@@ -1,0 +1,28 @@
+{
+  "name": "devsync-gas",
+  "version": "0.1.0",
+  "description": "GitHub複数リポジトリとNotionを連携してDevOps指標をスプレッドシートに書き出すGASプロダクト",
+  "type": "module",
+  "scripts": {
+    "build": "bun run esbuild.config.ts",
+    "push": "bun run build && clasp push",
+    "deploy": "clasp deploy",
+    "open": "clasp open",
+    "logs": "clasp logs",
+    "test": "bun test",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.2",
+    "@types/google-apps-script": "^1.0.83",
+    "esbuild": "^0.20.0",
+    "esbuild-gas-plugin": "^0.8.0",
+    "typescript": "^5.3.3",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "prettier": "^3.2.5"
+  },
+  "dependencies": {}
+}
