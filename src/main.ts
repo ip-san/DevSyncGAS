@@ -1,6 +1,6 @@
 import { getConfig, setConfig, addRepository, removeRepository } from "./config/settings";
 import "./init";
-import { getAllRepositoriesData } from "./services/github";
+import { getAllRepositoriesData, DateRange } from "./services/github";
 import { queryDatabase } from "./services/notion";
 import { writeMetricsToSheet, clearOldData, createSummarySheet } from "./services/spreadsheet";
 import { calculateMetricsForRepository } from "./utils/metrics";
@@ -9,20 +9,64 @@ import type { DevOpsMetrics } from "./types";
 /**
  * メイン実行関数 - DevOps指標を収集してスプレッドシートに書き出す
  */
-function syncDevOpsMetrics(): void {
+function syncDevOpsMetrics(dateRange?: DateRange): void {
   const config = getConfig();
+
+  Logger.log(`📊 Repositories: ${config.github.repositories.length}`);
+  config.github.repositories.forEach((repo) => {
+    Logger.log(`  - ${repo.fullName}`);
+  });
+
+  if (dateRange) {
+    Logger.log(`📅 Date range: ${dateRange.since?.toISOString()} ~ ${dateRange.until?.toISOString()}`);
+  }
+
   const { pullRequests, workflowRuns } = getAllRepositoriesData(
     config.github.repositories,
-    config.github.token
+    config.github.token,
+    dateRange
   );
+
+  Logger.log(`📥 Fetched ${pullRequests.length} PRs, ${workflowRuns.length} workflow runs`);
 
   const metrics: DevOpsMetrics[] = config.github.repositories.map((repo) =>
     calculateMetricsForRepository(repo.fullName, pullRequests, workflowRuns)
   );
 
+  Logger.log(`📈 Calculated ${metrics.length} metrics`);
+
   writeMetricsToSheet(config.spreadsheet.id, config.spreadsheet.sheetName, metrics);
 
   Logger.log(`✅ Synced metrics for ${metrics.length} repositories`);
+}
+
+/**
+ * 過去N日分のメトリクスを取得
+ */
+function syncHistoricalMetrics(days: number): void {
+  const until = new Date();
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  Logger.log(`📅 Fetching metrics for the last ${days} days`);
+  Logger.log(`   From: ${since.toISOString()}`);
+  Logger.log(`   To: ${until.toISOString()}`);
+
+  syncDevOpsMetrics({ since, until });
+}
+
+/**
+ * 過去30日分を取得
+ */
+function syncLast30Days(): void {
+  syncHistoricalMetrics(30);
+}
+
+/**
+ * 過去90日分を取得
+ */
+function syncLast90Days(): void {
+  syncHistoricalMetrics(90);
 }
 
 /**
@@ -111,9 +155,31 @@ function generateSummary(): void {
   Logger.log("✅ Summary sheet created");
 }
 
+/**
+ * 権限テスト用関数 - 初回実行で承認ダイアログを表示
+ */
+function testPermissions(): void {
+  // 外部リクエスト権限のテスト
+  const response = UrlFetchApp.fetch("https://api.github.com", {
+    muteHttpExceptions: true,
+  });
+  Logger.log(`GitHub API status: ${response.getResponseCode()}`);
+
+  // スプレッドシート権限のテスト
+  const config = getConfig();
+  const spreadsheet = SpreadsheetApp.openById(config.spreadsheet.id);
+  Logger.log(`Spreadsheet name: ${spreadsheet.getName()}`);
+
+  Logger.log("✅ All permissions granted!");
+}
+
 // GASグローバルスコープにエクスポート
 declare const global: any;
 global.syncDevOpsMetrics = syncDevOpsMetrics;
+global.syncHistoricalMetrics = syncHistoricalMetrics;
+global.syncLast30Days = syncLast30Days;
+global.syncLast90Days = syncLast90Days;
+global.testPermissions = testPermissions;
 global.createDailyTrigger = createDailyTrigger;
 global.setup = setup;
 global.addRepo = addRepo;

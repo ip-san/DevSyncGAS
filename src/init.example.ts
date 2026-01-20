@@ -8,6 +8,8 @@
  * 4. GASエディタで initConfig を実行
  */
 
+import { setConfig, addRepository } from "./config/settings";
+
 declare const global: any;
 
 function initConfig(): void {
@@ -23,11 +25,17 @@ function initConfig(): void {
   // ======================
 
   // 設定を保存
-  setup(GITHUB_TOKEN, SPREADSHEET_ID);
+  setConfig({
+    github: { token: GITHUB_TOKEN, repositories: [] },
+    notion: { token: "", databaseId: "" },
+    spreadsheet: { id: SPREADSHEET_ID, sheetName: "DevOps Metrics" },
+  });
+  Logger.log("✅ Configuration saved");
 
   // リポジトリを追加
   for (const repo of REPOSITORIES) {
-    addRepo(repo.owner, repo.name);
+    addRepository(repo.owner, repo.name);
+    Logger.log(`✅ Added repository: ${repo.owner}/${repo.name}`);
   }
 
   Logger.log("✅ 初期設定完了");
