@@ -27,6 +27,11 @@ export function writeMetricsToSheet(
     sheet.setFrozenRows(1);
   }
 
+  if (metrics.length === 0) {
+    Logger.log("⚠️ No metrics to write");
+    return;
+  }
+
   const rows = metrics.map((m) => [
     m.date,
     m.repository,
