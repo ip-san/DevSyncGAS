@@ -19,9 +19,11 @@ export interface GitHubPullRequest {
 
 export interface GitHubDeployment {
   id: number;
+  sha: string;
   environment: string;
   createdAt: string;
-  status: "success" | "failure" | "pending";
+  updatedAt: string;
+  status: "success" | "failure" | "error" | "inactive" | "in_progress" | "queued" | "pending" | null;
   repository: string;
 }
 
