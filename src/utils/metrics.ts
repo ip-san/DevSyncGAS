@@ -1,4 +1,5 @@
 import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, DevOpsMetrics } from "../types";
+import { getFrequencyCategory } from "../config/doraThresholds";
 
 /**
  * Lead Time計算結果
@@ -131,12 +132,7 @@ export function calculateDeploymentFrequency(
   }
 
   const avgPerDay = count / periodDays;
-
-  let frequency: DevOpsMetrics["deploymentFrequency"];
-  if (avgPerDay >= 1) frequency = "daily";
-  else if (avgPerDay >= 1 / 7) frequency = "weekly";
-  else if (avgPerDay >= 1 / 30) frequency = "monthly";
-  else frequency = "yearly";
+  const frequency = getFrequencyCategory(avgPerDay);
 
   return { count, frequency };
 }

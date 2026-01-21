@@ -15,7 +15,8 @@ GitHub複数リポジトリとNotionを連携してDevOps指標（DORA metrics�
 src/
 ├── main.ts              # GASエントリーポイント（グローバル関数をエクスポート）
 ├── config/
-│   └── settings.ts      # スクリプトプロパティ管理
+│   ├── settings.ts      # スクリプトプロパティ管理
+│   └── doraThresholds.ts # DORAパフォーマンスレベル閾値（年次更新）
 ├── services/
 │   ├── github.ts        # GitHub API連携
 │   ├── notion.ts        # Notion API連携

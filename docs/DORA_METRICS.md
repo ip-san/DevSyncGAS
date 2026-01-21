@@ -371,6 +371,43 @@ DORAの定義では、最初のコミットから本番デプロイまでの時�
 
 ## 実装上の考慮事項
 
+### 閾値の設定ファイル
+
+パフォーマンスレベル（Elite/High/Medium/Low）を判定する閾値は、設定ファイルに切り出されています:
+
+```
+src/config/doraThresholds.ts
+```
+
+**閾値を変更するには**:
+
+DORAが年次レポートで閾値を更新した場合、このファイルの定数を修正してください:
+
+```typescript
+// 例: Deployment Frequency の閾値
+export const DEPLOYMENT_FREQUENCY_THRESHOLDS = {
+  elite: 1,      // 1日1回以上
+  high: 1 / 7,   // 週1回以上
+  medium: 1 / 30, // 月1回以上
+} as const;
+```
+
+**パフォーマンスレベル判定関数**:
+
+各指標のパフォーマンスレベルを取得する関数も提供しています:
+
+```typescript
+import {
+  getDeploymentFrequencyLevel,
+  getLeadTimeLevel,
+  getChangeFailureRateLevel,
+  getMTTRLevel,
+} from "./config/doraThresholds";
+
+// 使用例
+const level = getLeadTimeLevel(2.5); // "high"
+```
+
 ### データソースの優先順位
 
 本プロジェクトでは、以下の優先順位でデータを取得します:
