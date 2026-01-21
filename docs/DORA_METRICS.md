@@ -91,16 +91,21 @@ GitHub Deploymentsは、特定の環境（production, staging等）へのデプ�
 - created_at: 2024-01-15 14:35:00
 ```
 
-**statusの値**:
-| 値 | 意味 | 計算への影響 |
-|----|------|-------------|
-| `success` | 成功 | Deployment Frequency, Lead Timeでカウント |
-| `failure` | 失敗 | CFR, MTTRでカウント |
-| `error` | エラー | CFR, MTTRでカウント |
-| `in_progress` | 進行中 | カウントしない |
-| `queued` | 待機中 | カウントしない |
-| `pending` | 保留中 | カウントしない |
-| `null` | 不明 | ワークフローにフォールバック |
+**statusの値と各指標への影響**:
+
+| 値 | 意味 | Deployment Frequency | Lead Time | CFR | MTTR |
+|----|------|---------------------|-----------|-----|------|
+| `success` | 成功 | ✅ カウント | ✅ 使用 | 分母に含む | 復旧として検出 |
+| `failure` | 失敗 | - | - | 分母・分子に含む | 障害として検出 |
+| `error` | エラー | - | - | 分母・分子に含む | 障害として検出 |
+| `inactive` | 非アクティブ | - | - | 分母に含む | - |
+| `in_progress` | 進行中 | - | - | 分母に含む | - |
+| `queued` | 待機中 | - | - | 分母に含む | - |
+| `pending` | 保留中 | - | - | 分母に含む | - |
+| `null` | 取得失敗 | フォールバック | フォールバック | フォールバック | フォールバック |
+
+> **注意**: `in_progress`や`queued`などの進行中ステータスもCFRの分母に含まれます。
+> これらが多いとCFRが実際より低く見える可能性があります。
 
 ### データ取得の流れ
 
@@ -125,13 +130,27 @@ GitHub Deploymentsは、特定の環境（production, staging等）へのデプ�
 │  Lead Time for Changes: PRs (merged_at) + Deployments       │
 │                        └→ フォールバック: PRs (created_at)  │
 │                                                             │
-│  Change Failure Rate  : Deployments (status=failure/error)  │
+│  Change Failure Rate  : Deployments (status≠null)           │
 │                        └→ フォールバック: Workflow Runs     │
 │                                                             │
-│  MTTR                 : Deployments (failure → success)     │
+│  MTTR                 : Deployments (status≠null)           │
 │                        └→ フォールバック: Workflow Runs     │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### フォールバックが発生する条件
+
+各指標がワークフローにフォールバックするタイミング:
+
+| 指標 | フォールバック条件 |
+|------|-------------------|
+| Deployment Frequency | `status=success`のデプロイが0件の場合 |
+| Lead Time | `status=success`のデプロイが0件の場合（PR作成→マージ時間を使用） |
+| Change Failure Rate | `status≠null`のデプロイが0件の場合 |
+| MTTR | `status≠null`のデプロイが0件の場合 |
+
+> **ポイント**: Deploymentsが存在しても、すべてのステータスが`null`の場合はフォールバックします。
+> これは`skipStatusFetch=true`を使用した場合や、ステータス取得に失敗した場合に発生します。
 
 ### あなたのリポジトリでDeploymentsが使われているか確認する方法
 
