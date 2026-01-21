@@ -6,6 +6,7 @@
 import { describe, it, expect } from "bun:test";
 import {
   calculateLeadTime,
+  calculateLeadTimeDetailed,
   calculateDeploymentFrequency,
   calculateChangeFailureRate,
   calculateMTTR,
@@ -126,6 +127,109 @@ describe("calculateLeadTime", () => {
   it("空の配列の場合は0を返す", () => {
     expect(calculateLeadTime([], [])).toBe(0);
   });
+
+  it("デプロイメントのstatusがnullの場合はフォールバック", () => {
+    const prs: GitHubPullRequest[] = [
+      {
+        id: 1,
+        number: 1,
+        title: "PR 1",
+        state: "closed",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T12:00:00Z",
+        closedAt: "2024-01-01T12:00:00Z",
+        author: "user",
+        repository: "owner/repo",
+      },
+    ];
+
+    const deployments: GitHubDeployment[] = [
+      {
+        id: 1,
+        sha: "abc123",
+        environment: "production",
+        createdAt: "2024-01-01T13:00:00Z",
+        updatedAt: "2024-01-01T13:05:00Z",
+        status: null, // skipStatusFetch=true の場合
+        repository: "owner/repo",
+      },
+    ];
+
+    // status=nullのデプロイメントは無視され、フォールバック
+    // PR作成→マージ = 2時間
+    expect(calculateLeadTime(prs, deployments)).toBe(2);
+  });
+});
+
+describe("calculateLeadTimeDetailed", () => {
+  it("測定方法の内訳を返す", () => {
+    const prs: GitHubPullRequest[] = [
+      {
+        id: 1,
+        number: 1,
+        title: "PR 1",
+        state: "closed",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T12:00:00Z",
+        closedAt: "2024-01-01T12:00:00Z",
+        author: "user",
+        repository: "owner/repo",
+      },
+      {
+        id: 2,
+        number: 2,
+        title: "PR 2",
+        state: "closed",
+        createdAt: "2024-01-02T10:00:00Z",
+        mergedAt: "2024-01-02T14:00:00Z", // 4時間でマージ
+        closedAt: "2024-01-02T14:00:00Z",
+        author: "user",
+        repository: "owner/repo",
+      },
+    ];
+
+    const deployments: GitHubDeployment[] = [
+      {
+        id: 1,
+        sha: "abc123",
+        environment: "production",
+        createdAt: "2024-01-01T13:00:00Z", // PR1のマージから1時間後
+        updatedAt: "2024-01-01T13:05:00Z",
+        status: "success",
+        repository: "owner/repo",
+      },
+      // PR2に対応するデプロイなし
+    ];
+
+    const result = calculateLeadTimeDetailed(prs, deployments);
+
+    expect(result.mergeToDeployCount).toBe(1); // PR1
+    expect(result.createToMergeCount).toBe(1); // PR2
+    // 平均: (1 + 4) / 2 = 2.5時間
+    expect(result.hours).toBe(2.5);
+  });
+
+  it("デプロイメントがない場合はすべてフォールバック", () => {
+    const prs: GitHubPullRequest[] = [
+      {
+        id: 1,
+        number: 1,
+        title: "PR 1",
+        state: "closed",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T12:00:00Z",
+        closedAt: "2024-01-01T12:00:00Z",
+        author: "user",
+        repository: "owner/repo",
+      },
+    ];
+
+    const result = calculateLeadTimeDetailed(prs, []);
+
+    expect(result.mergeToDeployCount).toBe(0);
+    expect(result.createToMergeCount).toBe(1);
+    expect(result.hours).toBe(2);
+  });
 });
 
 describe("calculateDeploymentFrequency", () => {
@@ -224,6 +328,36 @@ describe("calculateDeploymentFrequency", () => {
     ];
 
     const result = calculateDeploymentFrequency(deployments, [], 30);
+    expect(result.count).toBe(1);
+  });
+
+  it("デプロイメントのstatusがすべてnullの場合はワークフローにフォールバック", () => {
+    const deployments: GitHubDeployment[] = [
+      {
+        id: 1,
+        sha: "sha1",
+        environment: "production",
+        createdAt: "2024-01-01T10:00:00Z",
+        updatedAt: "2024-01-01T10:05:00Z",
+        status: null, // skipStatusFetch=true の場合
+        repository: "owner/repo",
+      },
+    ];
+
+    const runs: GitHubWorkflowRun[] = [
+      {
+        id: 1,
+        name: "Deploy",
+        status: "completed",
+        conclusion: "success",
+        createdAt: "2024-01-01T10:00:00Z",
+        updatedAt: "2024-01-01T10:05:00Z",
+        repository: "owner/repo",
+      },
+    ];
+
+    // status=nullは成功としてカウントされないので、ワークフローにフォールバック
+    const result = calculateDeploymentFrequency(deployments, runs, 30);
     expect(result.count).toBe(1);
   });
 });
@@ -597,5 +731,50 @@ describe("calculateMetricsForRepository", () => {
     const metrics = calculateMetricsForRepository("owner/repo", prs, runs, deployments, 30);
     expect(metrics.leadTimeForChangesHours).toBe(1); // マージからデプロイまで1時間
     expect(metrics.deploymentCount).toBe(1);
+  });
+
+  it("leadTimeMeasurementに測定方法の内訳を含む", () => {
+    const prs: GitHubPullRequest[] = [
+      {
+        id: 1,
+        number: 1,
+        title: "PR 1",
+        state: "closed",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T12:00:00Z",
+        closedAt: "2024-01-01T12:00:00Z",
+        author: "user",
+        repository: "owner/repo",
+      },
+      {
+        id: 2,
+        number: 2,
+        title: "PR 2",
+        state: "closed",
+        createdAt: "2024-01-02T10:00:00Z",
+        mergedAt: "2024-01-02T14:00:00Z",
+        closedAt: "2024-01-02T14:00:00Z",
+        author: "user",
+        repository: "owner/repo",
+      },
+    ];
+
+    const deployments: GitHubDeployment[] = [
+      {
+        id: 1,
+        sha: "sha1",
+        environment: "production",
+        createdAt: "2024-01-01T13:00:00Z", // PR1のマージから1時間後
+        updatedAt: "2024-01-01T13:05:00Z",
+        status: "success",
+        repository: "owner/repo",
+      },
+    ];
+
+    const metrics = calculateMetricsForRepository("owner/repo", prs, [], deployments, 30);
+
+    expect(metrics.leadTimeMeasurement).toBeDefined();
+    expect(metrics.leadTimeMeasurement!.mergeToDeployCount).toBe(1);
+    expect(metrics.leadTimeMeasurement!.createToMergeCount).toBe(1);
   });
 });

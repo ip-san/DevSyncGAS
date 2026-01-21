@@ -54,6 +54,15 @@ export interface DevOpsMetrics {
   deploymentCount: number;
   deploymentFrequency: "daily" | "weekly" | "monthly" | "yearly";
   leadTimeForChangesHours: number;
+  /**
+   * Lead Time測定の内訳
+   * - mergeToDeployCount: マージ→デプロイで計測されたPR数
+   * - createToMergeCount: PR作成→マージで計測されたPR数（フォールバック）
+   */
+  leadTimeMeasurement?: {
+    mergeToDeployCount: number;
+    createToMergeCount: number;
+  };
   totalDeployments: number;
   failedDeployments: number;
   changeFailureRate: number;

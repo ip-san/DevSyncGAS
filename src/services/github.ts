@@ -155,6 +155,11 @@ export interface GetDeploymentsOptions {
    * ステータス取得をスキップしてAPI呼び出しを削減
    * true: ステータスをnullのまま返す（高速）
    * false: 各デプロイメントのステータスを個別に取得（N+1クエリ）
+   *
+   * ⚠️ 注意: trueに設定するとすべてのdeployment.statusがnullになり、
+   * DORA metricsの計算（Deployment Frequency, Change Failure Rate, MTTR）が
+   * ワークフローベースのフォールバックを使用するようになります。
+   * メトリクス計算が目的の場合はfalse（デフォルト）を推奨します。
    */
   skipStatusFetch?: boolean;
 }
@@ -166,7 +171,6 @@ export function getDeployments(
 ): ApiResponse<GitHubDeployment[]> {
   const { environment, dateRange, maxPages = 5, skipStatusFetch = false } = options;
   const allDeployments: GitHubDeployment[] = [];
-  const deploymentIds: number[] = [];
   let page = 1;
 
   // Phase 1: デプロイメント一覧を取得
@@ -199,7 +203,6 @@ export function getDeployments(
         continue;
       }
 
-      deploymentIds.push(deployment.id);
       allDeployments.push({
         id: deployment.id,
         sha: deployment.sha,

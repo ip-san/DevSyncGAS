@@ -1,6 +1,18 @@
 import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, DevOpsMetrics } from "../types";
 
 /**
+ * Lead Time計算結果
+ */
+export interface LeadTimeResult {
+  /** 平均リードタイム（時間） */
+  hours: number;
+  /** マージ→デプロイで計測されたPR数 */
+  mergeToDeployCount: number;
+  /** PR作成→マージで計測されたPR数（フォールバック） */
+  createToMergeCount: number;
+}
+
+/**
  * DORA Metrics: Lead Time for Changes
  *
  * 定義: コードがコミットされてから本番環境にデプロイされるまでの時間
@@ -20,14 +32,28 @@ export function calculateLeadTime(
   prs: GitHubPullRequest[],
   deployments: GitHubDeployment[] = []
 ): number {
+  return calculateLeadTimeDetailed(prs, deployments).hours;
+}
+
+/**
+ * Lead Timeの詳細計算（測定方法の内訳を含む）
+ */
+export function calculateLeadTimeDetailed(
+  prs: GitHubPullRequest[],
+  deployments: GitHubDeployment[] = []
+): LeadTimeResult {
   const mergedPRs = prs.filter((pr) => pr.mergedAt !== null);
-  if (mergedPRs.length === 0) return 0;
+  if (mergedPRs.length === 0) {
+    return { hours: 0, mergeToDeployCount: 0, createToMergeCount: 0 };
+  }
 
   const successfulDeployments = deployments
     .filter((d) => d.status === "success")
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
   const leadTimes: number[] = [];
+  let mergeToDeployCount = 0;
+  let createToMergeCount = 0;
 
   for (const pr of mergedPRs) {
     const mergedAt = new Date(pr.mergedAt!).getTime();
@@ -44,6 +70,7 @@ export function calculateLeadTime(
         // マージ後24時間以内のデプロイのみを関連付ける
         if (diffHours <= 24) {
           leadTimes.push(diffHours);
+          mergeToDeployCount++;
           continue;
         }
       }
@@ -53,12 +80,17 @@ export function calculateLeadTime(
     const created = new Date(pr.createdAt).getTime();
     const diffHours = (mergedAt - created) / (1000 * 60 * 60);
     leadTimes.push(diffHours);
+    createToMergeCount++;
   }
 
-  if (leadTimes.length === 0) return 0;
+  if (leadTimes.length === 0) {
+    return { hours: 0, mergeToDeployCount: 0, createToMergeCount: 0 };
+  }
 
   const totalHours = leadTimes.reduce((sum, hours) => sum + hours, 0);
-  return Math.round((totalHours / leadTimes.length) * 10) / 10;
+  const hours = Math.round((totalHours / leadTimes.length) * 10) / 10;
+
+  return { hours, mergeToDeployCount, createToMergeCount };
 }
 
 /**
@@ -253,13 +285,18 @@ export function calculateMetricsForRepository(
 
   const { count, frequency } = calculateDeploymentFrequency(repoDeployments, repoRuns, periodDays);
   const { total, failed, rate } = calculateChangeFailureRate(repoDeployments, repoRuns);
+  const leadTimeResult = calculateLeadTimeDetailed(repoPRs, repoDeployments);
 
   return {
     date: new Date().toISOString().split("T")[0],
     repository,
     deploymentCount: count,
     deploymentFrequency: frequency,
-    leadTimeForChangesHours: calculateLeadTime(repoPRs, repoDeployments),
+    leadTimeForChangesHours: leadTimeResult.hours,
+    leadTimeMeasurement: {
+      mergeToDeployCount: leadTimeResult.mergeToDeployCount,
+      createToMergeCount: leadTimeResult.createToMergeCount,
+    },
     totalDeployments: total,
     failedDeployments: failed,
     changeFailureRate: rate,
