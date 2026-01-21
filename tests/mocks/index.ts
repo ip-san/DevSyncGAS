@@ -148,7 +148,20 @@ export class MockSheet implements Sheet {
   }
 
   getDataRange(): SheetRange {
-    return new MockSheetRange(this.data);
+    // Return a range that maintains reference to the sheet's data
+    const range = new MockSheetRange(this.data);
+    // Override setValues to update the actual sheet data
+    range.setValues = (values: unknown[][]) => {
+      for (let r = 0; r < values.length; r++) {
+        if (!this.data[r]) {
+          this.data[r] = [];
+        }
+        for (let c = 0; c < values[r].length; c++) {
+          this.data[r][c] = values[r][c];
+        }
+      }
+    };
+    return range;
   }
 
   getLastRow(): number {

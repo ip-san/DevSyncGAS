@@ -160,6 +160,9 @@ export class GasLoggerClient implements LoggerClient {
 
 // Trigger Client
 class GasTrigger implements Trigger {
+  // Symbol to identify GasTrigger instances
+  private readonly _isGasTrigger = true;
+
   constructor(private trigger: GoogleAppsScript.Script.Trigger) {}
 
   getHandlerFunction(): string {
@@ -168,6 +171,10 @@ class GasTrigger implements Trigger {
 
   getUnderlyingTrigger(): GoogleAppsScript.Script.Trigger {
     return this.trigger;
+  }
+
+  static isGasTrigger(trigger: Trigger): trigger is GasTrigger {
+    return (trigger as GasTrigger)._isGasTrigger === true;
   }
 }
 
@@ -203,9 +210,10 @@ export class GasTriggerClient implements TriggerClient {
   }
 
   deleteTrigger(trigger: Trigger): void {
-    // GasTriggerの内部トリガーを取得
-    const gasTrigger = trigger as GasTrigger;
-    ScriptApp.deleteTrigger(gasTrigger.getUnderlyingTrigger());
+    if (!GasTrigger.isGasTrigger(trigger)) {
+      throw new Error("Cannot delete non-GAS trigger with GasTriggerClient");
+    }
+    ScriptApp.deleteTrigger(trigger.getUnderlyingTrigger());
   }
 
   newTrigger(functionName: string): TriggerBuilder {
