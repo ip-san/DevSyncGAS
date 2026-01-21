@@ -477,6 +477,56 @@ describe("calculateChangeFailureRate", () => {
     expect(result.failed).toBe(0);
     expect(result.rate).toBe(0);
   });
+
+  it("デプロイメントのstatusがすべてnullの場合はワークフローにフォールバック", () => {
+    const deployments: GitHubDeployment[] = [
+      {
+        id: 1,
+        sha: "sha1",
+        environment: "production",
+        createdAt: "2024-01-01T10:00:00Z",
+        updatedAt: "2024-01-01T10:05:00Z",
+        status: null, // skipStatusFetch=true の場合
+        repository: "owner/repo",
+      },
+      {
+        id: 2,
+        sha: "sha2",
+        environment: "production",
+        createdAt: "2024-01-02T10:00:00Z",
+        updatedAt: "2024-01-02T10:05:00Z",
+        status: null,
+        repository: "owner/repo",
+      },
+    ];
+
+    const runs: GitHubWorkflowRun[] = [
+      {
+        id: 1,
+        name: "Deploy",
+        status: "completed",
+        conclusion: "success",
+        createdAt: "2024-01-01T10:00:00Z",
+        updatedAt: "2024-01-01T10:05:00Z",
+        repository: "owner/repo",
+      },
+      {
+        id: 2,
+        name: "Deploy",
+        status: "completed",
+        conclusion: "failure",
+        createdAt: "2024-01-02T10:00:00Z",
+        updatedAt: "2024-01-02T10:05:00Z",
+        repository: "owner/repo",
+      },
+    ];
+
+    // status=nullのデプロイメントは無視され、ワークフローにフォールバック
+    const result = calculateChangeFailureRate(deployments, runs);
+    expect(result.total).toBe(2);
+    expect(result.failed).toBe(1);
+    expect(result.rate).toBe(50);
+  });
 });
 
 describe("calculateMTTR", () => {
@@ -623,6 +673,51 @@ describe("calculateMTTR", () => {
     ];
 
     expect(calculateMTTR([], runs)).toBe(2);
+  });
+
+  it("デプロイメントのstatusがすべてnullの場合はワークフローにフォールバック", () => {
+    const deployments: GitHubDeployment[] = [
+      {
+        id: 1,
+        sha: "sha1",
+        environment: "production",
+        createdAt: "2024-01-01T10:00:00Z",
+        updatedAt: "2024-01-01T10:05:00Z",
+        status: null,
+        repository: "owner/repo",
+      },
+      {
+        id: 2,
+        sha: "sha2",
+        environment: "production",
+        createdAt: "2024-01-01T12:00:00Z",
+        updatedAt: "2024-01-01T12:05:00Z",
+        status: null,
+        repository: "owner/repo",
+      },
+    ];
+    const runs: GitHubWorkflowRun[] = [
+      {
+        id: 1,
+        name: "Deploy",
+        status: "completed",
+        conclusion: "failure",
+        createdAt: "2024-01-01T10:00:00Z",
+        updatedAt: "2024-01-01T10:05:00Z",
+        repository: "owner/repo",
+      },
+      {
+        id: 2,
+        name: "Deploy",
+        status: "completed",
+        conclusion: "success",
+        createdAt: "2024-01-01T13:00:00Z", // 3時間後に復旧
+        updatedAt: "2024-01-01T13:05:00Z",
+        repository: "owner/repo",
+      },
+    ];
+
+    expect(calculateMTTR(deployments, runs)).toBe(3);
   });
 });
 

@@ -151,7 +151,7 @@ export function calculateDeploymentFrequency(
  *
  * 計算方法:
  * 1. GitHub Deployments: 失敗ステータスのデプロイ / 全デプロイ
- *    （環境フィルタはAPI呼び出し時に適用済み）
+ *    （環境フィルタはAPI呼び出し時に適用済み、ステータスが取得できている場合のみ）
  * 2. フォールバック: ワークフロー失敗数 / 全ワークフロー実行数
  *
  * 分類基準 (DORA):
@@ -170,9 +170,12 @@ export function calculateChangeFailureRate(
 } {
   // 優先: GitHub Deployments API
   // 注意: 環境フィルタはgetDeployments()で適用済み
-  if (deployments.length > 0) {
-    const total = deployments.length;
-    const failed = deployments.filter(
+  // ステータスが取得できているデプロイメントのみを対象とする
+  const deploymentsWithStatus = deployments.filter((d) => d.status !== null);
+
+  if (deploymentsWithStatus.length > 0) {
+    const total = deploymentsWithStatus.length;
+    const failed = deploymentsWithStatus.filter(
       (d) => d.status === "failure" || d.status === "error"
     ).length;
     const rate = total > 0 ? Math.round((failed / total) * 100 * 10) / 10 : 0;
@@ -201,7 +204,7 @@ export function calculateChangeFailureRate(
  *
  * 計算方法:
  * 1. 失敗したデプロイメントを時系列で追跡
- *    （環境フィルタはAPI呼び出し時に適用済み）
+ *    （環境フィルタはAPI呼び出し時に適用済み、ステータスが取得できている場合のみ）
  * 2. 次の成功デプロイメントまでの時間を計算
  * 3. 平均値を算出
  *
@@ -217,8 +220,11 @@ export function calculateMTTR(
 ): number | null {
   // 優先: GitHub Deployments API
   // 注意: 環境フィルタはgetDeployments()で適用済み
-  if (deployments.length > 0) {
-    const sortedDeployments = [...deployments].sort(
+  // ステータスが取得できているデプロイメントのみを対象とする
+  const deploymentsWithStatus = deployments.filter((d) => d.status !== null);
+
+  if (deploymentsWithStatus.length > 0) {
+    const sortedDeployments = [...deploymentsWithStatus].sort(
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
 
