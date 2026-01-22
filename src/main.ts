@@ -31,16 +31,16 @@ function syncDevOpsMetrics(dateRange?: DateRange): void {
     Logger.log(`📅 Date range: ${dateRange.since?.toISOString()} ~ ${dateRange.until?.toISOString()}`);
   }
 
-  const { pullRequests, workflowRuns } = getAllRepositoriesData(
+  const { pullRequests, workflowRuns, deployments } = getAllRepositoriesData(
     config.github.repositories,
     config.github.token,
-    dateRange
+    { dateRange }
   );
 
-  Logger.log(`📥 Fetched ${pullRequests.length} PRs, ${workflowRuns.length} workflow runs`);
+  Logger.log(`📥 Fetched ${pullRequests.length} PRs, ${workflowRuns.length} workflow runs, ${deployments.length} deployments`);
 
   const metrics: DevOpsMetrics[] = config.github.repositories.map((repo) =>
-    calculateMetricsForRepository(repo.fullName, pullRequests, workflowRuns)
+    calculateMetricsForRepository(repo.fullName, pullRequests, workflowRuns, deployments)
   );
 
   Logger.log(`📈 Calculated ${metrics.length} metrics`);

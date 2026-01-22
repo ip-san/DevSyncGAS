@@ -5,7 +5,7 @@ GitHub複数リポジトリとNotionを連携してDevOps指標（DORA metrics�
 ## 機能
 
 - 複数GitHubリポジトリからPR・デプロイメント情報を取得
-- DORA 4 Key Metrics を自動計算
+- DORA 4 Key Metrics を自動計算（[詳細ドキュメント](docs/DORA_METRICS.md)）
   - Deployment Frequency（デプロイ頻度）
   - Lead Time for Changes（変更のリードタイム）
   - Change Failure Rate（変更失敗率）
@@ -165,6 +165,10 @@ bun test
 # リント
 bun run lint
 ```
+
+## ドキュメント
+
+- [DORA Metrics 実装ガイド](docs/DORA_METRICS.md) - 4つの主要指標の定義、計算方法、制約事項の解説
 
 ## License
 
