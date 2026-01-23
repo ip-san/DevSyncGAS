@@ -1,6 +1,12 @@
 import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, DevOpsMetrics } from "../types";
 import { getFrequencyCategory } from "../config/doraThresholds";
 
+/** ミリ秒から時間への変換定数 */
+const MS_TO_HOURS = 1000 * 60 * 60;
+
+/** Lead Time計算時のマージ→デプロイ関連付け最大時間（時間） */
+const LEAD_TIME_DEPLOY_MATCH_THRESHOLD_HOURS = 24;
+
 /**
  * Lead Time計算結果
  */
@@ -67,9 +73,9 @@ export function calculateLeadTimeDetailed(
 
       if (deploymentAfterMerge) {
         const deployedAt = new Date(deploymentAfterMerge.createdAt).getTime();
-        const diffHours = (deployedAt - mergedAt) / (1000 * 60 * 60);
-        // マージ後24時間以内のデプロイのみを関連付ける
-        if (diffHours <= 24) {
+        const diffHours = (deployedAt - mergedAt) / MS_TO_HOURS;
+        // マージ後一定時間以内のデプロイのみを関連付ける
+        if (diffHours <= LEAD_TIME_DEPLOY_MATCH_THRESHOLD_HOURS) {
           leadTimes.push(diffHours);
           mergeToDeployCount++;
           continue;
@@ -79,7 +85,7 @@ export function calculateLeadTimeDetailed(
 
     // フォールバック: PR作成からマージまでの時間
     const created = new Date(pr.createdAt).getTime();
-    const diffHours = (mergedAt - created) / (1000 * 60 * 60);
+    const diffHours = (mergedAt - created) / MS_TO_HOURS;
     leadTimes.push(diffHours);
     createToMergeCount++;
   }
@@ -247,6 +253,17 @@ export function calculateMTTR(
   );
 }
 
+/**
+ * イベントの時系列から復旧時間を計算するヘルパー関数
+ *
+ * @param events - 時系列順にソートされたイベント配列
+ * @returns 平均復旧時間（時間）、障害がない場合はnull
+ *
+ * 計算ロジック:
+ * 1. 失敗イベントを検出して記録
+ * 2. その後の成功イベントまでの時間差を計算
+ * 3. 全復旧時間の平均を返す
+ */
 function calculateRecoveryTime(
   events: Array<{ createdAt: string; isFailure: boolean; isSuccess: boolean }>
 ): number | null {
@@ -259,7 +276,7 @@ function calculateRecoveryTime(
     } else if (event.isSuccess && lastFailure) {
       const failureTime = new Date(lastFailure.createdAt).getTime();
       const recoveryTime = new Date(event.createdAt).getTime();
-      const diffHours = (recoveryTime - failureTime) / (1000 * 60 * 60);
+      const diffHours = (recoveryTime - failureTime) / MS_TO_HOURS;
       recoveryTimes.push(diffHours);
       lastFailure = null;
     }

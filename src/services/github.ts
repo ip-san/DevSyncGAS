@@ -3,11 +3,32 @@ import { getContainer } from "../container";
 
 const GITHUB_API_BASE = "https://api.github.com";
 
+/** ページネーションのデフォルト最大ページ数 */
+const DEFAULT_MAX_PAGES = 5;
+
+/** 1ページあたりの取得件数（GitHub API最大値） */
+const PER_PAGE = 100;
+
+/** ステータス取得時の警告閾値（この件数を超えると警告ログ） */
+const STATUS_FETCH_WARNING_THRESHOLD = 50;
+
+/**
+ * 期間フィルタ
+ */
 export interface DateRange {
+  /** 開始日（この日以降を取得） */
   since?: Date;
+  /** 終了日（この日以前を取得） */
   until?: Date;
 }
 
+/**
+ * GitHub REST APIを呼び出すヘルパー関数
+ *
+ * @param endpoint - APIエンドポイント（例: "/repos/owner/repo/pulls"）
+ * @param token - GitHub Personal Access Token
+ * @returns APIレスポンス
+ */
 function fetchGitHub<T>(endpoint: string, token: string): ApiResponse<T> {
   const { httpClient } = getContainer();
   const url = `${GITHUB_API_BASE}${endpoint}`;
@@ -31,18 +52,28 @@ function fetchGitHub<T>(endpoint: string, token: string): ApiResponse<T> {
   }
 }
 
+/**
+ * リポジトリのプルリクエスト一覧を取得
+ *
+ * @param repo - 対象リポジトリ
+ * @param token - GitHub Personal Access Token
+ * @param state - 取得するPRの状態（デフォルト: "all"）
+ * @param dateRange - 期間フィルタ（オプション）
+ * @param maxPages - 最大取得ページ数（デフォルト: 5）
+ * @returns PRの配列
+ */
 export function getPullRequests(
   repo: GitHubRepository,
   token: string,
   state: "open" | "closed" | "all" = "all",
   dateRange?: DateRange,
-  maxPages = 5
+  maxPages = DEFAULT_MAX_PAGES
 ): ApiResponse<GitHubPullRequest[]> {
   const allPRs: GitHubPullRequest[] = [];
   let page = 1;
 
   while (page <= maxPages) {
-    let endpoint = `/repos/${repo.fullName}/pulls?state=${state}&per_page=100&page=${page}&sort=updated&direction=desc`;
+    let endpoint = `/repos/${repo.fullName}/pulls?state=${state}&per_page=${PER_PAGE}&page=${page}&sort=updated&direction=desc`;
 
     const response = fetchGitHub<any[]>(endpoint, token);
 
@@ -88,17 +119,26 @@ export function getPullRequests(
   return { success: true, data: allPRs };
 }
 
+/**
+ * リポジトリのワークフロー実行履歴を取得
+ *
+ * @param repo - 対象リポジトリ
+ * @param token - GitHub Personal Access Token
+ * @param dateRange - 期間フィルタ（オプション）
+ * @param maxPages - 最大取得ページ数（デフォルト: 5）
+ * @returns ワークフロー実行の配列
+ */
 export function getWorkflowRuns(
   repo: GitHubRepository,
   token: string,
   dateRange?: DateRange,
-  maxPages = 5
+  maxPages = DEFAULT_MAX_PAGES
 ): ApiResponse<GitHubWorkflowRun[]> {
   const allRuns: GitHubWorkflowRun[] = [];
   let page = 1;
 
   while (page <= maxPages) {
-    let endpoint = `/repos/${repo.fullName}/actions/runs?per_page=100&page=${page}`;
+    let endpoint = `/repos/${repo.fullName}/actions/runs?per_page=${PER_PAGE}&page=${page}`;
 
     // GitHub Actions APIは created パラメータで日付フィルタ可能
     if (dateRange?.since) {
@@ -164,18 +204,26 @@ export interface GetDeploymentsOptions {
   skipStatusFetch?: boolean;
 }
 
+/**
+ * リポジトリのデプロイメント一覧を取得
+ *
+ * @param repo - 対象リポジトリ
+ * @param token - GitHub Personal Access Token
+ * @param options - 取得オプション（環境、期間、ステータス取得有無）
+ * @returns デプロイメントの配列
+ */
 export function getDeployments(
   repo: GitHubRepository,
   token: string,
   options: GetDeploymentsOptions = {}
 ): ApiResponse<GitHubDeployment[]> {
-  const { environment, dateRange, maxPages = 5, skipStatusFetch = false } = options;
+  const { environment, dateRange, maxPages = DEFAULT_MAX_PAGES, skipStatusFetch = false } = options;
   const allDeployments: GitHubDeployment[] = [];
   let page = 1;
 
   // Phase 1: デプロイメント一覧を取得
   while (page <= maxPages) {
-    let endpoint = `/repos/${repo.fullName}/deployments?per_page=100&page=${page}`;
+    let endpoint = `/repos/${repo.fullName}/deployments?per_page=${PER_PAGE}&page=${page}`;
     if (environment) {
       endpoint += `&environment=${encodeURIComponent(environment)}`;
     }
@@ -222,7 +270,7 @@ export function getDeployments(
   // 大量のデプロイメントがある場合はskipStatusFetch=trueを推奨
   if (!skipStatusFetch && allDeployments.length > 0) {
     const { logger } = getContainer();
-    if (allDeployments.length > 50) {
+    if (allDeployments.length > STATUS_FETCH_WARNING_THRESHOLD) {
       logger.log(`  ⚠️ Fetching status for ${allDeployments.length} deployments (may be slow)`);
     }
 
@@ -240,7 +288,11 @@ export function getDeployments(
   return { success: true, data: allDeployments };
 }
 
+/**
+ * 複数リポジトリからデータを一括取得する際のオプション
+ */
 export interface GetAllRepositoriesDataOptions {
+  /** 期間フィルタ */
   dateRange?: DateRange;
   /**
    * デプロイメント環境名（デフォルト: "production"）
@@ -249,6 +301,14 @@ export interface GetAllRepositoriesDataOptions {
   deploymentEnvironment?: string;
 }
 
+/**
+ * 複数リポジトリのGitHubデータを一括取得
+ *
+ * @param repositories - 対象リポジトリの配列
+ * @param token - GitHub Personal Access Token
+ * @param options - 取得オプション
+ * @returns PR、ワークフロー実行、デプロイメントの集約データ
+ */
 export function getAllRepositoriesData(
   repositories: GitHubRepository[],
   token: string,
