@@ -608,9 +608,9 @@ Notion API error: 401 - Unauthorized
 
 **解決方法:**
 1. Notion Integrationページでトークンを再取得
-2. 正しい形式で設定
+2. 正しい形式で設定（`secret_`で始まる必要があります）
 ```javascript
-setup('github-token', 'spreadsheet-id', 'secret_正しいトークン', 'database-id');
+setup('ghp_xxxx', 'spreadsheet-id', 'secret_正しいトークン', 'database-id');
 ```
 
 ---
@@ -737,7 +737,11 @@ addRepo('other-owner', 'repo3');
 **A:** API呼び出しが401エラーで失敗します。新しいトークンを発行して再設定してください。
 
 ```javascript
-setup('新しいトークン', 'spreadsheet-id', 'notion-token', 'database-id');
+// GitHub PATのみ更新する場合
+setup('ghp_新しいトークン', 'spreadsheet-id');
+
+// Notion連携も使用している場合
+setup('ghp_新しいトークン', 'spreadsheet-id', 'secret_xxxx', 'database-id');
 ```
 
 ---
