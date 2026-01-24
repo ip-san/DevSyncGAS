@@ -9,9 +9,11 @@ import {
   getDeployments,
   getAllRepositoriesData,
   getIncidents,
+  getPRDetails,
+  getPRSizeDataForPRs,
 } from "../../src/services/github";
 import { setupTestContainer, teardownTestContainer, type TestContainer } from "../helpers/setup";
-import type { GitHubRepository } from "../../src/types";
+import type { GitHubRepository, GitHubPullRequest } from "../../src/types";
 
 describe("github", () => {
   let container: TestContainer;
@@ -900,6 +902,229 @@ describe("github", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain("404");
+    });
+  });
+
+  describe("getPRDetails", () => {
+    it("PR詳細を正しく取得する", () => {
+      container.httpClient.setJsonResponse(
+        "https://api.github.com/repos/test-owner/test-repo/pulls/123",
+        200,
+        {
+          additions: 100,
+          deletions: 50,
+          changed_files: 5,
+        }
+      );
+
+      const result = getPRDetails("test-owner", "test-repo", 123, "test-token");
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual({
+        additions: 100,
+        deletions: 50,
+        changedFiles: 5,
+      });
+    });
+
+    it("APIエラー時はエラーを返す", () => {
+      container.httpClient.setResponse(
+        "https://api.github.com/repos/test-owner/test-repo/pulls/999",
+        { statusCode: 404, content: "Not Found" }
+      );
+
+      const result = getPRDetails("test-owner", "test-repo", 999, "test-token");
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("404");
+    });
+
+    it("欠損値をデフォルト0で処理する", () => {
+      container.httpClient.setJsonResponse(
+        "https://api.github.com/repos/test-owner/test-repo/pulls/1",
+        200,
+        {
+          // additions, deletions, changed_files が欠損
+        }
+      );
+
+      const result = getPRDetails("test-owner", "test-repo", 1, "test-token");
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual({
+        additions: 0,
+        deletions: 0,
+        changedFiles: 0,
+      });
+    });
+  });
+
+  describe("getPRSizeDataForPRs", () => {
+    const testPRs: GitHubPullRequest[] = [
+      {
+        id: 1,
+        number: 1,
+        title: "PR 1",
+        state: "closed",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T12:00:00Z",
+        closedAt: "2024-01-01T12:00:00Z",
+        author: "user1",
+        repository: "test-owner/test-repo",
+      },
+      {
+        id: 2,
+        number: 2,
+        title: "PR 2",
+        state: "closed",
+        createdAt: "2024-01-02T10:00:00Z",
+        mergedAt: "2024-01-02T12:00:00Z",
+        closedAt: "2024-01-02T12:00:00Z",
+        author: "user2",
+        repository: "test-owner/test-repo",
+      },
+    ];
+
+    it("複数PRのサイズデータを取得する", () => {
+      container.httpClient.setJsonResponse(
+        "https://api.github.com/repos/test-owner/test-repo/pulls/1",
+        200,
+        { additions: 100, deletions: 50, changed_files: 5 }
+      );
+      container.httpClient.setJsonResponse(
+        "https://api.github.com/repos/test-owner/test-repo/pulls/2",
+        200,
+        { additions: 200, deletions: 100, changed_files: 10 }
+      );
+
+      const result = getPRSizeDataForPRs(testPRs, "test-token");
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual({
+        prNumber: 1,
+        title: "PR 1",
+        repository: "test-owner/test-repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T12:00:00Z",
+        additions: 100,
+        deletions: 50,
+        linesOfCode: 150,
+        filesChanged: 5,
+      });
+      expect(result[1]).toEqual({
+        prNumber: 2,
+        title: "PR 2",
+        repository: "test-owner/test-repo",
+        createdAt: "2024-01-02T10:00:00Z",
+        mergedAt: "2024-01-02T12:00:00Z",
+        additions: 200,
+        deletions: 100,
+        linesOfCode: 300,
+        filesChanged: 10,
+      });
+    });
+
+    it("API失敗時はそのPRをスキップする", () => {
+      container.httpClient.setJsonResponse(
+        "https://api.github.com/repos/test-owner/test-repo/pulls/1",
+        200,
+        { additions: 100, deletions: 50, changed_files: 5 }
+      );
+      container.httpClient.setResponse(
+        "https://api.github.com/repos/test-owner/test-repo/pulls/2",
+        { statusCode: 500, content: "Server Error" }
+      );
+
+      const result = getPRSizeDataForPRs(testPRs, "test-token");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].prNumber).toBe(1);
+      // 警告ログが出力されていること
+      expect(container.logger.logs.some((log) => log.includes("Skipped 1 PRs"))).toBe(true);
+    });
+
+    it("不正なリポジトリ形式のPRをスキップする", () => {
+      const invalidPRs: GitHubPullRequest[] = [
+        {
+          id: 1,
+          number: 1,
+          title: "PR 1",
+          state: "closed",
+          createdAt: "2024-01-01T10:00:00Z",
+          mergedAt: "2024-01-01T12:00:00Z",
+          closedAt: "2024-01-01T12:00:00Z",
+          author: "user1",
+          repository: "invalid-format", // owner/repo形式ではない
+        },
+      ];
+
+      const result = getPRSizeDataForPRs(invalidPRs, "test-token");
+
+      expect(result).toHaveLength(0);
+      expect(container.logger.logs.some((log) => log.includes("Invalid repository format"))).toBe(true);
+    });
+
+    it("大量PR取得時に警告を出力する", () => {
+      // 51個のPRを作成（警告閾値は50）
+      const manyPRs: GitHubPullRequest[] = Array.from({ length: 51 }, (_, i) => ({
+        id: i + 1,
+        number: i + 1,
+        title: `PR ${i + 1}`,
+        state: "closed" as const,
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T12:00:00Z",
+        closedAt: "2024-01-01T12:00:00Z",
+        author: "user",
+        repository: "test-owner/test-repo",
+      }));
+
+      // 全PRに対してレスポンスを設定
+      for (let i = 1; i <= 51; i++) {
+        container.httpClient.setJsonResponse(
+          `https://api.github.com/repos/test-owner/test-repo/pulls/${i}`,
+          200,
+          { additions: 10, deletions: 5, changed_files: 2 }
+        );
+      }
+
+      const result = getPRSizeDataForPRs(manyPRs, "test-token");
+
+      expect(result).toHaveLength(51);
+      expect(container.logger.logs.some((log) => log.includes("51 PRs") && log.includes("may take a while"))).toBe(true);
+    });
+
+    it("空の配列を渡すと空の配列を返す", () => {
+      const result = getPRSizeDataForPRs([], "test-token");
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("未マージのPRも正しく処理する", () => {
+      const unmergedPR: GitHubPullRequest[] = [
+        {
+          id: 1,
+          number: 1,
+          title: "Unmerged PR",
+          state: "open",
+          createdAt: "2024-01-01T10:00:00Z",
+          mergedAt: null,
+          closedAt: null,
+          author: "user",
+          repository: "test-owner/test-repo",
+        },
+      ];
+
+      container.httpClient.setJsonResponse(
+        "https://api.github.com/repos/test-owner/test-repo/pulls/1",
+        200,
+        { additions: 50, deletions: 25, changed_files: 3 }
+      );
+
+      const result = getPRSizeDataForPRs(unmergedPR, "test-token");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].mergedAt).toBeNull();
+      expect(result[0].linesOfCode).toBe(75);
     });
   });
 });

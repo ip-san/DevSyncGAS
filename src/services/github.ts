@@ -1,4 +1,4 @@
-import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, GitHubRepository, ApiResponse, NotionTask, PRReworkData, PRReviewData } from "../types";
+import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, GitHubRepository, ApiResponse, NotionTask, PRReworkData, PRReviewData, PRSizeData } from "../types";
 import { getContainer } from "../container";
 
 const GITHUB_API_BASE = "https://api.github.com";
@@ -967,4 +967,96 @@ export function getReviewEfficiencyDataForPRs(
   }
 
   return reviewData;
+}
+
+/**
+ * PRの詳細情報を取得（additions, deletions, changed_files を含む）
+ *
+ * @param owner - リポジトリオーナー
+ * @param repo - リポジトリ名
+ * @param prNumber - PR番号
+ * @param token - GitHub Personal Access Token
+ * @returns PR詳細情報
+ */
+export function getPRDetails(
+  owner: string,
+  repo: string,
+  prNumber: number,
+  token: string
+): ApiResponse<{ additions: number; deletions: number; changedFiles: number }> {
+  const endpoint = `/repos/${owner}/${repo}/pulls/${prNumber}`;
+  const response = fetchGitHub<any>(endpoint, token);
+
+  if (!response.success || !response.data) {
+    return response as ApiResponse<{ additions: number; deletions: number; changedFiles: number }>;
+  }
+
+  return {
+    success: true,
+    data: {
+      additions: response.data.additions ?? 0,
+      deletions: response.data.deletions ?? 0,
+      changedFiles: response.data.changed_files ?? 0,
+    },
+  };
+}
+
+/**
+ * 複数PRのサイズデータを一括取得
+ *
+ * @param pullRequests - PR情報の配列
+ * @param token - GitHub Personal Access Token
+ * @returns 各PRのサイズデータ配列（API取得に失敗したPRはスキップ）
+ */
+export function getPRSizeDataForPRs(
+  pullRequests: GitHubPullRequest[],
+  token: string
+): PRSizeData[] {
+  const { logger } = getContainer();
+  const sizeData: PRSizeData[] = [];
+
+  // 大量PR取得時の警告
+  if (pullRequests.length > STATUS_FETCH_WARNING_THRESHOLD) {
+    logger.log(`  ⚠️ Fetching size data for ${pullRequests.length} PRs. This may take a while and consume API quota.`);
+  }
+
+  let skippedCount = 0;
+
+  for (const pr of pullRequests) {
+    const [owner, repo] = pr.repository.split("/");
+    if (!owner || !repo) {
+      logger.log(`  ⚠️ Invalid repository format: ${pr.repository}`);
+      skippedCount++;
+      continue;
+    }
+
+    // PR詳細を取得
+    const detailsResult = getPRDetails(owner, repo, pr.number, token);
+
+    if (!detailsResult.success || !detailsResult.data) {
+      logger.log(`  ⚠️ Failed to fetch details for PR #${pr.number}: ${detailsResult.error}`);
+      skippedCount++;
+      continue;
+    }
+
+    const { additions, deletions, changedFiles } = detailsResult.data;
+
+    sizeData.push({
+      prNumber: pr.number,
+      title: pr.title,
+      repository: pr.repository,
+      createdAt: pr.createdAt,
+      mergedAt: pr.mergedAt,
+      additions,
+      deletions,
+      linesOfCode: additions + deletions,
+      filesChanged: changedFiles,
+    });
+  }
+
+  if (skippedCount > 0) {
+    logger.log(`  ⚠️ Skipped ${skippedCount} PRs due to API errors`);
+  }
+
+  return sizeData;
 }

@@ -1,4 +1,4 @@
-import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, DevOpsMetrics, NotionTask, CycleTimeMetrics, TaskCycleTime, CodingTimeMetrics, TaskCodingTime, ReworkRateMetrics, PRReworkData, ReviewEfficiencyMetrics, PRReviewData } from "../types";
+import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, DevOpsMetrics, NotionTask, CycleTimeMetrics, TaskCycleTime, CodingTimeMetrics, TaskCodingTime, ReworkRateMetrics, PRReworkData, ReviewEfficiencyMetrics, PRReviewData, PRSizeMetrics, PRSizeData } from "../types";
 import { getFrequencyCategory } from "../config/doraThresholds";
 
 /** ミリ秒から時間への変換定数 */
@@ -725,5 +725,59 @@ export function calculateReviewEfficiency(
       maxHours: totalTimeStats.max,
     },
     prDetails: reviewData,
+  };
+}
+
+/**
+ * PRサイズ（PR Size）を計算
+ *
+ * 定義: PRの変更行数と変更ファイル数を測定
+ * 小さいPRほどレビューしやすく、マージが早い傾向がある
+ *
+ * @param sizeData - 各PRのサイズデータ配列
+ * @param period - 計測期間の表示文字列
+ */
+export function calculatePRSize(
+  sizeData: PRSizeData[],
+  period: string
+): PRSizeMetrics {
+  if (sizeData.length === 0) {
+    return {
+      period,
+      prCount: 0,
+      linesOfCode: { total: 0, avg: null, median: null, min: null, max: null },
+      filesChanged: { total: 0, avg: null, median: null, min: null, max: null },
+      prDetails: [],
+    };
+  }
+
+  // 変更行数の統計
+  const locValues = sizeData.map((pr) => pr.linesOfCode);
+  const locStats = calculateStats(locValues);
+  const locTotal = locValues.reduce((sum, val) => sum + val, 0);
+
+  // 変更ファイル数の統計
+  const filesValues = sizeData.map((pr) => pr.filesChanged);
+  const filesStats = calculateStats(filesValues);
+  const filesTotal = filesValues.reduce((sum, val) => sum + val, 0);
+
+  return {
+    period,
+    prCount: sizeData.length,
+    linesOfCode: {
+      total: locTotal,
+      avg: locStats.avg,
+      median: locStats.median,
+      min: locStats.min,
+      max: locStats.max,
+    },
+    filesChanged: {
+      total: filesTotal,
+      avg: filesStats.avg,
+      median: filesStats.median,
+      min: filesStats.min,
+      max: filesStats.max,
+    },
+    prDetails: sizeData,
   };
 }
