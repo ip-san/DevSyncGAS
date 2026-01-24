@@ -350,15 +350,14 @@ addRepo('owner', 'repo-name');
 | 4 | [LinearB - Cycle Time](https://linearb.io/blog/cycle-time) | Review Timeを含むサイクルタイム解説 |
 | 5 | [Sleuth - Review Time](https://www.sleuth.io/metrics/review-time) | レビュー時間の定義と測定 |
 | 6 | [Code Climate - Review Lag](https://docs.velocity.codeclimate.com/en/articles/2913574) | レビュー遅延の測定 |
-| 7 | [Pluralsight Flow](https://help.pluralsight.com/help/flow-help) | サイクルタイムの可視化 |
 
 ### GitHub API
 
 | # | 資料 | 説明 |
 |---|------|------|
-| 8 | [Pull Requests API](https://docs.github.com/en/rest/pulls/pulls) | PR一覧取得 |
-| 9 | [Timeline Events API](https://docs.github.com/en/rest/issues/timeline) | `ready_for_review`イベント検出 |
-| 10 | [Pull Request Reviews API](https://docs.github.com/en/rest/pulls/reviews) | レビュー一覧取得 |
+| 7 | [Pull Requests API](https://docs.github.com/en/rest/pulls/pulls) | PR一覧取得 |
+| 8 | [Timeline Events API](https://docs.github.com/en/rest/issues/timeline) | `ready_for_review`イベント検出 |
+| 9 | [Pull Request Reviews API](https://docs.github.com/en/rest/pulls/reviews) | レビュー一覧取得 |
 
 ---
 

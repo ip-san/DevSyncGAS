@@ -337,14 +337,13 @@ addRepo('owner', 'repo-name');
 | 4 | [Code Climate - Rework](https://docs.velocity.codeclimate.com/en/articles/2913574-rework) | 30日以内の書き換え。シニアで9-14% |
 | 5 | [Hatica - Code Churn](https://www.hatica.io/blog/code-churn-rate/) | 15-25%が許容範囲 |
 | 6 | [LinearB - Code Churn](https://linearb.io/blog/what-is-code-churn) | サイクルタイム内訳としての解説 |
-| 7 | [Pluralsight Flow - Rework](https://help.pluralsight.com/help/what-is-churn) | 可視化方法 |
 
 ### GitHub API
 
 | # | 資料 | 説明 |
 |---|------|------|
-| 8 | [Pull Requests API](https://docs.github.com/en/rest/pulls/pulls) | PR一覧、コミット一覧 |
-| 9 | [Timeline Events API](https://docs.github.com/en/rest/issues/timeline) | Force Pushイベント検出 |
+| 7 | [Pull Requests API](https://docs.github.com/en/rest/pulls/pulls) | PR一覧、コミット一覧 |
+| 8 | [Timeline Events API](https://docs.github.com/en/rest/issues/timeline) | Force Pushイベント検出 |
 
 ---
 
