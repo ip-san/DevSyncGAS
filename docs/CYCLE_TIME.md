@@ -345,23 +345,15 @@ Notion Token と Database ID が設定されているか確認してください
    - https://kanbantool.com/kanban-guide/cycle-time
    - Kanban文脈でのサイクルタイムの定義とWIPとの関係
 
-6. **Kanban - Wikipedia**
-   - https://en.wikipedia.org/wiki/Kanban
-   - トヨタ生産方式におけるKanbanの起源と概念
-
 ### 比較・解説記事
 
-7. **Typo - DORA Metrics: Cycle Time vs Lead Time**
-   - https://typoapp.io/blog/cycle-time-vs-lead-time
-   - サイクルタイムとリードタイムの違いの詳細な解説
-
-8. **LinearB - Lead Time vs Cycle Time**
+6. **LinearB - Lead Time vs Cycle Time**
    - https://linearb.io/blog/lead-time-vs-cycle-time
    - ソフトウェア開発におけるリードタイムとサイクルタイムの比較
 
 ### 書籍
 
-9. **Accelerate: The Science of Lean Software and DevOps**
+7. **Accelerate: The Science of Lean Software and DevOps**
    - Nicole Forsgren, Jez Humble, Gene Kim 著
    - DORA研究の基礎となった書籍。Lead Time for Changesの公式定義を含む
 

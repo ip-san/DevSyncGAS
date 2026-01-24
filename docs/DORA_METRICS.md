@@ -10,15 +10,6 @@
 - [DORA Metricsとは](#dora-metricsとは)
 - [4つの主要指標](#4つの主要指標)
 
-### 📊 詳細ドキュメント
-
-| ドキュメント | 内容 |
-|-------------|------|
-| [GitHubから取得するデータ](./dora/github-data.md) | Pull Request、Workflow、Deployment、Issuesの各データソースの詳細 |
-| [各指標の詳細](./dora/metrics-detail.md) | 4つの指標それぞれの公式定義、計算式、実装方法 |
-| [設定・実装上の考慮事項](./dora/configuration.md) | 閾値設定、環境フィルタリング、インシデントトラッキングの設定方法 |
-| [出典・参考資料](./dora/references.md) | DORA公式ドキュメント、書籍、API仕様へのリンク |
-
 ---
 
 ## DORA Metricsとは
@@ -70,28 +61,6 @@ addRepo('owner', 'repo-name');
 // インシデントラベルを設定（真のMTTR計測用）
 setIncidentConfig({ labels: ["incident", "production-bug"] });
 ```
-
----
-
-## ドキュメント構成
-
-```
-docs/
-├── DORA_METRICS.md          # このファイル（概要と目次）
-└── dora/
-    ├── github-data.md       # GitHubから取得するデータ
-    ├── metrics-detail.md    # 各指標の詳細
-    ├── configuration.md     # 設定・実装上の考慮事項
-    └── references.md        # 出典・参考資料
-```
-
----
-
-## 次のステップ
-
-1. **[GitHubから取得するデータ](./dora/github-data.md)** を読んで、どのGitHubデータが使用されるかを理解する
-2. **[各指標の詳細](./dora/metrics-detail.md)** で計算方法を確認する
-3. **[設定・実装上の考慮事項](./dora/configuration.md)** でプロジェクトに合わせた設定を行う
 
 ---
 

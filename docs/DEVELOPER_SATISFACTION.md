@@ -332,14 +332,13 @@ setup(
 | # | 資料 | 説明 |
 |---|------|------|
 | 1 | [SPACE Framework](https://queue.acm.org/detail.cfm?id=3454124) | Microsoft Research。開発者生産性の5ディメンション |
-| 2 | [Developer Experience](https://queue.acm.org/detail.cfm?id=3595878) | DevExの3コアディメンション |
 
 ### Notion API
 
 | # | 資料 | 説明 |
 |---|------|------|
-| 3 | [Query a database](https://developers.notion.com/reference/post-database-query) | データベースクエリAPI |
-| 4 | [Property values](https://developers.notion.com/reference/property-value-object) | プロパティ値の取得 |
+| 2 | [Query a database](https://developers.notion.com/reference/post-database-query) | データベースクエリAPI |
+| 3 | [Property values](https://developers.notion.com/reference/property-value-object) | プロパティ値の取得 |
 
 ---
 
