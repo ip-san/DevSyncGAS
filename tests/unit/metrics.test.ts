@@ -15,8 +15,9 @@ import {
   calculateCycleTime,
   calculateCodingTime,
   calculateReworkRate,
+  calculateReviewEfficiency,
 } from "../../src/utils/metrics";
-import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, NotionTask, PRReworkData } from "../../src/types";
+import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, NotionTask, PRReworkData, PRReviewData } from "../../src/types";
 
 describe("calculateLeadTime", () => {
   it("マージされたPRがない場合は0を返す", () => {
@@ -1755,5 +1756,331 @@ describe("calculateReworkRate", () => {
       forcePushCount: 1,
       totalCommits: 5,
     });
+  });
+});
+
+describe("calculateReviewEfficiency", () => {
+  it("PRがない場合はnullを返す", () => {
+    const result = calculateReviewEfficiency([], "2024-01");
+
+    expect(result.prCount).toBe(0);
+    expect(result.timeToFirstReview.avgHours).toBeNull();
+    expect(result.timeToFirstReview.medianHours).toBeNull();
+    expect(result.timeToFirstReview.minHours).toBeNull();
+    expect(result.timeToFirstReview.maxHours).toBeNull();
+    expect(result.reviewDuration.avgHours).toBeNull();
+    expect(result.reviewDuration.minHours).toBeNull();
+    expect(result.timeToMerge.avgHours).toBeNull();
+    expect(result.timeToMerge.minHours).toBeNull();
+    expect(result.totalTime.avgHours).toBeNull();
+    expect(result.totalTime.minHours).toBeNull();
+    expect(result.prDetails).toHaveLength(0);
+  });
+
+  it("レビュー効率を正しく計算する（1PR）", () => {
+    const reviewData: PRReviewData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        readyForReviewAt: "2024-01-01T10:00:00Z",
+        firstReviewAt: "2024-01-01T12:00:00Z",     // 2時間後
+        approvedAt: "2024-01-01T14:00:00Z",        // さらに2時間後
+        mergedAt: "2024-01-01T15:00:00Z",          // さらに1時間後
+        timeToFirstReviewHours: 2,
+        reviewDurationHours: 2,
+        timeToMergeHours: 1,
+        totalTimeHours: 5,
+      },
+    ];
+
+    const result = calculateReviewEfficiency(reviewData, "2024-01");
+
+    expect(result.prCount).toBe(1);
+    expect(result.timeToFirstReview.avgHours).toBe(2);
+    expect(result.timeToFirstReview.medianHours).toBe(2);
+    expect(result.timeToFirstReview.minHours).toBe(2);
+    expect(result.timeToFirstReview.maxHours).toBe(2);
+    expect(result.reviewDuration.avgHours).toBe(2);
+    expect(result.reviewDuration.medianHours).toBe(2);
+    expect(result.reviewDuration.minHours).toBe(2);
+    expect(result.reviewDuration.maxHours).toBe(2);
+    expect(result.timeToMerge.avgHours).toBe(1);
+    expect(result.timeToMerge.minHours).toBe(1);
+    expect(result.timeToMerge.maxHours).toBe(1);
+    expect(result.totalTime.avgHours).toBe(5);
+    expect(result.totalTime.minHours).toBe(5);
+    expect(result.totalTime.maxHours).toBe(5);
+  });
+
+  it("複数PRの平均・中央値を正しく計算する", () => {
+    const reviewData: PRReviewData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        readyForReviewAt: "2024-01-01T10:00:00Z",
+        firstReviewAt: "2024-01-01T12:00:00Z",
+        approvedAt: "2024-01-01T14:00:00Z",
+        mergedAt: "2024-01-01T15:00:00Z",
+        timeToFirstReviewHours: 2,
+        reviewDurationHours: 2,
+        timeToMergeHours: 1,
+        totalTimeHours: 5,
+      },
+      {
+        prNumber: 2,
+        title: "PR 2",
+        repository: "owner/repo",
+        createdAt: "2024-01-02T10:00:00Z",
+        readyForReviewAt: "2024-01-02T10:00:00Z",
+        firstReviewAt: "2024-01-02T14:00:00Z",
+        approvedAt: "2024-01-02T18:00:00Z",
+        mergedAt: "2024-01-02T20:00:00Z",
+        timeToFirstReviewHours: 4,
+        reviewDurationHours: 4,
+        timeToMergeHours: 2,
+        totalTimeHours: 10,
+      },
+      {
+        prNumber: 3,
+        title: "PR 3",
+        repository: "owner/repo",
+        createdAt: "2024-01-03T10:00:00Z",
+        readyForReviewAt: "2024-01-03T10:00:00Z",
+        firstReviewAt: "2024-01-03T16:00:00Z",
+        approvedAt: "2024-01-03T22:00:00Z",
+        mergedAt: "2024-01-04T01:00:00Z",
+        timeToFirstReviewHours: 6,
+        reviewDurationHours: 6,
+        timeToMergeHours: 3,
+        totalTimeHours: 15,
+      },
+    ];
+
+    const result = calculateReviewEfficiency(reviewData, "2024-01");
+
+    expect(result.prCount).toBe(3);
+    // 平均: (2 + 4 + 6) / 3 = 4
+    expect(result.timeToFirstReview.avgHours).toBe(4);
+    // 中央値: 4
+    expect(result.timeToFirstReview.medianHours).toBe(4);
+    expect(result.timeToFirstReview.minHours).toBe(2);
+    expect(result.timeToFirstReview.maxHours).toBe(6);
+    // reviewDuration
+    expect(result.reviewDuration.avgHours).toBe(4);
+    expect(result.reviewDuration.medianHours).toBe(4);
+    expect(result.reviewDuration.minHours).toBe(2);
+    expect(result.reviewDuration.maxHours).toBe(6);
+    // timeToMerge: (1 + 2 + 3) / 3 = 2
+    expect(result.timeToMerge.avgHours).toBe(2);
+    expect(result.timeToMerge.minHours).toBe(1);
+    expect(result.timeToMerge.maxHours).toBe(3);
+    // totalTime: (5 + 10 + 15) / 3 = 10
+    expect(result.totalTime.avgHours).toBe(10);
+    expect(result.totalTime.minHours).toBe(5);
+    expect(result.totalTime.maxHours).toBe(15);
+  });
+
+  it("偶数個のPRで中央値を正しく計算する", () => {
+    const reviewData: PRReviewData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        readyForReviewAt: "2024-01-01T10:00:00Z",
+        firstReviewAt: "2024-01-01T12:00:00Z",
+        approvedAt: "2024-01-01T14:00:00Z",
+        mergedAt: "2024-01-01T15:00:00Z",
+        timeToFirstReviewHours: 2,
+        reviewDurationHours: 2,
+        timeToMergeHours: 1,
+        totalTimeHours: 5,
+      },
+      {
+        prNumber: 2,
+        title: "PR 2",
+        repository: "owner/repo",
+        createdAt: "2024-01-02T10:00:00Z",
+        readyForReviewAt: "2024-01-02T10:00:00Z",
+        firstReviewAt: "2024-01-02T16:00:00Z",
+        approvedAt: "2024-01-02T22:00:00Z",
+        mergedAt: "2024-01-03T01:00:00Z",
+        timeToFirstReviewHours: 6,
+        reviewDurationHours: 6,
+        timeToMergeHours: 3,
+        totalTimeHours: 15,
+      },
+    ];
+
+    const result = calculateReviewEfficiency(reviewData, "2024-01");
+
+    // 中央値: (2 + 6) / 2 = 4
+    expect(result.timeToFirstReview.medianHours).toBe(4);
+    expect(result.timeToFirstReview.minHours).toBe(2);
+    expect(result.timeToFirstReview.maxHours).toBe(6);
+    expect(result.reviewDuration.medianHours).toBe(4);
+    expect(result.reviewDuration.minHours).toBe(2);
+    expect(result.reviewDuration.maxHours).toBe(6);
+    // timeToMerge中央値: (1 + 3) / 2 = 2
+    expect(result.timeToMerge.medianHours).toBe(2);
+    expect(result.timeToMerge.minHours).toBe(1);
+    expect(result.timeToMerge.maxHours).toBe(3);
+  });
+
+  it("最初のレビューがないPRを正しく処理する", () => {
+    const reviewData: PRReviewData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        readyForReviewAt: "2024-01-01T10:00:00Z",
+        firstReviewAt: null,  // レビューなし
+        approvedAt: null,
+        mergedAt: "2024-01-01T12:00:00Z",
+        timeToFirstReviewHours: null,
+        reviewDurationHours: null,
+        timeToMergeHours: null,
+        totalTimeHours: 2,
+      },
+    ];
+
+    const result = calculateReviewEfficiency(reviewData, "2024-01");
+
+    expect(result.prCount).toBe(1);
+    expect(result.timeToFirstReview.avgHours).toBeNull();
+    expect(result.timeToFirstReview.minHours).toBeNull();
+    expect(result.timeToFirstReview.maxHours).toBeNull();
+    expect(result.reviewDuration.avgHours).toBeNull();
+    expect(result.reviewDuration.minHours).toBeNull();
+    expect(result.timeToMerge.avgHours).toBeNull();
+    expect(result.timeToMerge.minHours).toBeNull();
+    expect(result.totalTime.avgHours).toBe(2);
+    expect(result.totalTime.minHours).toBe(2);
+    expect(result.totalTime.maxHours).toBe(2);
+  });
+
+  it("承認なしでマージされたPRを正しく処理する", () => {
+    const reviewData: PRReviewData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        readyForReviewAt: "2024-01-01T10:00:00Z",
+        firstReviewAt: "2024-01-01T12:00:00Z",
+        approvedAt: null,  // 承認なし（CHANGES_REQUESTEDのままマージなど）
+        mergedAt: "2024-01-01T14:00:00Z",
+        timeToFirstReviewHours: 2,
+        reviewDurationHours: null,
+        timeToMergeHours: null,
+        totalTimeHours: 4,
+      },
+    ];
+
+    const result = calculateReviewEfficiency(reviewData, "2024-01");
+
+    expect(result.prCount).toBe(1);
+    expect(result.timeToFirstReview.avgHours).toBe(2);
+    expect(result.timeToFirstReview.minHours).toBe(2);
+    expect(result.timeToFirstReview.maxHours).toBe(2);
+    expect(result.reviewDuration.avgHours).toBeNull();
+    expect(result.reviewDuration.minHours).toBeNull();
+    expect(result.reviewDuration.maxHours).toBeNull();
+    expect(result.timeToMerge.avgHours).toBeNull();
+    expect(result.timeToMerge.minHours).toBeNull();
+    expect(result.timeToMerge.maxHours).toBeNull();
+    expect(result.totalTime.avgHours).toBe(4);
+    expect(result.totalTime.minHours).toBe(4);
+    expect(result.totalTime.maxHours).toBe(4);
+  });
+
+  it("期間文字列を正しく設定する", () => {
+    const result = calculateReviewEfficiency([], "2024-01-01〜2024-01-31");
+
+    expect(result.period).toBe("2024-01-01〜2024-01-31");
+  });
+
+  it("PR詳細に正しい情報を含む", () => {
+    const reviewData: PRReviewData[] = [
+      {
+        prNumber: 42,
+        title: "Feature X implementation",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        readyForReviewAt: "2024-01-01T11:00:00Z",
+        firstReviewAt: "2024-01-01T13:00:00Z",
+        approvedAt: "2024-01-01T15:00:00Z",
+        mergedAt: "2024-01-01T16:00:00Z",
+        timeToFirstReviewHours: 2,
+        reviewDurationHours: 2,
+        timeToMergeHours: 1,
+        totalTimeHours: 5,
+      },
+    ];
+
+    const result = calculateReviewEfficiency(reviewData, "2024-01");
+
+    expect(result.prDetails[0]).toEqual({
+      prNumber: 42,
+      title: "Feature X implementation",
+      repository: "owner/repo",
+      createdAt: "2024-01-01T10:00:00Z",
+      readyForReviewAt: "2024-01-01T11:00:00Z",
+      firstReviewAt: "2024-01-01T13:00:00Z",
+      approvedAt: "2024-01-01T15:00:00Z",
+      mergedAt: "2024-01-01T16:00:00Z",
+      timeToFirstReviewHours: 2,
+      reviewDurationHours: 2,
+      timeToMergeHours: 1,
+      totalTimeHours: 5,
+    });
+  });
+
+  it("一部のPRにのみ値がある場合、その値のみで統計を計算する", () => {
+    const reviewData: PRReviewData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        readyForReviewAt: "2024-01-01T10:00:00Z",
+        firstReviewAt: "2024-01-01T12:00:00Z",
+        approvedAt: "2024-01-01T14:00:00Z",
+        mergedAt: "2024-01-01T15:00:00Z",
+        timeToFirstReviewHours: 2,
+        reviewDurationHours: 2,
+        timeToMergeHours: 1,
+        totalTimeHours: 5,
+      },
+      {
+        prNumber: 2,
+        title: "PR 2",
+        repository: "owner/repo",
+        createdAt: "2024-01-02T10:00:00Z",
+        readyForReviewAt: "2024-01-02T10:00:00Z",
+        firstReviewAt: null,
+        approvedAt: null,
+        mergedAt: "2024-01-02T12:00:00Z",
+        timeToFirstReviewHours: null,
+        reviewDurationHours: null,
+        timeToMergeHours: null,
+        totalTimeHours: 2,
+      },
+    ];
+
+    const result = calculateReviewEfficiency(reviewData, "2024-01");
+
+    expect(result.prCount).toBe(2);
+    // timeToFirstReviewは1つのPRのみ有効
+    expect(result.timeToFirstReview.avgHours).toBe(2);
+    expect(result.reviewDuration.avgHours).toBe(2);
+    expect(result.timeToMerge.avgHours).toBe(1);
+    // totalTimeは両方有効: (5 + 2) / 2 = 3.5
+    expect(result.totalTime.avgHours).toBe(3.5);
   });
 });

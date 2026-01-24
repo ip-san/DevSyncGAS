@@ -194,6 +194,94 @@ export interface PRReworkData {
   totalCommits: number;
 }
 
+/**
+ * レビュー効率（Review Efficiency）指標
+ * PRの各フェーズでの滞留時間を測定
+ * 長い滞留時間 = AIコードが難解な可能性
+ */
+export interface ReviewEfficiencyMetrics {
+  /** 計測期間 */
+  period: string;
+  /** 計測対象PR数 */
+  prCount: number;
+  /** レビュー待ち時間（Ready for Review → 最初のレビュー） */
+  timeToFirstReview: {
+    /** 平均時間（時間） */
+    avgHours: number | null;
+    /** 中央値（時間） */
+    medianHours: number | null;
+    /** 最小値（時間） */
+    minHours: number | null;
+    /** 最大値（時間） */
+    maxHours: number | null;
+  };
+  /** レビュー時間（最初のレビュー → 承認） */
+  reviewDuration: {
+    /** 平均時間（時間） */
+    avgHours: number | null;
+    /** 中央値（時間） */
+    medianHours: number | null;
+    /** 最小値（時間） */
+    minHours: number | null;
+    /** 最大値（時間） */
+    maxHours: number | null;
+  };
+  /** マージ待ち時間（承認 → マージ） */
+  timeToMerge: {
+    /** 平均時間（時間） */
+    avgHours: number | null;
+    /** 中央値（時間） */
+    medianHours: number | null;
+    /** 最小値（時間） */
+    minHours: number | null;
+    /** 最大値（時間） */
+    maxHours: number | null;
+  };
+  /** 全体時間（Ready for Review → マージ） */
+  totalTime: {
+    /** 平均時間（時間） */
+    avgHours: number | null;
+    /** 中央値（時間） */
+    medianHours: number | null;
+    /** 最小値（時間） */
+    minHours: number | null;
+    /** 最大値（時間） */
+    maxHours: number | null;
+  };
+  /** 各PRの詳細 */
+  prDetails: PRReviewData[];
+}
+
+/**
+ * 個別PRのレビューデータ
+ */
+export interface PRReviewData {
+  /** PR番号 */
+  prNumber: number;
+  /** PRタイトル */
+  title: string;
+  /** リポジトリ名 */
+  repository: string;
+  /** PR作成時刻 */
+  createdAt: string;
+  /** Ready for Review時刻（ドラフト解除時刻、ドラフトでない場合はPR作成時刻） */
+  readyForReviewAt: string;
+  /** 最初のレビュー時刻 */
+  firstReviewAt: string | null;
+  /** 承認時刻 */
+  approvedAt: string | null;
+  /** マージ時刻 */
+  mergedAt: string | null;
+  /** レビュー待ち時間（時間） */
+  timeToFirstReviewHours: number | null;
+  /** レビュー時間（時間） */
+  reviewDurationHours: number | null;
+  /** マージ待ち時間（時間） */
+  timeToMergeHours: number | null;
+  /** 全体時間（時間） */
+  totalTimeHours: number | null;
+}
+
 // DevOps指標の型定義（DORA metrics）
 export interface DevOpsMetrics {
   date: string;

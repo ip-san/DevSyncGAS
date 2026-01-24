@@ -1,9 +1,9 @@
 import { getConfig, setConfig, addRepository, removeRepository } from "./config/settings";
 import "./init";
-import { getAllRepositoriesData, DateRange, getPullRequestsForTasks, getPullRequests, getReworkDataForPRs } from "./services/github";
+import { getAllRepositoriesData, DateRange, getPullRequestsForTasks, getPullRequests, getReworkDataForPRs, getReviewEfficiencyDataForPRs } from "./services/github";
 import { getTasksForCycleTime, getTasksForCodingTime } from "./services/notion";
-import { writeMetricsToSheet, clearOldData, createSummarySheet, writeCycleTimeToSheet, writeCodingTimeToSheet, writeReworkRateToSheet } from "./services/spreadsheet";
-import { calculateMetricsForRepository, calculateCycleTime, calculateCodingTime, calculateReworkRate } from "./utils/metrics";
+import { writeMetricsToSheet, clearOldData, createSummarySheet, writeCycleTimeToSheet, writeCodingTimeToSheet, writeReworkRateToSheet, writeReviewEfficiencyToSheet } from "./services/spreadsheet";
+import { calculateMetricsForRepository, calculateCycleTime, calculateCodingTime, calculateReworkRate, calculateReviewEfficiency } from "./utils/metrics";
 import { initializeContainer, isContainerInitialized, getContainer } from "./container";
 import { createGasAdapters } from "./adapters/gas";
 import type { DevOpsMetrics, CycleTimeMetrics, GitHubPullRequest } from "./types";
@@ -505,6 +505,136 @@ function showReworkRateDetails(days: number = 30): void {
 }
 
 /**
+ * レビュー効率を計算してスプレッドシートに書き出す
+ *
+ * 定義: PRの各フェーズでの滞留時間
+ * - レビュー待ち時間: Ready for Review → 最初のレビュー
+ * - レビュー時間: 最初のレビュー → 承認（長い = AIコードが難解な可能性）
+ * - マージ待ち時間: 承認 → マージ
+ *
+ * @param days - 計測期間（日数）デフォルト30日
+ */
+function syncReviewEfficiency(days: number = 30): void {
+  ensureContainerInitialized();
+  const config = getConfig();
+
+  if (!config.github.token) {
+    Logger.log("⚠️ GitHub token is not configured. Set githubToken in setup()");
+    return;
+  }
+
+  if (config.github.repositories.length === 0) {
+    Logger.log("⚠️ No repositories configured. Add repositories with addRepo()");
+    return;
+  }
+
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  const startDateStr = startDate.toISOString().split("T")[0];
+  const endDateStr = endDate.toISOString().split("T")[0];
+  const period = `${startDateStr}〜${endDateStr}`;
+
+  Logger.log(`⏱️ Calculating Review Efficiency for ${days} days`);
+  Logger.log(`   Period: ${period}`);
+
+  // 全リポジトリからPRを取得
+  const allPRs: GitHubPullRequest[] = [];
+  for (const repo of config.github.repositories) {
+    Logger.log(`📡 Fetching PRs from ${repo.fullName}...`);
+    const prsResult = getPullRequests(repo, config.github.token, "all", {
+      since: startDate,
+      until: endDate,
+    });
+
+    if (prsResult.success && prsResult.data) {
+      // マージ済みPRのみを対象とする
+      const mergedPRs = prsResult.data.filter((pr) => pr.mergedAt !== null);
+      allPRs.push(...mergedPRs);
+      Logger.log(`   Found ${mergedPRs.length} merged PRs`);
+    } else {
+      Logger.log(`   ⚠️ Failed to fetch PRs: ${prsResult.error}`);
+    }
+  }
+
+  if (allPRs.length === 0) {
+    Logger.log("⚠️ No merged PRs found in the period");
+    return;
+  }
+
+  Logger.log(`📊 Fetching review data for ${allPRs.length} PRs...`);
+  const reviewData = getReviewEfficiencyDataForPRs(allPRs, config.github.token);
+
+  const reviewMetrics = calculateReviewEfficiency(reviewData, period);
+
+  Logger.log(`📊 Review Efficiency Results:`);
+  Logger.log(`   PRs analyzed: ${reviewMetrics.prCount}`);
+  Logger.log(`   Time to First Review: avg=${reviewMetrics.timeToFirstReview.avgHours}h, median=${reviewMetrics.timeToFirstReview.medianHours}h`);
+  Logger.log(`   Review Duration: avg=${reviewMetrics.reviewDuration.avgHours}h, median=${reviewMetrics.reviewDuration.medianHours}h`);
+  Logger.log(`   Time to Merge: avg=${reviewMetrics.timeToMerge.avgHours}h, median=${reviewMetrics.timeToMerge.medianHours}h`);
+  Logger.log(`   Total Time: avg=${reviewMetrics.totalTime.avgHours}h, median=${reviewMetrics.totalTime.medianHours}h`);
+
+  writeReviewEfficiencyToSheet(config.spreadsheet.id, reviewMetrics);
+
+  Logger.log("✅ Review Efficiency metrics synced");
+}
+
+/**
+ * レビュー効率のPR詳細を表示（デバッグ用）
+ */
+function showReviewEfficiencyDetails(days: number = 30): void {
+  ensureContainerInitialized();
+  const config = getConfig();
+
+  if (!config.github.token) {
+    Logger.log("⚠️ GitHub token is not configured");
+    return;
+  }
+
+  if (config.github.repositories.length === 0) {
+    Logger.log("⚠️ No repositories configured");
+    return;
+  }
+
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  const allPRs: GitHubPullRequest[] = [];
+  for (const repo of config.github.repositories) {
+    const prsResult = getPullRequests(repo, config.github.token, "all", {
+      since: startDate,
+      until: endDate,
+    });
+
+    if (prsResult.success && prsResult.data) {
+      const mergedPRs = prsResult.data.filter((pr) => pr.mergedAt !== null);
+      allPRs.push(...mergedPRs);
+    }
+  }
+
+  const reviewData = getReviewEfficiencyDataForPRs(allPRs, config.github.token);
+  const startDateStr = startDate.toISOString().split("T")[0];
+  const endDateStr = endDate.toISOString().split("T")[0];
+  const reviewMetrics = calculateReviewEfficiency(reviewData, `${startDateStr}〜${endDateStr}`);
+
+  Logger.log(`\n📋 Review Efficiency Details (${reviewMetrics.prCount} PRs):\n`);
+  reviewMetrics.prDetails.forEach((pr, i) => {
+    Logger.log(`${i + 1}. PR #${pr.prNumber}: ${pr.title}`);
+    Logger.log(`   Repository: ${pr.repository}`);
+    Logger.log(`   Ready for Review: ${pr.readyForReviewAt}`);
+    Logger.log(`   First Review: ${pr.firstReviewAt ?? "N/A"}`);
+    Logger.log(`   Approved: ${pr.approvedAt ?? "N/A"}`);
+    Logger.log(`   Merged: ${pr.mergedAt ?? "Not merged"}`);
+    Logger.log(`   Time to First Review: ${pr.timeToFirstReviewHours ?? "N/A"}h`);
+    Logger.log(`   Review Duration: ${pr.reviewDurationHours ?? "N/A"}h`);
+    Logger.log(`   Time to Merge: ${pr.timeToMergeHours ?? "N/A"}h`);
+    Logger.log(`   Total Time: ${pr.totalTimeHours ?? "N/A"}h\n`);
+  });
+}
+
+/**
  * 権限テスト用関数 - 初回実行で承認ダイアログを表示
  */
 function testPermissions(): void {
@@ -542,3 +672,5 @@ global.syncCodingTime = syncCodingTime;
 global.showCodingTimeDetails = showCodingTimeDetails;
 global.syncReworkRate = syncReworkRate;
 global.showReworkRateDetails = showReworkRateDetails;
+global.syncReviewEfficiency = syncReviewEfficiency;
+global.showReviewEfficiencyDetails = showReviewEfficiencyDetails;
