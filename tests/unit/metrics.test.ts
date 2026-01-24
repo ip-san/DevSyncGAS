@@ -16,8 +16,9 @@ import {
   calculateCodingTime,
   calculateReworkRate,
   calculateReviewEfficiency,
+  calculatePRSize,
 } from "../../src/utils/metrics";
-import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, NotionTask, PRReworkData, PRReviewData } from "../../src/types";
+import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, NotionTask, PRReworkData, PRReviewData, PRSizeData } from "../../src/types";
 
 describe("calculateLeadTime", () => {
   it("マージされたPRがない場合は0を返す", () => {
@@ -2082,5 +2083,275 @@ describe("calculateReviewEfficiency", () => {
     expect(result.timeToMerge.avgHours).toBe(1);
     // totalTimeは両方有効: (5 + 2) / 2 = 3.5
     expect(result.totalTime.avgHours).toBe(3.5);
+  });
+});
+
+describe("calculatePRSize", () => {
+  it("PRがない場合はnullを返す", () => {
+    const result = calculatePRSize([], "2024-01");
+
+    expect(result.prCount).toBe(0);
+    expect(result.linesOfCode.total).toBe(0);
+    expect(result.linesOfCode.avg).toBeNull();
+    expect(result.linesOfCode.median).toBeNull();
+    expect(result.linesOfCode.min).toBeNull();
+    expect(result.linesOfCode.max).toBeNull();
+    expect(result.filesChanged.total).toBe(0);
+    expect(result.filesChanged.avg).toBeNull();
+    expect(result.filesChanged.median).toBeNull();
+    expect(result.filesChanged.min).toBeNull();
+    expect(result.filesChanged.max).toBeNull();
+    expect(result.prDetails).toHaveLength(0);
+  });
+
+  it("PRサイズを正しく計算する（1PR）", () => {
+    const sizeData: PRSizeData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T14:00:00Z",
+        additions: 100,
+        deletions: 50,
+        linesOfCode: 150,
+        filesChanged: 5,
+      },
+    ];
+
+    const result = calculatePRSize(sizeData, "2024-01");
+
+    expect(result.prCount).toBe(1);
+    expect(result.linesOfCode.total).toBe(150);
+    expect(result.linesOfCode.avg).toBe(150);
+    expect(result.linesOfCode.median).toBe(150);
+    expect(result.linesOfCode.min).toBe(150);
+    expect(result.linesOfCode.max).toBe(150);
+    expect(result.filesChanged.total).toBe(5);
+    expect(result.filesChanged.avg).toBe(5);
+    expect(result.filesChanged.median).toBe(5);
+    expect(result.filesChanged.min).toBe(5);
+    expect(result.filesChanged.max).toBe(5);
+    expect(result.prDetails).toHaveLength(1);
+  });
+
+  it("複数PRの平均・中央値を正しく計算する", () => {
+    const sizeData: PRSizeData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T14:00:00Z",
+        additions: 50,
+        deletions: 50,
+        linesOfCode: 100,
+        filesChanged: 2,
+      },
+      {
+        prNumber: 2,
+        title: "PR 2",
+        repository: "owner/repo",
+        createdAt: "2024-01-02T10:00:00Z",
+        mergedAt: "2024-01-02T14:00:00Z",
+        additions: 150,
+        deletions: 50,
+        linesOfCode: 200,
+        filesChanged: 4,
+      },
+      {
+        prNumber: 3,
+        title: "PR 3",
+        repository: "owner/repo",
+        createdAt: "2024-01-03T10:00:00Z",
+        mergedAt: "2024-01-03T14:00:00Z",
+        additions: 200,
+        deletions: 100,
+        linesOfCode: 300,
+        filesChanged: 6,
+      },
+    ];
+
+    const result = calculatePRSize(sizeData, "2024-01");
+
+    expect(result.prCount).toBe(3);
+    // linesOfCode: 100 + 200 + 300 = 600, avg = 200, median = 200
+    expect(result.linesOfCode.total).toBe(600);
+    expect(result.linesOfCode.avg).toBe(200);
+    expect(result.linesOfCode.median).toBe(200);
+    expect(result.linesOfCode.min).toBe(100);
+    expect(result.linesOfCode.max).toBe(300);
+    // filesChanged: 2 + 4 + 6 = 12, avg = 4, median = 4
+    expect(result.filesChanged.total).toBe(12);
+    expect(result.filesChanged.avg).toBe(4);
+    expect(result.filesChanged.median).toBe(4);
+    expect(result.filesChanged.min).toBe(2);
+    expect(result.filesChanged.max).toBe(6);
+  });
+
+  it("偶数個のPRで中央値を正しく計算する", () => {
+    const sizeData: PRSizeData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T14:00:00Z",
+        additions: 50,
+        deletions: 50,
+        linesOfCode: 100,
+        filesChanged: 2,
+      },
+      {
+        prNumber: 2,
+        title: "PR 2",
+        repository: "owner/repo",
+        createdAt: "2024-01-02T10:00:00Z",
+        mergedAt: "2024-01-02T14:00:00Z",
+        additions: 200,
+        deletions: 100,
+        linesOfCode: 300,
+        filesChanged: 6,
+      },
+    ];
+
+    const result = calculatePRSize(sizeData, "2024-01");
+
+    // 中央値: (100 + 300) / 2 = 200
+    expect(result.linesOfCode.median).toBe(200);
+    expect(result.linesOfCode.min).toBe(100);
+    expect(result.linesOfCode.max).toBe(300);
+    // filesChanged中央値: (2 + 6) / 2 = 4
+    expect(result.filesChanged.median).toBe(4);
+    expect(result.filesChanged.min).toBe(2);
+    expect(result.filesChanged.max).toBe(6);
+  });
+
+  it("未マージのPRを正しく処理する", () => {
+    const sizeData: PRSizeData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: null, // 未マージ
+        additions: 100,
+        deletions: 50,
+        linesOfCode: 150,
+        filesChanged: 5,
+      },
+    ];
+
+    const result = calculatePRSize(sizeData, "2024-01");
+
+    expect(result.prCount).toBe(1);
+    expect(result.prDetails[0].mergedAt).toBeNull();
+  });
+
+  it("0行の変更を正しく処理する", () => {
+    const sizeData: PRSizeData[] = [
+      {
+        prNumber: 1,
+        title: "PR 1 (empty)",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T14:00:00Z",
+        additions: 0,
+        deletions: 0,
+        linesOfCode: 0,
+        filesChanged: 0,
+      },
+    ];
+
+    const result = calculatePRSize(sizeData, "2024-01");
+
+    expect(result.prCount).toBe(1);
+    expect(result.linesOfCode.total).toBe(0);
+    expect(result.linesOfCode.avg).toBe(0);
+    expect(result.linesOfCode.median).toBe(0);
+    expect(result.linesOfCode.min).toBe(0);
+    expect(result.linesOfCode.max).toBe(0);
+    expect(result.filesChanged.total).toBe(0);
+    expect(result.filesChanged.avg).toBe(0);
+    expect(result.filesChanged.median).toBe(0);
+    expect(result.filesChanged.min).toBe(0);
+    expect(result.filesChanged.max).toBe(0);
+  });
+
+  it("期間文字列を正しく設定する", () => {
+    const result = calculatePRSize([], "2024-01-01〜2024-01-31");
+
+    expect(result.period).toBe("2024-01-01〜2024-01-31");
+  });
+
+  it("PR詳細に正しい情報を含む", () => {
+    const sizeData: PRSizeData[] = [
+      {
+        prNumber: 42,
+        title: "Feature X implementation",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T14:00:00Z",
+        additions: 200,
+        deletions: 50,
+        linesOfCode: 250,
+        filesChanged: 8,
+      },
+    ];
+
+    const result = calculatePRSize(sizeData, "2024-01");
+
+    expect(result.prDetails[0]).toEqual({
+      prNumber: 42,
+      title: "Feature X implementation",
+      repository: "owner/repo",
+      createdAt: "2024-01-01T10:00:00Z",
+      mergedAt: "2024-01-01T14:00:00Z",
+      additions: 200,
+      deletions: 50,
+      linesOfCode: 250,
+      filesChanged: 8,
+    });
+  });
+
+  it("大きなPRと小さなPRが混在する場合の統計を正しく計算する", () => {
+    const sizeData: PRSizeData[] = [
+      {
+        prNumber: 1,
+        title: "Small PR",
+        repository: "owner/repo",
+        createdAt: "2024-01-01T10:00:00Z",
+        mergedAt: "2024-01-01T14:00:00Z",
+        additions: 5,
+        deletions: 2,
+        linesOfCode: 7,
+        filesChanged: 1,
+      },
+      {
+        prNumber: 2,
+        title: "Large PR",
+        repository: "owner/repo",
+        createdAt: "2024-01-02T10:00:00Z",
+        mergedAt: "2024-01-02T14:00:00Z",
+        additions: 500,
+        deletions: 200,
+        linesOfCode: 700,
+        filesChanged: 25,
+      },
+    ];
+
+    const result = calculatePRSize(sizeData, "2024-01");
+
+    expect(result.prCount).toBe(2);
+    // linesOfCode: total = 707, avg = 353.5
+    expect(result.linesOfCode.total).toBe(707);
+    expect(result.linesOfCode.avg).toBe(353.5);
+    expect(result.linesOfCode.min).toBe(7);
+    expect(result.linesOfCode.max).toBe(700);
+    // filesChanged: total = 26, avg = 13
+    expect(result.filesChanged.total).toBe(26);
+    expect(result.filesChanged.avg).toBe(13);
+    expect(result.filesChanged.min).toBe(1);
+    expect(result.filesChanged.max).toBe(25);
   });
 });

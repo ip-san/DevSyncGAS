@@ -15,6 +15,12 @@ export interface GitHubPullRequest {
   closedAt: string | null;
   author: string;
   repository: string;
+  /** 追加行数 */
+  additions?: number;
+  /** 削除行数 */
+  deletions?: number;
+  /** 変更ファイル数 */
+  changedFiles?: number;
 }
 
 export interface GitHubDeployment {
@@ -280,6 +286,70 @@ export interface PRReviewData {
   timeToMergeHours: number | null;
   /** 全体時間（時間） */
   totalTimeHours: number | null;
+}
+
+/**
+ * PRサイズ（PR Size）指標
+ * PRの変更行数と変更ファイル数を測定
+ * 小さいPRほどレビューしやすく、マージが早い傾向がある
+ */
+export interface PRSizeMetrics {
+  /** 計測期間 */
+  period: string;
+  /** 計測対象PR数 */
+  prCount: number;
+  /** 変更行数（additions + deletions）の統計 */
+  linesOfCode: {
+    /** 合計 */
+    total: number;
+    /** 平均 */
+    avg: number | null;
+    /** 中央値 */
+    median: number | null;
+    /** 最小値 */
+    min: number | null;
+    /** 最大値 */
+    max: number | null;
+  };
+  /** 変更ファイル数の統計 */
+  filesChanged: {
+    /** 合計 */
+    total: number;
+    /** 平均 */
+    avg: number | null;
+    /** 中央値 */
+    median: number | null;
+    /** 最小値 */
+    min: number | null;
+    /** 最大値 */
+    max: number | null;
+  };
+  /** 各PRの詳細 */
+  prDetails: PRSizeData[];
+}
+
+/**
+ * 個別PRのサイズデータ
+ */
+export interface PRSizeData {
+  /** PR番号 */
+  prNumber: number;
+  /** PRタイトル */
+  title: string;
+  /** リポジトリ名 */
+  repository: string;
+  /** PR作成時刻 */
+  createdAt: string;
+  /** マージ時刻 */
+  mergedAt: string | null;
+  /** 追加行数 */
+  additions: number;
+  /** 削除行数 */
+  deletions: number;
+  /** 変更行数（additions + deletions） */
+  linesOfCode: number;
+  /** 変更ファイル数 */
+  filesChanged: number;
 }
 
 // DevOps指標の型定義（DORA metrics）

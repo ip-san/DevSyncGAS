@@ -1,4 +1,4 @@
-import type { DevOpsMetrics, CycleTimeMetrics, CodingTimeMetrics, ReworkRateMetrics, ReviewEfficiencyMetrics } from "../types";
+import type { DevOpsMetrics, CycleTimeMetrics, CodingTimeMetrics, ReworkRateMetrics, ReviewEfficiencyMetrics, PRSizeMetrics } from "../types";
 import type { Sheet } from "../interfaces";
 import { getContainer } from "../container";
 
@@ -609,4 +609,132 @@ export function writeReviewEfficiencyToSheet(
   }
 
   logger.log(`📝 Wrote review efficiency metrics to sheet "${REVIEW_EFFICIENCY_SHEET_NAME}"`);
+}
+
+const PR_SIZE_SHEET_NAME = "PR Size";
+const PR_SIZE_HEADERS = [
+  "Period",
+  "PR Count",
+  "Lines of Code (Total)",
+  "Lines of Code (Avg)",
+  "Lines of Code (Median)",
+  "Lines of Code (Min)",
+  "Lines of Code (Max)",
+  "Files Changed (Total)",
+  "Files Changed (Avg)",
+  "Files Changed (Median)",
+  "Files Changed (Min)",
+  "Files Changed (Max)",
+  "Recorded At",
+];
+
+const PR_SIZE_DETAIL_HEADERS = [
+  "PR #",
+  "Title",
+  "Repository",
+  "Created At",
+  "Merged At",
+  "Additions",
+  "Deletions",
+  "Lines of Code",
+  "Files Changed",
+];
+
+/**
+ * PRサイズ指標をスプレッドシートに書き出す
+ *
+ * 2つのシートを作成/更新:
+ * - "PR Size": サマリー情報
+ * - "PR Size - Details": 各PRの詳細
+ */
+export function writePRSizeToSheet(
+  spreadsheetId: string,
+  metrics: PRSizeMetrics
+): void {
+  const { spreadsheetClient, logger } = getContainer();
+  const spreadsheet = spreadsheetClient.openById(spreadsheetId);
+
+  // サマリーシート
+  let summarySheet = spreadsheet.getSheetByName(PR_SIZE_SHEET_NAME);
+  if (!summarySheet) {
+    summarySheet = spreadsheet.insertSheet(PR_SIZE_SHEET_NAME);
+    summarySheet.getRange(1, 1, 1, PR_SIZE_HEADERS.length).setValues([PR_SIZE_HEADERS]);
+    summarySheet.getRange(1, 1, 1, PR_SIZE_HEADERS.length).setFontWeight("bold");
+    summarySheet.setFrozenRows(1);
+  }
+
+  const summaryRow = [
+    metrics.period,
+    metrics.prCount,
+    metrics.linesOfCode.total,
+    metrics.linesOfCode.avg ?? "N/A",
+    metrics.linesOfCode.median ?? "N/A",
+    metrics.linesOfCode.min ?? "N/A",
+    metrics.linesOfCode.max ?? "N/A",
+    metrics.filesChanged.total,
+    metrics.filesChanged.avg ?? "N/A",
+    metrics.filesChanged.median ?? "N/A",
+    metrics.filesChanged.min ?? "N/A",
+    metrics.filesChanged.max ?? "N/A",
+    new Date().toISOString(),
+  ];
+
+  const lastRow = summarySheet.getLastRow();
+  summarySheet.getRange(lastRow + 1, 1, 1, PR_SIZE_HEADERS.length).setValues([summaryRow]);
+
+  // 数値フォーマット（新しく追加した行を含む）
+  const newLastRow = summarySheet.getLastRow();
+  if (newLastRow > 1) {
+    // 整数列（Total）
+    summarySheet.getRange(2, 3, newLastRow - 1, 1).setNumberFormat("#,##0");
+    summarySheet.getRange(2, 8, newLastRow - 1, 1).setNumberFormat("#,##0");
+    // 小数列（Avg, Median, Min, Max）
+    summarySheet.getRange(2, 4, newLastRow - 1, 4).setNumberFormat("#,##0.0");
+    summarySheet.getRange(2, 9, newLastRow - 1, 4).setNumberFormat("#,##0.0");
+  }
+
+  // 列幅の自動調整
+  for (let i = 1; i <= PR_SIZE_HEADERS.length; i++) {
+    summarySheet.autoResizeColumn(i);
+  }
+
+  // 詳細シート
+  const detailSheetName = `${PR_SIZE_SHEET_NAME} - Details`;
+  let detailSheet = spreadsheet.getSheetByName(detailSheetName);
+  if (!detailSheet) {
+    detailSheet = spreadsheet.insertSheet(detailSheetName);
+    detailSheet.getRange(1, 1, 1, PR_SIZE_DETAIL_HEADERS.length).setValues([PR_SIZE_DETAIL_HEADERS]);
+    detailSheet.getRange(1, 1, 1, PR_SIZE_DETAIL_HEADERS.length).setFontWeight("bold");
+    detailSheet.setFrozenRows(1);
+  }
+
+  if (metrics.prDetails.length > 0) {
+    const detailRows = metrics.prDetails.map((pr) => [
+      pr.prNumber,
+      pr.title,
+      pr.repository,
+      pr.createdAt,
+      pr.mergedAt ?? "Not merged",
+      pr.additions,
+      pr.deletions,
+      pr.linesOfCode,
+      pr.filesChanged,
+    ]);
+
+    const detailLastRow = detailSheet.getLastRow();
+    detailSheet.getRange(detailLastRow + 1, 1, detailRows.length, PR_SIZE_DETAIL_HEADERS.length).setValues(detailRows);
+
+    // 数値フォーマット
+    const detailNewLastRow = detailSheet.getLastRow();
+    if (detailNewLastRow > 1) {
+      detailSheet.getRange(2, 6, detailNewLastRow - 1, 4).setNumberFormat("#,##0");
+    }
+
+    // 列幅の自動調整
+    for (let i = 1; i <= PR_SIZE_DETAIL_HEADERS.length; i++) {
+      detailSheet.autoResizeColumn(i);
+    }
+  }
+
+  logger.log(`📝 Wrote PR size metrics to sheet "${PR_SIZE_SHEET_NAME}"`);
 }
