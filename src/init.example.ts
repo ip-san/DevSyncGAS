@@ -9,10 +9,16 @@
  */
 
 import { setConfig, addRepository } from "./config/settings";
+import { initializeContainer, isContainerInitialized } from "./container";
+import { createGasAdapters } from "./adapters/gas";
 
 declare const global: any;
 
 function initConfig(): void {
+  // コンテナ初期化
+  if (!isContainerInitialized()) {
+    initializeContainer(createGasAdapters());
+  }
   // ===== ここを編集 =====
   const GITHUB_TOKEN = "your_github_token_here";
   const SPREADSHEET_ID = "your_spreadsheet_id_here";
