@@ -1,4 +1,4 @@
-import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, DevOpsMetrics, NotionTask, CycleTimeMetrics, TaskCycleTime, CodingTimeMetrics, TaskCodingTime, ReworkRateMetrics, PRReworkData } from "../types";
+import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, DevOpsMetrics, NotionTask, CycleTimeMetrics, TaskCycleTime, CodingTimeMetrics, TaskCodingTime, ReworkRateMetrics, PRReworkData, ReviewEfficiencyMetrics, PRReviewData } from "../types";
 import { getFrequencyCategory } from "../config/doraThresholds";
 
 /** ミリ秒から時間への変換定数 */
@@ -617,5 +617,113 @@ export function calculateReworkRate(
       forcePushRate: Math.round(forcePushRate * 10) / 10,
     },
     prDetails: reworkData,
+  };
+}
+
+/**
+ * 配列の統計値（平均、中央値、最小値、最大値）を計算するヘルパー
+ */
+function calculateStats(values: number[]): { avg: number | null; median: number | null; min: number | null; max: number | null } {
+  if (values.length === 0) {
+    return { avg: null, median: null, min: null, max: null };
+  }
+
+  const sorted = [...values].sort((a, b) => a - b);
+  const sum = values.reduce((acc, val) => acc + val, 0);
+  const avg = Math.round((sum / values.length) * 10) / 10;
+
+  const mid = Math.floor(sorted.length / 2);
+  const median =
+    sorted.length % 2 !== 0
+      ? Math.round(sorted[mid] * 10) / 10
+      : Math.round(((sorted[mid - 1] + sorted[mid]) / 2) * 10) / 10;
+
+  const min = Math.round(sorted[0] * 10) / 10;
+  const max = Math.round(sorted[sorted.length - 1] * 10) / 10;
+
+  return { avg, median, min, max };
+}
+
+/**
+ * レビュー効率（Review Efficiency）を計算
+ *
+ * 定義: PRの各フェーズでの滞留時間を測定
+ * - レビュー待ち時間: Ready for Review → 最初のレビュー
+ * - レビュー時間: 最初のレビュー → 承認
+ * - マージ待ち時間: 承認 → マージ
+ * - 全体時間: Ready for Review → マージ
+ *
+ * 長い滞留時間はAIコードが難解な可能性を示唆
+ *
+ * @param reviewData - 各PRのレビューデータ配列
+ * @param period - 計測期間の表示文字列
+ */
+export function calculateReviewEfficiency(
+  reviewData: PRReviewData[],
+  period: string
+): ReviewEfficiencyMetrics {
+  if (reviewData.length === 0) {
+    return {
+      period,
+      prCount: 0,
+      timeToFirstReview: { avgHours: null, medianHours: null, minHours: null, maxHours: null },
+      reviewDuration: { avgHours: null, medianHours: null, minHours: null, maxHours: null },
+      timeToMerge: { avgHours: null, medianHours: null, minHours: null, maxHours: null },
+      totalTime: { avgHours: null, medianHours: null, minHours: null, maxHours: null },
+      prDetails: [],
+    };
+  }
+
+  // 各時間を抽出（nullを除外）
+  const timeToFirstReviewValues = reviewData
+    .map((pr) => pr.timeToFirstReviewHours)
+    .filter((v): v is number => v !== null);
+
+  const reviewDurationValues = reviewData
+    .map((pr) => pr.reviewDurationHours)
+    .filter((v): v is number => v !== null);
+
+  const timeToMergeValues = reviewData
+    .map((pr) => pr.timeToMergeHours)
+    .filter((v): v is number => v !== null);
+
+  const totalTimeValues = reviewData
+    .map((pr) => pr.totalTimeHours)
+    .filter((v): v is number => v !== null);
+
+  // 統計値を計算
+  const timeToFirstReviewStats = calculateStats(timeToFirstReviewValues);
+  const reviewDurationStats = calculateStats(reviewDurationValues);
+  const timeToMergeStats = calculateStats(timeToMergeValues);
+  const totalTimeStats = calculateStats(totalTimeValues);
+
+  return {
+    period,
+    prCount: reviewData.length,
+    timeToFirstReview: {
+      avgHours: timeToFirstReviewStats.avg,
+      medianHours: timeToFirstReviewStats.median,
+      minHours: timeToFirstReviewStats.min,
+      maxHours: timeToFirstReviewStats.max,
+    },
+    reviewDuration: {
+      avgHours: reviewDurationStats.avg,
+      medianHours: reviewDurationStats.median,
+      minHours: reviewDurationStats.min,
+      maxHours: reviewDurationStats.max,
+    },
+    timeToMerge: {
+      avgHours: timeToMergeStats.avg,
+      medianHours: timeToMergeStats.median,
+      minHours: timeToMergeStats.min,
+      maxHours: timeToMergeStats.max,
+    },
+    totalTime: {
+      avgHours: totalTimeStats.avg,
+      medianHours: totalTimeStats.median,
+      minHours: totalTimeStats.min,
+      maxHours: totalTimeStats.max,
+    },
+    prDetails: reviewData,
   };
 }

@@ -1,4 +1,4 @@
-import type { DevOpsMetrics, CycleTimeMetrics, CodingTimeMetrics, ReworkRateMetrics } from "../types";
+import type { DevOpsMetrics, CycleTimeMetrics, CodingTimeMetrics, ReworkRateMetrics, ReviewEfficiencyMetrics } from "../types";
 import type { Sheet } from "../interfaces";
 import { getContainer } from "../container";
 
@@ -467,4 +467,146 @@ export function writeReworkRateToSheet(
   }
 
   logger.log(`📝 Wrote rework rate metrics to sheet "${REWORK_RATE_SHEET_NAME}"`);
+}
+
+const REVIEW_EFFICIENCY_SHEET_NAME = "Review Efficiency";
+const REVIEW_EFFICIENCY_HEADERS = [
+  "Period",
+  "PR Count",
+  "Time to First Review (Avg)",
+  "Time to First Review (Median)",
+  "Time to First Review (Min)",
+  "Time to First Review (Max)",
+  "Review Duration (Avg)",
+  "Review Duration (Median)",
+  "Review Duration (Min)",
+  "Review Duration (Max)",
+  "Time to Merge (Avg)",
+  "Time to Merge (Median)",
+  "Time to Merge (Min)",
+  "Time to Merge (Max)",
+  "Total Time (Avg)",
+  "Total Time (Median)",
+  "Total Time (Min)",
+  "Total Time (Max)",
+  "Recorded At",
+];
+
+const REVIEW_EFFICIENCY_DETAIL_HEADERS = [
+  "PR #",
+  "Title",
+  "Repository",
+  "Created At",
+  "Ready for Review At",
+  "First Review At",
+  "Approved At",
+  "Merged At",
+  "Time to First Review (h)",
+  "Review Duration (h)",
+  "Time to Merge (h)",
+  "Total Time (h)",
+];
+
+/**
+ * レビュー効率指標をスプレッドシートに書き出す
+ *
+ * 2つのシートを作成/更新:
+ * - "Review Efficiency": サマリー情報
+ * - "Review Efficiency - Details": 各PRの詳細
+ */
+export function writeReviewEfficiencyToSheet(
+  spreadsheetId: string,
+  metrics: ReviewEfficiencyMetrics
+): void {
+  const { spreadsheetClient, logger } = getContainer();
+  const spreadsheet = spreadsheetClient.openById(spreadsheetId);
+
+  // サマリーシート
+  let summarySheet = spreadsheet.getSheetByName(REVIEW_EFFICIENCY_SHEET_NAME);
+  if (!summarySheet) {
+    summarySheet = spreadsheet.insertSheet(REVIEW_EFFICIENCY_SHEET_NAME);
+    summarySheet.getRange(1, 1, 1, REVIEW_EFFICIENCY_HEADERS.length).setValues([REVIEW_EFFICIENCY_HEADERS]);
+    summarySheet.getRange(1, 1, 1, REVIEW_EFFICIENCY_HEADERS.length).setFontWeight("bold");
+    summarySheet.setFrozenRows(1);
+  }
+
+  const summaryRow = [
+    metrics.period,
+    metrics.prCount,
+    metrics.timeToFirstReview.avgHours ?? "N/A",
+    metrics.timeToFirstReview.medianHours ?? "N/A",
+    metrics.timeToFirstReview.minHours ?? "N/A",
+    metrics.timeToFirstReview.maxHours ?? "N/A",
+    metrics.reviewDuration.avgHours ?? "N/A",
+    metrics.reviewDuration.medianHours ?? "N/A",
+    metrics.reviewDuration.minHours ?? "N/A",
+    metrics.reviewDuration.maxHours ?? "N/A",
+    metrics.timeToMerge.avgHours ?? "N/A",
+    metrics.timeToMerge.medianHours ?? "N/A",
+    metrics.timeToMerge.minHours ?? "N/A",
+    metrics.timeToMerge.maxHours ?? "N/A",
+    metrics.totalTime.avgHours ?? "N/A",
+    metrics.totalTime.medianHours ?? "N/A",
+    metrics.totalTime.minHours ?? "N/A",
+    metrics.totalTime.maxHours ?? "N/A",
+    new Date().toISOString(),
+  ];
+
+  const lastRow = summarySheet.getLastRow();
+  summarySheet.getRange(lastRow + 1, 1, 1, REVIEW_EFFICIENCY_HEADERS.length).setValues([summaryRow]);
+
+  // 数値フォーマット（新しく追加した行を含む）
+  const newLastRow = summarySheet.getLastRow();
+  if (newLastRow > 1) {
+    // 時間列（3-18）の書式設定
+    summarySheet.getRange(2, 3, newLastRow - 1, 16).setNumberFormat("#,##0.0");
+  }
+
+  // 列幅の自動調整
+  for (let i = 1; i <= REVIEW_EFFICIENCY_HEADERS.length; i++) {
+    summarySheet.autoResizeColumn(i);
+  }
+
+  // 詳細シート
+  const detailSheetName = `${REVIEW_EFFICIENCY_SHEET_NAME} - Details`;
+  let detailSheet = spreadsheet.getSheetByName(detailSheetName);
+  if (!detailSheet) {
+    detailSheet = spreadsheet.insertSheet(detailSheetName);
+    detailSheet.getRange(1, 1, 1, REVIEW_EFFICIENCY_DETAIL_HEADERS.length).setValues([REVIEW_EFFICIENCY_DETAIL_HEADERS]);
+    detailSheet.getRange(1, 1, 1, REVIEW_EFFICIENCY_DETAIL_HEADERS.length).setFontWeight("bold");
+    detailSheet.setFrozenRows(1);
+  }
+
+  if (metrics.prDetails.length > 0) {
+    const detailRows = metrics.prDetails.map((pr) => [
+      pr.prNumber,
+      pr.title,
+      pr.repository,
+      pr.createdAt,
+      pr.readyForReviewAt,
+      pr.firstReviewAt ?? "N/A",
+      pr.approvedAt ?? "N/A",
+      pr.mergedAt ?? "Not merged",
+      pr.timeToFirstReviewHours ?? "N/A",
+      pr.reviewDurationHours ?? "N/A",
+      pr.timeToMergeHours ?? "N/A",
+      pr.totalTimeHours ?? "N/A",
+    ]);
+
+    const detailLastRow = detailSheet.getLastRow();
+    detailSheet.getRange(detailLastRow + 1, 1, detailRows.length, REVIEW_EFFICIENCY_DETAIL_HEADERS.length).setValues(detailRows);
+
+    // 数値フォーマット
+    const detailNewLastRow = detailSheet.getLastRow();
+    if (detailNewLastRow > 1) {
+      detailSheet.getRange(2, 9, detailNewLastRow - 1, 4).setNumberFormat("#,##0.0");
+    }
+
+    // 列幅の自動調整
+    for (let i = 1; i <= REVIEW_EFFICIENCY_DETAIL_HEADERS.length; i++) {
+      detailSheet.autoResizeColumn(i);
+    }
+  }
+
+  logger.log(`📝 Wrote review efficiency metrics to sheet "${REVIEW_EFFICIENCY_SHEET_NAME}"`);
 }

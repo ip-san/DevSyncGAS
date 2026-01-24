@@ -1,4 +1,4 @@
-import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, GitHubRepository, ApiResponse, NotionTask, PRReworkData } from "../types";
+import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, GitHubRepository, ApiResponse, NotionTask, PRReworkData, PRReviewData } from "../types";
 import { getContainer } from "../container";
 
 const GITHUB_API_BASE = "https://api.github.com";
@@ -737,4 +737,234 @@ export function getReworkDataForPRs(
   }
 
   return reworkData;
+}
+
+/**
+ * GitHub Reviewの状態
+ */
+export type ReviewState = "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED" | "PENDING" | "DISMISSED";
+
+/**
+ * PRのレビュー一覧を取得
+ *
+ * @param owner - リポジトリオーナー
+ * @param repo - リポジトリ名
+ * @param prNumber - PR番号
+ * @param token - GitHub Personal Access Token
+ * @returns レビューの配列
+ */
+export function getPRReviews(
+  owner: string,
+  repo: string,
+  prNumber: number,
+  token: string
+): ApiResponse<{ state: ReviewState; submittedAt: string; user: string }[]> {
+  const allReviews: { state: ReviewState; submittedAt: string; user: string }[] = [];
+  let page = 1;
+
+  while (page <= DEFAULT_MAX_PAGES) {
+    const endpoint = `/repos/${owner}/${repo}/pulls/${prNumber}/reviews?per_page=${PER_PAGE}&page=${page}`;
+    const response = fetchGitHub<any[]>(endpoint, token);
+
+    if (!response.success || !response.data) {
+      if (page === 1) {
+        return response as ApiResponse<{ state: ReviewState; submittedAt: string; user: string }[]>;
+      }
+      break;
+    }
+
+    if (response.data.length === 0) {
+      break;
+    }
+
+    for (const review of response.data) {
+      // PENDINGは未提出なのでスキップ
+      if (review.state === "PENDING") {
+        continue;
+      }
+
+      allReviews.push({
+        state: review.state,
+        submittedAt: review.submitted_at,
+        user: review.user?.login ?? "unknown",
+      });
+    }
+
+    page++;
+  }
+
+  return { success: true, data: allReviews };
+}
+
+/**
+ * PRのready_for_review時刻を取得（Timeline APIから）
+ * ドラフトPRがレビュー可能になった時刻を返す
+ * ドラフトでないPRの場合はnullを返す（PR作成時刻を使用すべき）
+ *
+ * @param owner - リポジトリオーナー
+ * @param repo - リポジトリ名
+ * @param prNumber - PR番号
+ * @param token - GitHub Personal Access Token
+ * @returns ready_for_review時刻（ドラフトでない場合はnull）
+ */
+export function getPRReadyForReviewAt(
+  owner: string,
+  repo: string,
+  prNumber: number,
+  token: string
+): ApiResponse<string | null> {
+  let page = 1;
+
+  while (page <= DEFAULT_MAX_PAGES) {
+    const endpoint = `/repos/${owner}/${repo}/issues/${prNumber}/timeline?per_page=${PER_PAGE}&page=${page}`;
+    const response = fetchGitHub<any[]>(endpoint, token);
+
+    if (!response.success || !response.data) {
+      if (page === 1) {
+        return response as ApiResponse<string | null>;
+      }
+      break;
+    }
+
+    if (response.data.length === 0) {
+      break;
+    }
+
+    for (const event of response.data) {
+      if (event.event === "ready_for_review") {
+        return { success: true, data: event.created_at };
+      }
+    }
+
+    page++;
+  }
+
+  // ready_for_reviewイベントがない = 最初からドラフトでなかった
+  return { success: true, data: null };
+}
+
+/**
+ * 複数PRのレビュー効率データを一括取得
+ *
+ * @param pullRequests - PR情報の配列
+ * @param token - GitHub Personal Access Token
+ * @returns 各PRのレビュー効率データ配列
+ */
+export function getReviewEfficiencyDataForPRs(
+  pullRequests: GitHubPullRequest[],
+  token: string
+): PRReviewData[] {
+  const { logger } = getContainer();
+  const reviewData: PRReviewData[] = [];
+
+  for (const pr of pullRequests) {
+    const [owner, repo] = pr.repository.split("/");
+    if (!owner || !repo) {
+      logger.log(`  ⚠️ Invalid repository format: ${pr.repository}`);
+      continue;
+    }
+
+    // Ready for Review時刻を取得
+    const readyResult = getPRReadyForReviewAt(owner, repo, pr.number, token);
+    let readyForReviewAt = pr.createdAt; // デフォルトはPR作成時刻
+
+    if (readyResult.success && readyResult.data) {
+      readyForReviewAt = readyResult.data;
+    } else if (!readyResult.success) {
+      logger.log(`  ⚠️ Failed to fetch timeline for PR #${pr.number}: ${readyResult.error}`);
+    }
+
+    // レビュー一覧を取得
+    const reviewsResult = getPRReviews(owner, repo, pr.number, token);
+    let firstReviewAt: string | null = null;
+    let approvedAt: string | null = null;
+
+    if (reviewsResult.success && reviewsResult.data) {
+      // 時系列でソート
+      const sortedReviews = [...reviewsResult.data].sort(
+        (a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+      );
+
+      // 最初のレビュー
+      if (sortedReviews.length > 0) {
+        firstReviewAt = sortedReviews[0].submittedAt;
+      }
+
+      // 最初の承認
+      const approvalReview = sortedReviews.find((r) => r.state === "APPROVED");
+      if (approvalReview) {
+        approvedAt = approvalReview.submittedAt;
+      }
+    } else {
+      logger.log(`  ⚠️ Failed to fetch reviews for PR #${pr.number}: ${reviewsResult.error}`);
+    }
+
+    // 各時間を計算
+    const readyAt = new Date(readyForReviewAt).getTime();
+    const msToHours = 1000 * 60 * 60;
+
+    let timeToFirstReviewHours: number | null = null;
+    let reviewDurationHours: number | null = null;
+    let timeToMergeHours: number | null = null;
+    let totalTimeHours: number | null = null;
+
+    // レビュー待ち時間
+    if (firstReviewAt) {
+      const firstReview = new Date(firstReviewAt).getTime();
+      const hours = Math.round(((firstReview - readyAt) / msToHours) * 10) / 10;
+      if (hours < 0) {
+        logger.log(`  ⚠️ PR #${pr.number}: Negative time to first review (${hours}h) - data inconsistency`);
+      }
+      timeToFirstReviewHours = hours;
+    }
+
+    // レビュー時間
+    if (firstReviewAt && approvedAt) {
+      const firstReview = new Date(firstReviewAt).getTime();
+      const approved = new Date(approvedAt).getTime();
+      const hours = Math.round(((approved - firstReview) / msToHours) * 10) / 10;
+      if (hours < 0) {
+        logger.log(`  ⚠️ PR #${pr.number}: Negative review duration (${hours}h) - data inconsistency`);
+      }
+      reviewDurationHours = hours;
+    }
+
+    // マージ待ち時間
+    if (approvedAt && pr.mergedAt) {
+      const approved = new Date(approvedAt).getTime();
+      const merged = new Date(pr.mergedAt).getTime();
+      const hours = Math.round(((merged - approved) / msToHours) * 10) / 10;
+      if (hours < 0) {
+        logger.log(`  ⚠️ PR #${pr.number}: Negative time to merge (${hours}h) - data inconsistency`);
+      }
+      timeToMergeHours = hours;
+    }
+
+    // 全体時間
+    if (pr.mergedAt) {
+      const merged = new Date(pr.mergedAt).getTime();
+      const hours = Math.round(((merged - readyAt) / msToHours) * 10) / 10;
+      if (hours < 0) {
+        logger.log(`  ⚠️ PR #${pr.number}: Negative total time (${hours}h) - data inconsistency`);
+      }
+      totalTimeHours = hours;
+    }
+
+    reviewData.push({
+      prNumber: pr.number,
+      title: pr.title,
+      repository: pr.repository,
+      createdAt: pr.createdAt,
+      readyForReviewAt,
+      firstReviewAt,
+      approvedAt,
+      mergedAt: pr.mergedAt,
+      timeToFirstReviewHours,
+      reviewDurationHours,
+      timeToMergeHours,
+      totalTimeHours,
+    });
+  }
+
+  return reviewData;
 }

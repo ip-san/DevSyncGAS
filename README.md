@@ -14,6 +14,8 @@ GitHub複数リポジトリとNotionを連携してDevOps指標（DORA metrics�
   - Notionのタスク着手〜完了までの時間を自動集計
 - コーディング時間計測（[詳細ドキュメント](docs/CODING_TIME.md)）
   - Notionのタスク着手〜GitHub PR作成までの時間を自動集計
+- レビュー効率計測（[詳細ドキュメント](docs/REVIEW_EFFICIENCY.md)）
+  - PRのレビュー待ち時間・レビュー時間・マージ待ち時間を自動集計
 - Notionデータベースとの連携
 - Googleスプレッドシートへの自動書き出し
 - 日次トリガーによる定期実行
@@ -92,6 +94,7 @@ createDailyTrigger(); // 毎日9時に自動実行
 | `syncCycleTime(days?, prop?)` | サイクルタイムを計測（Notion連携必須） |
 | `syncCodingTime(prop?)` | コーディング時間を計測（Notion + GitHub連携必須） |
 | `syncReworkRate(days?)` | 手戻り率を計測（GitHub連携必須） |
+| `syncReviewEfficiency(days?)` | レビュー効率を計測（GitHub連携必須） |
 | `createDailyTrigger()` | 日次トリガーを設定 |
 | `setup(github, spreadsheet, notion?, notionDb?)` | 設定をScript Propertiesに保存 |
 | `addRepo(owner, name)` | リポジトリを追加 |
@@ -179,6 +182,7 @@ bun run lint
 - [サイクルタイム実装ガイド](docs/CYCLE_TIME.md) - Notionタスクの着手〜完了時間の計測方法
 - [コーディング時間実装ガイド](docs/CODING_TIME.md) - Notion着手〜GitHub PR作成時間の計測方法
 - [手戻り率実装ガイド](docs/REWORK_RATE.md) - PR作成後の追加コミット数・Force Push回数の計測方法
+- [レビュー効率実装ガイド](docs/REVIEW_EFFICIENCY.md) - PRのレビュー待ち時間・レビュー時間の計測方法
 
 ## License
 
