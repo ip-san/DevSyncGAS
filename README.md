@@ -126,9 +126,22 @@ bun run push
 
 ## 利用可能な関数
 
+### 初期設定・認証
+
 | 関数 | 説明 |
 |------|------|
 | `initConfig()` | 初期設定を実行（init.tsで定義） |
+| `setup(github, spreadsheet, notion?, notionDb?)` | 設定をScript Propertiesに保存（PAT認証） |
+| `setupWithGitHubApp(appId, key, instId, spreadsheet, ...)` | GitHub Apps認証で設定 |
+| `showAuthMode()` | 現在の認証モードを表示 |
+| `addRepo(owner, name)` | リポジトリを追加 |
+| `removeRepo(fullName)` | リポジトリを削除 |
+| `listRepos()` | 登録済みリポジトリ一覧 |
+
+### メトリクス収集
+
+| 関数 | 説明 |
+|------|------|
 | `syncDevOpsMetrics()` | 手動でメトリクスを同期 |
 | `syncCycleTime(days?, prop?)` | サイクルタイムを計測（Notion連携必須） |
 | `syncCodingTime(prop?)` | コーディング時間を計測（Notion + GitHub連携必須） |
@@ -136,20 +149,28 @@ bun run push
 | `syncReviewEfficiency(days?)` | レビュー効率を計測（GitHub連携必須） |
 | `syncPRSize(days?)` | PRサイズを計測（GitHub連携必須） |
 | `syncDeveloperSatisfaction(days?)` | 開発者満足度を計測（Notion連携必須） |
+
+### 運用・メンテナンス
+
+| 関数 | 説明 |
+|------|------|
 | `createDailyTrigger()` | 日次トリガーを設定 |
-| `setup(github, spreadsheet, notion?, notionDb?)` | 設定をScript Propertiesに保存（PAT認証） |
-| `setupWithGitHubApp(appId, key, instId, spreadsheet, ...)` | GitHub Apps認証で設定 |
-| `showAuthMode()` | 現在の認証モードを表示 |
-| `addRepo(owner, name)` | リポジトリを追加 |
-| `removeRepo(fullName)` | リポジトリを削除 |
-| `listRepos()` | 登録済みリポジトリ一覧 |
-| `cleanup(days)` | 古いデータを削除 |
 | `generateSummary()` | サマリーシートを作成 |
-| `previewMigration()` | スキーマ変更のプレビュー（ドライラン） |
-| `migrateAllSchemas()` | 全シートのスキーママイグレーション実行 |
-| `migrateSheet(sheetName)` | 特定シートのマイグレーション |
-| `updateHeadersOnly()` | ヘッダー行のみ最新に更新 |
-| `showBackupCleanupHelp()` | バックアップシート削除の手順を表示 |
+| `cleanup(days)` | 古いデータを削除 |
+
+### スキーママイグレーション
+
+ツールのバージョンアップでスプレッドシートの列構成が変わった場合に使用します。
+
+| 関数 | 説明 |
+|------|------|
+| `previewMigration()` | 変更内容をプレビュー（データ変更なし） |
+| `migrateAllSchemas()` | 全シートのマイグレーションを実行 |
+| `migrateSheet(sheetName)` | 特定シートのみマイグレーション |
+| `updateHeadersOnly()` | ヘッダー行のみ更新（データ並べ替えなし） |
+| `showBackupCleanupHelp()` | バックアップシートの削除手順を表示 |
+
+> **マイグレーションの安全機能**: マイグレーション実行時は自動的にバックアップシート（`_backup_シート名_日時`）が作成されます。マイグレーション失敗時は自動でロールバックされます。成功後、不要になったバックアップシートは手動で削除してください。
 
 ## 必要なAPIトークン
 
