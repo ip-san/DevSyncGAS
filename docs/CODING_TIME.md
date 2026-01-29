@@ -1,6 +1,6 @@
 # コーディング時間（Coding Time）実装ガイド
 
-NotionのタスクデータとGitHub PRを連携して、コーディング時間を計測する機能の解説です。
+GitHub IssueとPRを連携して、コーディング時間を計測する機能の解説です。
 
 ---
 
@@ -9,10 +9,10 @@ NotionのタスクデータとGitHub PRを連携して、コーディング時�
 - [コーディング時間とは](#コーディング時間とは)
 - [公式定義との比較](#公式定義との比較)
 - [計測方法](#計測方法)
-- [Notionの設定](#notionの設定)
 - [使い方](#使い方)
 - [出力データ](#出力データ)
 - [サイクルタイムとの違い](#サイクルタイムとの違い)
+- [設定オプション](#設定オプション)
 - [制約事項](#制約事項)
 - [出典・参考資料](#出典参考資料)
 
@@ -20,12 +20,12 @@ NotionのタスクデータとGitHub PRを連携して、コーディング時�
 
 ## コーディング時間とは
 
-コーディング時間は、タスクの**着手からPR作成までの時間**を測定する指標です。
+コーディング時間は、**Issue作成からPR作成までの時間**を測定する指標です。
 
 ```
-着手（Notion進行中）────────→ PR作成（GitHub）
+Issue作成（GitHub）────────→ PR作成（GitHub）
         ↑                           ↑
-   作業開始                    コード完成
+   タスク起票                  コード完成
 
    ←──────── コーディング時間 ────────→
 ```
@@ -35,10 +35,6 @@ NotionのタスクデータとGitHub PRを連携して、コーディング時�
 > **Coding Time** is the time elapsed from the first commit until the pull request is created. It's an indication of how long the developer was actively working on the code changes before submitting them for review.
 >
 > — [Multitudes - Coding Time](https://docs.multitudes.com/metrics-and-definitions/process-metrics/flow-of-work/coding-time)
-
-> **Coding time** is calculated from the first commit to when a pull request or merge request is created.
->
-> — [Hatica - Coding Time](https://www.hatica.io/docs/metrics/coding-time/)
 
 ### なぜコーディング時間を計測するのか
 
@@ -57,7 +53,7 @@ NotionのタスクデータとGitHub PRを連携して、コーディング時�
 
 | 開始点 | 終了点 | 計算式 |
 |--------|--------|--------|
-| Notionの着手日（Date Started） | GitHub PRの作成時刻（created_at） | PR作成時刻 - 着手日時 |
+| GitHub Issue作成日時（`created_at`） | リンクされたPRの作成日時（`created_at`） | PR作成時刻 - Issue作成時刻 |
 
 ### 業界標準の定義
 
@@ -69,13 +65,11 @@ NotionのタスクデータとGitHub PRを連携して、コーディング時�
 
 ### 本実装の特徴
 
-本実装では**Notionのタスク着手日**を開始点として使用しています。これは以下の理由によります：
+本実装では**GitHub Issue作成日時**を開始点として使用しています。これは以下の理由によります：
 
-1. **タスク管理との統合**: Notionでタスク管理を行うワークフローと親和性が高い
-2. **実作業時間の測定**: コミット前の設計・調査時間も含めた開発時間を測定
-3. **柔軟な開始点**: チームのワークフローに合わせて開始点を調整可能
-
-> **Note**: 業界標準の「最初のコミット〜PR作成」を測定したい場合は、GitHubのみでの計測を検討してください（Apache DevLake、LinearB等のツールで可能）。
+1. **GitHub完結**: Notionなどの外部ツール連携が不要
+2. **サイクルタイムとの一貫性**: サイクルタイムと同様にIssue起点で計測
+3. **Issue-PR連携**: `Fixes #123` などのキーワードで自動的にIssueとPRがリンク
 
 ### SPACEフレームワークとの関連
 
@@ -91,77 +85,40 @@ NotionのタスクデータとGitHub PRを連携して、コーディング時�
 
 ### データソース
 
-2つのデータソースを連携します：
+GitHubのデータのみを使用します：
 
 | ソース | フィールド | 説明 |
 |--------|-----------|------|
-| **Notion** | `Date Started` | コーディング時間の開始点 |
-| **Notion** | `PR URL` | GitHub PRへのリンク |
-| **GitHub** | PR `created_at` | コーディング時間の終了点 |
+| **GitHub Issue** | `created_at` | コーディング時間の開始点 |
+| **GitHub PR** | `created_at` | コーディング時間の終了点 |
+| **GitHub Timeline** | `cross-referenced` | IssueとPRのリンク検出 |
+
+### Issue-PRリンクの検出
+
+以下の方法でIssueとPRがリンクされている場合に計測対象となります：
+
+```markdown
+# PR本文またはコミットメッセージに以下のキーワードを含める
+
+Fixes #123
+Closes #123
+Resolves #123
+```
 
 ### 計算式
 
 ```
-コーディング時間 = PR作成時刻 - 着手時刻
+コーディング時間 = PR作成時刻 - Issue作成時刻
 ```
 
 ### 統計値
 
 | 指標 | 説明 |
 |------|------|
-| 平均（Average） | 全タスクのコーディング時間の平均値 |
+| 平均（Average） | 全Issueのコーディング時間の平均値 |
 | 中央値（Median） | ソート後の中央の値。外れ値の影響を受けにくい |
 | 最小（Min） | 最も短いコーディング時間 |
 | 最大（Max） | 最も長いコーディング時間 |
-
----
-
-## Notionの設定
-
-### 必要なプロパティ
-
-Notionデータベースに以下のプロパティを追加してください：
-
-| プロパティ名 | タイプ | 説明 |
-|-------------|--------|------|
-| `Date Started` | Date | タスクに着手した日時 |
-| `PR URL` | URL | GitHub PRのURL |
-
-> **Note**: プロパティ名の代替：
-> - 着手日: `Started`, `着手日`, `開始日`
-> - PR URL: `PR`, `Pull Request`, `GitHub PR`
-
-### ワークフロー例
-
-```
-1. タスク作成
-   └→ Issueやチケットから自動作成、または手動作成
-
-2. 着手時
-   └→ Date Started に現在日時を設定
-   └→ ステータスを「進行中」に変更
-
-3. PR作成時
-   └→ GitHubでPRを作成
-   └→ NotionにPR URLを記録
-
-4. 計測
-   └→ syncCodingTime() でデータを取得・集計
-```
-
-### PR URLの記録方法
-
-#### 手動
-
-1. GitHubでPRを作成
-2. PRのURLをコピー
-3. NotionタスクのPR URLプロパティに貼り付け
-
-#### 自動化（推奨）
-
-Notion APIやZapier/Make等を使用して自動連携：
-- PRタイトルやブランチ名にNotionタスクIDを含める
-- PR作成時にWebhookでNotionを更新
 
 ---
 
@@ -172,42 +129,51 @@ Notion APIやZapier/Make等を使用して自動連携：
 ```javascript
 // GASエディタで実行
 
-// コーディング時間を計測
+// 過去30日間のコーディング時間を計測
 syncCodingTime();
 
-// 着手日プロパティ名をカスタマイズ
-syncCodingTime("着手日");
+// 過去7日間のコーディング時間を計測
+syncCodingTime(7);
+
+// 過去90日間のコーディング時間を計測
+syncCodingTime(90);
 ```
 
-### オプション
+### デバッグ用
 
 ```javascript
-// タスク詳細をログで確認（デバッグ用）
+// Issue詳細をログで確認
 showCodingTimeDetails();
+
+// 過去7日間のIssue詳細をログで確認
+showCodingTimeDetails(7);
 ```
 
 ### 前提条件
 
-1. **Notion連携の設定が必要**
+1. **GitHub認証の設定が必要**
 
 ```javascript
-// setup() で Notion Token と Database ID を設定
+// setup() で GitHub Token を設定
 setup(
   'ghp_xxxx',           // GitHub PAT
-  'spreadsheet-id',     // Google Spreadsheet ID
-  'secret_xxxx',        // Notion Token ← 必須
-  'database-id'         // Notion Database ID ← 必須
+  'spreadsheet-id'      // Google Spreadsheet ID
+);
+
+// または GitHub Apps認証
+setupWithGitHubApp(
+  'app-id',
+  'private-key',
+  'installation-id',
+  'spreadsheet-id'
 );
 ```
 
-2. **GitHub PAT**
+2. **リポジトリの登録**
 
-リポジトリへの読み取り権限が必要です。
-
-3. **Notionインテグレーションの権限**
-
-対象データベースにインテグレーションを追加してください：
-- データベース右上の「...」→「接続」→ インテグレーションを選択
+```javascript
+addRepo('owner', 'repo-name');
+```
 
 ---
 
@@ -217,27 +183,33 @@ setup(
 
 2つのシートが作成されます：
 
-#### 「Coding Time」シート（サマリー）
+#### 「コーディング時間」シート（サマリー）
 
-| Period | Task Count | Avg (hours) | Avg (days) | Median | Min | Max | Recorded At |
-|--------|------------|-------------|------------|--------|-----|-----|-------------|
-| 〜2024-01-31 | 12 | 6.5 | 0.3 | 4.0 | 1.0 | 24.0 | 2024-01-31T... |
+| 期間 | Issue数 | 平均 (時間) | 平均 (日) | 中央値 | 最小 | 最大 | 記録日時 |
+|------|---------|-------------|-----------|--------|------|------|----------|
+| 2024-01-01〜2024-01-31 | 12 | 6.5 | 0.3 | 4.0 | 1.0 | 24.0 | 2024-01-31T... |
 
-#### 「Coding Time - Details」シート（タスク詳細）
+#### 「コーディング時間 - Details」シート（Issue詳細）
 
-| Task ID | Title | Started At | PR Created At | PR URL | Coding Time (hours) | Coding Time (days) |
-|---------|-------|------------|---------------|--------|--------------------|--------------------|
-| abc-123 | Implement feature X | 2024-01-10T10:00 | 2024-01-10T14:00 | https://github.com/... | 4.0 | 0.2 |
+| Issue番号 | タイトル | リポジトリ | Issue作成日時 | PR作成日時 | PR番号 | コーディング時間 (時間) | コーディング時間 (日) |
+|-----------|----------|------------|---------------|------------|--------|------------------------|----------------------|
+| #123 | Implement feature X | owner/repo | 2024-01-10T10:00 | 2024-01-10T14:00 | #125 | 4.0 | 0.2 |
 
 ### ログ出力例
 
 ```
-⌨️ Calculating Coding Time
-📥 Fetched 12 tasks with PR URLs
-📡 Fetching PR information from GitHub...
-   Found 12 PRs
+⌨️ Calculating Coding Time (GitHub) for 30 days
+   Period: 2024-01-01〜2024-01-31
+   Issue labels: (all issues)
+🔍 Processing owner/repo for coding time...
+  📋 Fetching issues from owner/repo...
+  ✅ Found 15 issues
+  📌 Processing Issue #123: Implement feature X
+    🔗 Found 1 linked PRs: 125
+    ✅ Coding time: 4.0h (Issue → PR #125)
+📥 Fetched 15 issues
 📊 Coding Time Results:
-   Tasks with valid coding time: 12
+   Issues with linked PRs: 12
    Average: 6.5 hours (0.3 days)
    Median: 4.0 hours
    Min: 1.0 hours
@@ -253,32 +225,26 @@ setup(
 
 | 観点 | コーディング時間 | サイクルタイム |
 |------|-----------------|---------------|
-| **開始点** | Notion着手時刻 | Notion着手時刻 |
-| **終了点** | GitHub PR作成時刻 | Notion完了時刻 |
-| **測定対象** | 純粋なコーディング | タスク全体の作業 |
-| **含まれるもの** | 開発・実装 | 開発 + レビュー + 修正 + QA |
+| **開始点** | Issue作成時刻 | Issue作成時刻 |
+| **終了点** | PR作成時刻 | productionブランチへのマージ時刻 |
+| **測定対象** | 純粋なコーディング | タスク全体の完了 |
+| **含まれるもの** | 開発・実装 | 開発 + レビュー + マージ + デプロイ |
 | **フレームワーク** | SPACE (Activity) | Kanban/Lean |
 
 ### 時系列での関係
 
 ```
-着手 ──→ コーディング ──→ PR作成 ──→ レビュー ──→ マージ ──→ 完了
-│                            │                              │
-└──── コーディング時間 ───────┘                              │
-│                                                           │
-└────────────────── サイクルタイム ──────────────────────────┘
+Issue作成 ──→ コーディング ──→ PR作成 ──→ レビュー ──→ productionマージ
+│                              │                              │
+└──── コーディング時間 ────────┘                              │
+│                                                             │
+└────────────────── サイクルタイム ───────────────────────────┘
 ```
-
-### 業界標準の分類
-
-> Coding Time is the time between the first code commit and when a pull request is created. While Cycle Time is a broader measure that includes all phases from code commit through deployment.
->
-> — [LinearB - Lead Time vs Cycle Time](https://linearb.io/blog/lead-time-vs-cycle-time)
 
 ### 使い分け
 
 - **コーディング時間**: 開発効率の改善、AI支援ツールの効果測定、個人の生産性分析
-- **サイクルタイム**: チーム全体のスループット、プロセス改善、WIP管理
+- **サイクルタイム**: チーム全体のスループット、プロセス改善、リリース頻度の最適化
 
 ### 推奨される目標値
 
@@ -289,51 +255,91 @@ setup(
 
 ---
 
+## 設定オプション
+
+### Issueラベルのフィルタ
+
+特定のラベルを持つIssueのみを計測対象にできます：
+
+```javascript
+// "feature" と "enhancement" ラベルを持つIssueのみ計測
+configureCodingTimeLabels(["feature", "enhancement"]);
+
+// 全Issueを対象にする
+configureCodingTimeLabels([]);
+
+// 現在の設定を確認
+showCodingTimeLabels();
+
+// 設定をリセット
+resetCodingTimeLabelsConfig();
+```
+
+### 設定の一覧表示
+
+```javascript
+// コーディングタイム設定を一覧表示
+showCodingTimeConfig();
+```
+
+---
+
 ## 制約事項
 
-1. **手動連携依存**: PR URLはNotionで手動設定が必要（自動化推奨）
-2. **日時の精度**: Notionの日付プロパティの設定に依存
-3. **GitHub API制限**: 多数のタスクがある場合、API呼び出し回数に注意
+### API呼び出し回数
 
-### 除外されるタスク
+コーディング時間の計測には以下のAPI呼び出しが発生します：
 
-以下のタスクはコーディング時間計算から除外されます：
+```
+Issue数 × (1 + リンクPR数)
+```
 
-- 着手日（Date Started）が未設定
-- PR URLが未設定
-- PR URLが無効（GitHub PRとして認識できない）
-- コーディング時間が負の値（PR作成後に着手日を設定した場合）
+GASの実行時間制限（6分）を考慮し、大量のIssueがある場合は期間を短く設定してください。
+
+### 除外されるIssue
+
+以下のIssueはコーディング時間計算から除外されます：
+
+- リンクされたPRがない
+- PRの取得に失敗した
+- コーディング時間が負の値（Issue作成前にPRが存在する場合）
+
+### Issue-PRリンクの検出
+
+以下の場合のみリンクが検出されます：
+
+- PRの本文またはコミットメッセージに `Fixes #123`, `Closes #123`, `Resolves #123` などのキーワードが含まれる
+- 同じリポジトリ内のIssueとPR
 
 ---
 
 ## トラブルシューティング
 
-### 「Notion integration is not configured」エラー
+### 「GitHub authentication is not configured」エラー
 
 ```javascript
-// Notion設定を確認
-const config = getConfig();
-console.log(config.notion);
+// 認証モードを確認
+showAuthMode();
 ```
 
-Notion Token と Database ID が設定されているか確認してください。
+GitHub Token または GitHub Apps認証が設定されているか確認してください。
 
-### タスクが取得されない
-
-1. Notionインテグレーションがデータベースに接続されているか確認
-2. 日付プロパティ名が正しいか確認（`Date Started` など）
-3. PR URLプロパティ名が正しいか確認（`PR URL` など）
-
-### PRが取得できない
+### Issueが取得されない
 
 1. GitHub PATが有効か確認
-2. PRが存在するリポジトリへのアクセス権があるか確認
-3. PR URLの形式が正しいか確認（`https://github.com/owner/repo/pull/123`）
+2. リポジトリへのアクセス権があるか確認
+3. 対象期間内にIssueがあるか確認
+
+### リンクPRが検出されない
+
+1. PR本文に `Fixes #123` などのキーワードが含まれているか確認
+2. 同じリポジトリ内のIssueとPRか確認
+3. Timeline APIの結果を確認
 
 ### コーディング時間が0件
 
-- 負の値のタスク（PR作成 < 着手）はスキップされます
-- 着手日時刻とPR作成時刻を確認してください
+- リンクPRがないIssueはスキップされます
+- 負の値（Issue作成前にPRが存在）はスキップされます
 
 ---
 
@@ -386,4 +392,4 @@ Notion Token と Database ID が設定されているか確認してください
 | 日付 | 内容 |
 |------|------|
 | 2025-01 | 初版作成。Notion + GitHubベースのコーディング時間計測機能を追加 |
-| 2025-01 | 公式定義との比較、出典・参考資料セクションを追加 |
+| 2025-01 | GitHub完結版に移行。Notion依存を排除し、Issue作成日時を開始点に変更 |

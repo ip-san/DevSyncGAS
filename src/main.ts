@@ -1,7 +1,7 @@
-import { getConfig, setConfig, addRepository, removeRepository, getGitHubToken, getGitHubAuthMode, setNotionPropertyNames, getNotionPropertyNames, resetNotionPropertyNames, getProductionBranchPattern, setProductionBranchPattern, resetProductionBranchPattern, getCycleTimeIssueLabels, setCycleTimeIssueLabels, resetCycleTimeIssueLabels } from "./config/settings";
+import { getConfig, setConfig, addRepository, removeRepository, getGitHubToken, getGitHubAuthMode, setNotionPropertyNames, getNotionPropertyNames, resetNotionPropertyNames, getProductionBranchPattern, setProductionBranchPattern, resetProductionBranchPattern, getCycleTimeIssueLabels, setCycleTimeIssueLabels, resetCycleTimeIssueLabels, getCodingTimeIssueLabels, setCodingTimeIssueLabels, resetCodingTimeIssueLabels } from "./config/settings";
 import "./init";
-import { getAllRepositoriesData, DateRange, getPullRequestsForTasks, getPullRequests, getReworkDataForPRs, getReviewEfficiencyDataForPRs, getPRSizeDataForPRs, getGitHubCycleTimeData } from "./services/github";
-import { getTasksForCodingTime, getTasksForSatisfaction } from "./services/notion";
+import { getAllRepositoriesData, DateRange, getPullRequests, getReworkDataForPRs, getReviewEfficiencyDataForPRs, getPRSizeDataForPRs, getGitHubCycleTimeData, getGitHubCodingTimeData } from "./services/github";
+import { getTasksForSatisfaction } from "./services/notion";
 import { writeMetricsToSheet, clearOldData, createSummarySheet, writeCycleTimeToSheet, writeCodingTimeToSheet, writeReworkRateToSheet, writeReviewEfficiencyToSheet, writePRSizeToSheet, writeDeveloperSatisfactionToSheet } from "./services/spreadsheet";
 import { calculateMetricsForRepository, calculateCycleTime, calculateCodingTime, calculateReworkRate, calculateReviewEfficiency, calculatePRSize, calculateDeveloperSatisfaction } from "./utils/metrics";
 import { initializeContainer, isContainerInitialized, getContainer } from "./container";
@@ -369,58 +369,70 @@ function showCycleTimeDetails(days: number = 30): void {
 /**
  * コーディング時間を計算してスプレッドシートに書き出す
  *
- * 定義: 着手（Notion進行中）からPR作成（GitHub）までの時間
- * 純粋なコーディング作業にかかった時間を測定
+ * 定義:
+ * - 着手日: Issue作成日時
+ * - コーディング完了日: リンクされたPR作成日時
+ *
+ * @param days - 計測期間（日数）デフォルト30日
  */
-function syncCodingTime(): void {
+function syncCodingTime(days: number = 30): void {
   ensureContainerInitialized();
   const config = getConfig();
-
-  if (!config.notion.token || !config.notion.databaseId) {
-    Logger.log("⚠️ Notion integration is not configured. Set notionToken and notionDatabaseId in setup()");
-    return;
-  }
 
   if (getGitHubAuthMode() === "none") {
     Logger.log("⚠️ GitHub authentication is not configured. Set githubToken in setup() or configure GitHub App");
     return;
   }
 
-  const today = new Date().toISOString().split("T")[0];
-  const period = `〜${today}`;
+  if (config.github.repositories.length === 0) {
+    Logger.log("⚠️ No repositories configured. Add repositories with addRepo()");
+    return;
+  }
 
-  Logger.log(`⌨️ Calculating Coding Time`);
+  const token = getGitHubToken();
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
 
-  // Notionから着手日とPR URLがあるタスクを取得
-  const tasksResult = getTasksForCodingTime(
-    config.notion.databaseId,
-    config.notion.token,
-    config.notion.propertyNames
+  const startDateStr = startDate.toISOString().split("T")[0];
+  const endDateStr = endDate.toISOString().split("T")[0];
+  const period = `${startDateStr}〜${endDateStr}`;
+
+  const labels = getCodingTimeIssueLabels();
+
+  Logger.log(`⌨️ Calculating Coding Time (GitHub) for ${days} days`);
+  Logger.log(`   Period: ${period}`);
+  if (labels.length > 0) {
+    Logger.log(`   Issue labels: ${labels.join(", ")}`);
+  } else {
+    Logger.log(`   Issue labels: (all issues)`);
+  }
+
+  // GitHubからコーディングタイムデータを取得
+  const codingTimeResult = getGitHubCodingTimeData(
+    config.github.repositories,
+    token,
+    {
+      dateRange: {
+        start: startDateStr,
+        end: endDateStr,
+      },
+      labels: labels.length > 0 ? labels : undefined,
+    }
   );
 
-  if (!tasksResult.success || !tasksResult.data) {
-    Logger.log(`❌ Failed to fetch tasks: ${tasksResult.error}`);
+  if (!codingTimeResult.success || !codingTimeResult.data) {
+    Logger.log(`❌ Failed to fetch coding time data: ${codingTimeResult.error}`);
     return;
   }
 
-  Logger.log(`📥 Fetched ${tasksResult.data.length} tasks with PR URLs`);
+  Logger.log(`📥 Fetched ${codingTimeResult.data.length} issues`);
 
-  if (tasksResult.data.length === 0) {
-    Logger.log("⚠️ No tasks with PR URLs found");
-    return;
-  }
-
-  // GitHubからPR情報を取得
-  const token = getGitHubToken();
-  Logger.log(`📡 Fetching PR information from GitHub...`);
-  const prMap = getPullRequestsForTasks(tasksResult.data, token);
-  Logger.log(`   Found ${prMap.size} PRs`);
-
-  // コーディング時間を計算
-  const codingTimeMetrics = calculateCodingTime(tasksResult.data, prMap, period);
+  // メトリクス計算
+  const codingTimeMetrics = calculateCodingTime(codingTimeResult.data, period);
 
   Logger.log(`📊 Coding Time Results:`);
-  Logger.log(`   Tasks with valid coding time: ${codingTimeMetrics.taskCount}`);
+  Logger.log(`   Issues with linked PRs: ${codingTimeMetrics.issueCount}`);
   if (codingTimeMetrics.avgCodingTimeHours !== null) {
     Logger.log(`   Average: ${codingTimeMetrics.avgCodingTimeHours} hours (${(codingTimeMetrics.avgCodingTimeHours / 24).toFixed(1)} days)`);
     Logger.log(`   Median: ${codingTimeMetrics.medianCodingTimeHours} hours`);
@@ -434,44 +446,59 @@ function syncCodingTime(): void {
 }
 
 /**
- * コーディング時間のタスク詳細を表示（デバッグ用）
+ * コーディング時間のIssue詳細を表示（デバッグ用）
  */
-function showCodingTimeDetails(): void {
+function showCodingTimeDetails(days: number = 30): void {
   ensureContainerInitialized();
   const config = getConfig();
-
-  if (!config.notion.token || !config.notion.databaseId) {
-    Logger.log("⚠️ Notion integration is not configured");
-    return;
-  }
 
   if (getGitHubAuthMode() === "none") {
     Logger.log("⚠️ GitHub authentication is not configured");
     return;
   }
 
-  const tasksResult = getTasksForCodingTime(
-    config.notion.databaseId,
-    config.notion.token,
-    config.notion.propertyNames
-  );
-
-  if (!tasksResult.success || !tasksResult.data) {
-    Logger.log(`❌ Failed to fetch tasks: ${tasksResult.error}`);
+  if (config.github.repositories.length === 0) {
+    Logger.log("⚠️ No repositories configured");
     return;
   }
 
   const token = getGitHubToken();
-  const prMap = getPullRequestsForTasks(tasksResult.data, token);
-  const codingTimeMetrics = calculateCodingTime(tasksResult.data, prMap, "");
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
 
-  Logger.log(`\n📋 Coding Time Details (${codingTimeMetrics.taskCount} tasks):\n`);
-  codingTimeMetrics.taskDetails.forEach((task, i) => {
-    const daysValue = (task.codingTimeHours / 24).toFixed(1);
-    Logger.log(`${i + 1}. ${task.title}`);
-    Logger.log(`   Started: ${task.startedAt} → PR Created: ${task.prCreatedAt}`);
-    Logger.log(`   Coding Time: ${task.codingTimeHours} hours (${daysValue} days)`);
-    Logger.log(`   PR: ${task.prUrl}\n`);
+  const startDateStr = startDate.toISOString().split("T")[0];
+  const endDateStr = endDate.toISOString().split("T")[0];
+
+  const labels = getCodingTimeIssueLabels();
+
+  const codingTimeResult = getGitHubCodingTimeData(
+    config.github.repositories,
+    token,
+    {
+      dateRange: {
+        start: startDateStr,
+        end: endDateStr,
+      },
+      labels: labels.length > 0 ? labels : undefined,
+    }
+  );
+
+  if (!codingTimeResult.success || !codingTimeResult.data) {
+    Logger.log(`❌ Failed to fetch coding time data: ${codingTimeResult.error}`);
+    return;
+  }
+
+  const codingTimeMetrics = calculateCodingTime(codingTimeResult.data, `${startDateStr}〜${endDateStr}`);
+
+  Logger.log(`\n📋 Coding Time Details (${codingTimeMetrics.issueCount} issues with linked PRs):\n`);
+  codingTimeMetrics.issueDetails.forEach((issue, i) => {
+    const daysValue = (issue.codingTimeHours / 24).toFixed(1);
+    Logger.log(`${i + 1}. #${issue.issueNumber}: ${issue.title}`);
+    Logger.log(`   Repository: ${issue.repository}`);
+    Logger.log(`   Issue Created: ${issue.issueCreatedAt}`);
+    Logger.log(`   PR #${issue.prNumber} Created: ${issue.prCreatedAt}`);
+    Logger.log(`   Coding Time: ${issue.codingTimeHours} hours (${daysValue} days)\n`);
   });
 }
 
@@ -1171,6 +1198,72 @@ global.configureCycleTimeLabels = configureCycleTimeLabels;
 global.showCycleTimeLabels = showCycleTimeLabels;
 global.resetCycleTimeLabelsConfig = resetCycleTimeLabelsConfig;
 global.showCycleTimeConfig = showCycleTimeConfig;
+
+// =============================================================================
+// コーディングタイム設定関数
+// =============================================================================
+
+/**
+ * コーディングタイム計測対象のIssueラベルを設定
+ * 空配列を設定すると全Issueが対象になる
+ *
+ * @example
+ * // "feature" と "enhancement" ラベルを持つIssueのみ計測
+ * configureCodingTimeLabels(["feature", "enhancement"]);
+ *
+ * // 全Issueを対象にする
+ * configureCodingTimeLabels([]);
+ */
+function configureCodingTimeLabels(labels: string[]): void {
+  ensureContainerInitialized();
+  setCodingTimeIssueLabels(labels);
+  if (labels.length > 0) {
+    Logger.log(`✅ Coding time labels set to: ${labels.join(", ")}`);
+  } else {
+    Logger.log("✅ Coding time labels cleared (all issues will be tracked)");
+  }
+}
+
+/**
+ * 現在のコーディングタイムIssueラベルを表示
+ */
+function showCodingTimeLabels(): void {
+  ensureContainerInitialized();
+  const labels = getCodingTimeIssueLabels();
+  if (labels.length > 0) {
+    Logger.log(`📋 Coding time labels: ${labels.join(", ")}`);
+  } else {
+    Logger.log("📋 Coding time labels: (all issues)");
+  }
+}
+
+/**
+ * コーディングタイムIssueラベルをリセット（全Issue対象に戻す）
+ */
+function resetCodingTimeLabelsConfig(): void {
+  ensureContainerInitialized();
+  resetCodingTimeIssueLabels();
+  Logger.log("✅ Coding time labels reset (all issues will be tracked)");
+}
+
+/**
+ * コーディングタイム設定を一覧表示
+ */
+function showCodingTimeConfig(): void {
+  ensureContainerInitialized();
+  Logger.log("📋 Coding Time Configuration:");
+  const labels = getCodingTimeIssueLabels();
+  if (labels.length > 0) {
+    Logger.log(`   Issue labels: ${labels.join(", ")}`);
+  } else {
+    Logger.log("   Issue labels: (all issues)");
+  }
+}
+
+global.configureCodingTimeLabels = configureCodingTimeLabels;
+global.showCodingTimeLabels = showCodingTimeLabels;
+global.resetCodingTimeLabelsConfig = resetCodingTimeLabelsConfig;
+global.showCodingTimeConfig = showCodingTimeConfig;
 
 // =============================================================================
 // スキーママイグレーション関数

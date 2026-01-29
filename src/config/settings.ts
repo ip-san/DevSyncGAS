@@ -263,3 +263,43 @@ export function resetCycleTimeIssueLabels(): void {
   const { storageClient } = getContainer();
   storageClient.deleteProperty("CYCLE_TIME_ISSUE_LABELS");
 }
+
+// ============================================================
+// コーディングタイム設定
+// ============================================================
+
+/**
+ * コーディングタイム計測対象のIssueラベルを取得
+ * 空配列の場合は全Issueが対象
+ *
+ * @returns ラベル配列（デフォルト: []）
+ */
+export function getCodingTimeIssueLabels(): string[] {
+  const { storageClient } = getContainer();
+  const json = storageClient.getProperty("CODING_TIME_ISSUE_LABELS");
+  if (!json) return [];
+  return JSON.parse(json);
+}
+
+/**
+ * コーディングタイム計測対象のIssueラベルを設定
+ *
+ * @example
+ * // "feature" と "enhancement" ラベルを持つIssueのみ計測
+ * setCodingTimeIssueLabels(["feature", "enhancement"]);
+ *
+ * // 全Issueを対象にする
+ * setCodingTimeIssueLabels([]);
+ */
+export function setCodingTimeIssueLabels(labels: string[]): void {
+  const { storageClient } = getContainer();
+  storageClient.setProperty("CODING_TIME_ISSUE_LABELS", JSON.stringify(labels));
+}
+
+/**
+ * コーディングタイムIssueラベル設定をリセット（全Issue対象に戻す）
+ */
+export function resetCodingTimeIssueLabels(): void {
+  const { storageClient } = getContainer();
+  storageClient.deleteProperty("CODING_TIME_ISSUE_LABELS");
+}
