@@ -1,4 +1,4 @@
-import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, GitHubRepository, ApiResponse, NotionTask, PRReworkData, PRReviewData, PRSizeData, GitHubIssue, PRChainItem, GitHubIssueCycleTime } from "../types";
+import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, GitHubRepository, ApiResponse, NotionTask, PRReworkData, PRReviewData, PRSizeData, GitHubIssue, PRChainItem, IssueCycleTime, IssueCodingTime } from "../types";
 import { getContainer } from "../container";
 
 const GITHUB_API_BASE = "https://api.github.com";
@@ -1371,7 +1371,7 @@ export function trackToProductionMerge(
  * @param options - オプション（日付範囲、productionブランチパターン、ラベルフィルタ）
  * @returns サイクルタイムデータ配列
  */
-export function getGitHubCycleTimeData(
+export function getCycleTimeData(
   repositories: GitHubRepository[],
   token: string,
   options: {
@@ -1379,10 +1379,10 @@ export function getGitHubCycleTimeData(
     productionBranchPattern?: string;
     labels?: string[];
   } = {}
-): ApiResponse<GitHubIssueCycleTime[]> {
+): ApiResponse<IssueCycleTime[]> {
   const { logger } = getContainer();
   const productionPattern = options.productionBranchPattern ?? "production";
-  const allCycleTimeData: GitHubIssueCycleTime[] = [];
+  const allCycleTimeData: IssueCycleTime[] = [];
 
   for (const repo of repositories) {
     logger.log(`🔍 Processing ${repo.fullName}...`);
@@ -1470,4 +1470,123 @@ export function getGitHubCycleTimeData(
 
   logger.log(`✅ Total: ${allCycleTimeData.length} issues processed`);
   return { success: true, data: allCycleTimeData };
+}
+
+// ============================================================
+// Coding Time関連
+// ============================================================
+
+/**
+ * 複数リポジトリからコーディングタイムデータを取得
+ *
+ * コーディングタイム = Issue作成日時 → リンクされたPR作成日時
+ *
+ * @param repositories - GitHubリポジトリ配列
+ * @param token - GitHub Personal Access Token
+ * @param options - オプション（日付範囲、ラベルフィルタ）
+ * @returns コーディングタイムデータ配列
+ */
+export function getCodingTimeData(
+  repositories: GitHubRepository[],
+  token: string,
+  options: {
+    dateRange?: DateRange;
+    labels?: string[];
+  } = {}
+): ApiResponse<IssueCodingTime[]> {
+  const { logger } = getContainer();
+  const allCodingTimeData: IssueCodingTime[] = [];
+
+  for (const repo of repositories) {
+    logger.log(`🔍 Processing ${repo.fullName} for coding time...`);
+
+    // 1. Issueを取得
+    const issuesResult = getIssues(repo, token, {
+      dateRange: options.dateRange,
+      labels: options.labels,
+    });
+
+    if (!issuesResult.success || !issuesResult.data) {
+      logger.log(`  ⚠️ Failed to fetch issues: ${issuesResult.error}`);
+      continue;
+    }
+
+    const issues = issuesResult.data;
+    logger.log(`  📋 Found ${issues.length} issues to process`);
+
+    // 2. 各IssueについてリンクPRを取得してコーディングタイムを計算
+    for (const issue of issues) {
+      logger.log(`  📌 Processing Issue #${issue.number}: ${issue.title}`);
+
+      // リンクされたPRを取得
+      const linkedPRsResult = getLinkedPRsForIssue(repo.owner, repo.name, issue.number, token);
+
+      if (!linkedPRsResult.success || !linkedPRsResult.data || linkedPRsResult.data.length === 0) {
+        logger.log(`    ⏭️ No linked PRs found`);
+        allCodingTimeData.push({
+          issueNumber: issue.number,
+          issueTitle: issue.title,
+          repository: repo.fullName,
+          issueCreatedAt: issue.createdAt,
+          prCreatedAt: null,
+          prNumber: null,
+          codingTimeHours: null,
+        });
+        continue;
+      }
+
+      logger.log(`    🔗 Found ${linkedPRsResult.data.length} linked PRs: ${linkedPRsResult.data.join(", ")}`);
+
+      // 最初にリンクされたPRの情報を取得（最も早く作成されたPRを使用）
+      let earliestPR: { prNumber: number; createdAt: string } | null = null;
+
+      for (const prNumber of linkedPRsResult.data) {
+        const prResult = getPullRequestWithBranches(repo.owner, repo.name, prNumber, token);
+
+        if (prResult.success && prResult.data) {
+          const pr = prResult.data;
+          if (!earliestPR || new Date(pr.createdAt) < new Date(earliestPR.createdAt)) {
+            earliestPR = {
+              prNumber: pr.number,
+              createdAt: pr.createdAt,
+            };
+          }
+        }
+      }
+
+      if (!earliestPR) {
+        logger.log(`    ⚠️ Could not fetch any linked PR details`);
+        allCodingTimeData.push({
+          issueNumber: issue.number,
+          issueTitle: issue.title,
+          repository: repo.fullName,
+          issueCreatedAt: issue.createdAt,
+          prCreatedAt: null,
+          prNumber: null,
+          codingTimeHours: null,
+        });
+        continue;
+      }
+
+      // コーディングタイム計算
+      const issueCreatedTime = new Date(issue.createdAt).getTime();
+      const prCreatedTime = new Date(earliestPR.createdAt).getTime();
+      const codingTimeHours = Math.round((prCreatedTime - issueCreatedTime) / (1000 * 60 * 60) * 10) / 10;
+
+      logger.log(`    ✅ Coding time: ${codingTimeHours}h (Issue → PR #${earliestPR.prNumber})`);
+
+      allCodingTimeData.push({
+        issueNumber: issue.number,
+        issueTitle: issue.title,
+        repository: repo.fullName,
+        issueCreatedAt: issue.createdAt,
+        prCreatedAt: earliestPR.createdAt,
+        prNumber: earliestPR.prNumber,
+        codingTimeHours,
+      });
+    }
+  }
+
+  logger.log(`✅ Total: ${allCodingTimeData.length} issues processed for coding time`);
+  return { success: true, data: allCodingTimeData };
 }

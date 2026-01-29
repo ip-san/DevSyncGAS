@@ -1,4 +1,4 @@
-import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, DevOpsMetrics, NotionTask, CycleTimeMetrics, IssueCycleTimeDetail, CodingTimeMetrics, TaskCodingTime, ReworkRateMetrics, PRReworkData, ReviewEfficiencyMetrics, PRReviewData, PRSizeMetrics, PRSizeData, DeveloperSatisfactionMetrics, TaskSatisfactionData, GitHubIssueCycleTime } from "../types";
+import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, DevOpsMetrics, NotionTask, CycleTimeMetrics, IssueCycleTimeDetail, CodingTimeMetrics, IssueCodingTimeDetail, ReworkRateMetrics, PRReworkData, ReviewEfficiencyMetrics, PRReviewData, PRSizeMetrics, PRSizeData, DeveloperSatisfactionMetrics, TaskSatisfactionData, IssueCycleTime, IssueCodingTime } from "../types";
 import { getFrequencyCategory } from "../config/doraThresholds";
 
 /** ミリ秒から時間への変換定数 */
@@ -403,7 +403,7 @@ export function calculateMetricsForRepository(
  * @param period - 計測期間の表示文字列（例: "2024-01"）
  */
 export function calculateCycleTime(
-  cycleTimeData: GitHubIssueCycleTime[],
+  cycleTimeData: IssueCycleTime[],
   period: string
 ): CycleTimeMetrics {
   // productionマージが完了しているIssueのみ対象
@@ -467,62 +467,50 @@ export function calculateCycleTime(
 /**
  * コーディング時間（Coding Time）を計算
  *
- * 定義: 着手（Notion進行中）からPR作成（GitHub）までの時間
+ * 定義: Issue作成（GitHub）からPR作成（GitHub）までの時間
  * 純粋なコーディング作業にかかった時間を測定
  *
  * 計算方法:
- * 1. 着手日（Date Started）とPR URLの両方があるタスクを対象
- * 2. GitHubからPR作成時刻を取得
- * 3. 各タスクのPR作成時刻 - 着手時刻 を計算
+ * 1. Issueにリンクされた最初のPRを対象
+ * 2. Issue作成日時を着手日とする
+ * 3. PR作成日時をコーディング完了日とする
  * 4. 平均値、中央値、最小値、最大値を算出
  *
- * @param tasks - Notionタスクの配列（着手日・PR URLを持つもの）
- * @param prMap - タスクIDとPR情報のマップ
+ * @param codingTimeData - コーディングタイムデータの配列
  * @param period - 計測期間の表示文字列
  */
 export function calculateCodingTime(
-  tasks: NotionTask[],
-  prMap: Map<string, GitHubPullRequest>,
+  codingTimeData: IssueCodingTime[],
   period: string
 ): CodingTimeMetrics {
-  const taskDetails: TaskCodingTime[] = [];
+  // PRがリンクされているIssueのみ対象
+  const validIssues = codingTimeData.filter(
+    (issue) => issue.prCreatedAt !== null && issue.codingTimeHours !== null && issue.codingTimeHours >= 0
+  );
 
-  for (const task of tasks) {
-    if (!task.startedAt || !task.prUrl) continue;
-
-    const pr = prMap.get(task.id);
-    if (!pr) continue;
-
-    const started = new Date(task.startedAt).getTime();
-    const prCreated = new Date(pr.createdAt).getTime();
-    const codingTimeHours = (prCreated - started) / MS_TO_HOURS;
-
-    // 負の値はスキップ（PR作成後にNotionで着手日を設定した場合など）
-    if (codingTimeHours < 0) continue;
-
-    taskDetails.push({
-      taskId: task.id,
-      title: task.title,
-      startedAt: task.startedAt,
-      prCreatedAt: pr.createdAt,
-      prUrl: task.prUrl,
-      codingTimeHours: Math.round(codingTimeHours * 10) / 10,
-    });
-  }
-
-  if (taskDetails.length === 0) {
+  if (validIssues.length === 0) {
     return {
       period,
-      taskCount: 0,
+      issueCount: 0,
       avgCodingTimeHours: null,
       medianCodingTimeHours: null,
       minCodingTimeHours: null,
       maxCodingTimeHours: null,
-      taskDetails: [],
+      issueDetails: [],
     };
   }
 
-  const codingTimes = taskDetails.map((t) => t.codingTimeHours);
+  const issueDetails: IssueCodingTimeDetail[] = validIssues.map((issue) => ({
+    issueNumber: issue.issueNumber,
+    title: issue.issueTitle,
+    repository: issue.repository,
+    issueCreatedAt: issue.issueCreatedAt,
+    prCreatedAt: issue.prCreatedAt!,
+    prNumber: issue.prNumber!,
+    codingTimeHours: issue.codingTimeHours!,
+  }));
+
+  const codingTimes = issueDetails.map((t) => t.codingTimeHours);
   const sortedCodingTimes = [...codingTimes].sort((a, b) => a - b);
 
   const sum = codingTimes.reduce((acc, val) => acc + val, 0);
@@ -537,12 +525,12 @@ export function calculateCodingTime(
 
   return {
     period,
-    taskCount: taskDetails.length,
+    issueCount: validIssues.length,
     avgCodingTimeHours: Math.round(avg * 10) / 10,
     medianCodingTimeHours: Math.round(median * 10) / 10,
     minCodingTimeHours: sortedCodingTimes[0],
     maxCodingTimeHours: sortedCodingTimes[sortedCodingTimes.length - 1],
-    taskDetails,
+    issueDetails,
   };
 }
 

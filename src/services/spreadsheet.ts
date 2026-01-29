@@ -264,16 +264,16 @@ const CODING_TIME_SHEET_NAME = "コーディング時間";
 
 /**
  * コーディング時間 シートのヘッダー定義
- * タスク着手からPR作成までの時間を計測
+ * Issue作成からPR作成までの時間を計測
  */
 const CODING_TIME_HEADERS = [
   "期間",                      // 計測期間
-  "タスク数",                  // 計測対象タスク数
-  "平均コーディング時間 (時間)", // 全タスクの平均値
+  "Issue数",                   // 計測対象Issue数
+  "平均コーディング時間 (時間)", // 全Issueの平均値
   "平均コーディング時間 (日)",   // 日単位での平均値
   "中央値 (時間)",             // ソート後の中央値
-  "最小 (時間)",               // 最も短かったタスク
-  "最大 (時間)",               // 最も長かったタスク
+  "最小 (時間)",               // 最も短かったIssue
+  "最大 (時間)",               // 最も長かったIssue
   "記録日時",                  // データ記録時刻
 ];
 
@@ -281,12 +281,13 @@ const CODING_TIME_HEADERS = [
  * コーディング時間詳細シートのヘッダー定義
  */
 const CODING_TIME_DETAIL_HEADERS = [
-  "タスクID",                  // NotionのタスクID
-  "タイトル",                  // タスク名
-  "着手日時",                  // 作業開始日時
+  "Issue番号",                 // GitHubのIssue番号
+  "タイトル",                  // Issue名
+  "リポジトリ",                // 対象リポジトリ
+  "Issue作成日時",             // Issue作成日時（着手日）
   "PR作成日時",                // GitHubでPRを作成した日時
-  "PR URL",                    // PRへのリンク
-  "コーディング時間 (時間)",   // 着手からPR作成までの時間
+  "PR番号",                    // リンクされたPR番号
+  "コーディング時間 (時間)",   // Issue作成からPR作成までの時間
   "コーディング時間 (日)",     // 日単位でのコーディング時間
 ];
 
@@ -294,8 +295,8 @@ const CODING_TIME_DETAIL_HEADERS = [
  * コーディング時間指標をスプレッドシートに書き出す
  *
  * 2つのシートを作成/更新:
- * - "Coding Time": サマリー情報
- * - "Coding Time - Details": 各タスクの詳細
+ * - "コーディング時間": サマリー情報
+ * - "コーディング時間 - Details": 各Issueの詳細
  */
 export function writeCodingTimeToSheet(
   spreadsheetId: string,
@@ -319,7 +320,7 @@ export function writeCodingTimeToSheet(
 
   const summaryRow = [
     metrics.period,
-    metrics.taskCount,
+    metrics.issueCount,
     metrics.avgCodingTimeHours ?? "N/A",
     avgDays,
     metrics.medianCodingTimeHours ?? "N/A",
@@ -352,15 +353,16 @@ export function writeCodingTimeToSheet(
     detailSheet.setFrozenRows(1);
   }
 
-  if (metrics.taskDetails.length > 0) {
-    const detailRows = metrics.taskDetails.map((task) => [
-      task.taskId,
-      task.title,
-      task.startedAt,
-      task.prCreatedAt,
-      task.prUrl,
-      task.codingTimeHours,
-      Math.round((task.codingTimeHours / 24) * 10) / 10,
+  if (metrics.issueDetails.length > 0) {
+    const detailRows = metrics.issueDetails.map((issue) => [
+      `#${issue.issueNumber}`,
+      issue.title,
+      issue.repository,
+      issue.issueCreatedAt,
+      issue.prCreatedAt,
+      `#${issue.prNumber}`,
+      issue.codingTimeHours,
+      Math.round((issue.codingTimeHours / 24) * 10) / 10,
     ]);
 
     const detailLastRow = detailSheet.getLastRow();
@@ -369,7 +371,7 @@ export function writeCodingTimeToSheet(
     // 数値フォーマット（新しく追加した行を含む）
     const newDetailLastRow = detailSheet.getLastRow();
     if (newDetailLastRow > 1) {
-      detailSheet.getRange(2, 6, newDetailLastRow - 1, 2).setNumberFormat("#,##0.0");
+      detailSheet.getRange(2, 7, newDetailLastRow - 1, 2).setNumberFormat("#,##0.0");
     }
 
     // 列幅の自動調整

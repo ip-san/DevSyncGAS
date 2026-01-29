@@ -95,7 +95,7 @@ export interface PRChainItem {
 /**
  * Issue→productionマージのサイクルタイムデータ
  */
-export interface GitHubIssueCycleTime {
+export interface IssueCycleTime {
   issueNumber: number;
   issueTitle: string;
   repository: string;
@@ -128,7 +128,7 @@ export interface NotionTask {
 
 /**
  * サイクルタイム指標
- * Issue作成（GitHub）〜productionマージ（GitHub）の時間を測定
+ * Issue作成〜productionマージの時間を測定
  */
 export interface CycleTimeMetrics {
   /** 計測期間 */
@@ -165,14 +165,49 @@ export interface IssueCycleTimeDetail {
 }
 
 /**
+ * Issue→PR作成のコーディングタイムデータ
+ * Issue作成日時からPR作成日時までの時間を計測
+ */
+export interface IssueCodingTime {
+  issueNumber: number;
+  issueTitle: string;
+  repository: string;
+  /** Issue作成日時（着手日） */
+  issueCreatedAt: string;
+  /** PR作成日時（コーディング完了日） */
+  prCreatedAt: string | null;
+  /** PR番号 */
+  prNumber: number | null;
+  /** コーディングタイム（時間）- PRがない場合はnull */
+  codingTimeHours: number | null;
+}
+
+/**
+ * 個別Issueのコーディングタイム詳細
+ */
+export interface IssueCodingTimeDetail {
+  issueNumber: number;
+  title: string;
+  repository: string;
+  /** Issue作成日時（着手日） */
+  issueCreatedAt: string;
+  /** PR作成日時（コーディング完了日） */
+  prCreatedAt: string;
+  /** PR番号 */
+  prNumber: number;
+  /** コーディングタイム（時間） */
+  codingTimeHours: number;
+}
+
+/**
  * コーディング時間指標
- * 着手（Notion進行中）〜 PR作成（GitHub）の時間を測定
+ * Issue作成〜 PR作成の時間を測定
  */
 export interface CodingTimeMetrics {
   /** 計測期間 */
   period: string;
-  /** PR作成済みタスク数 */
-  taskCount: number;
+  /** PR作成済みIssue数 */
+  issueCount: number;
   /** 平均コーディング時間（時間） */
   avgCodingTimeHours: number | null;
   /** 中央値コーディング時間（時間） */
@@ -181,24 +216,8 @@ export interface CodingTimeMetrics {
   minCodingTimeHours: number | null;
   /** 最大コーディング時間（時間） */
   maxCodingTimeHours: number | null;
-  /** 各タスクのコーディング時間詳細 */
-  taskDetails: TaskCodingTime[];
-}
-
-/**
- * 個別タスクのコーディング時間
- */
-export interface TaskCodingTime {
-  taskId: string;
-  title: string;
-  /** Notion進行中時刻 */
-  startedAt: string;
-  /** GitHub PR作成時刻 */
-  prCreatedAt: string;
-  /** PR URL */
-  prUrl: string;
-  /** コーディング時間（時間） */
-  codingTimeHours: number;
+  /** 各Issueのコーディング時間詳細 */
+  issueDetails: IssueCodingTimeDetail[];
 }
 
 /**

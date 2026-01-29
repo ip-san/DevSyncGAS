@@ -9,11 +9,11 @@ import {
   getPullRequestWithBranches,
   findPRContainingCommit,
   trackToProductionMerge,
-  getGitHubCycleTimeData,
+  getCycleTimeData,
 } from "../../src/services/github";
 import { calculateCycleTime } from "../../src/utils/metrics";
 import { setupTestContainer, teardownTestContainer, type TestContainer } from "../helpers/setup";
-import type { GitHubRepository, GitHubIssueCycleTime } from "../../src/types";
+import type { GitHubRepository, IssueCycleTime } from "../../src/types";
 
 describe("GitHub Cycle Time", () => {
   let container: TestContainer;
@@ -423,7 +423,7 @@ describe("GitHub Cycle Time", () => {
 
   describe("calculateCycleTime", () => {
     it("サイクルタイムを正しく計算する", () => {
-      const cycleTimeData: GitHubIssueCycleTime[] = [
+      const cycleTimeData: IssueCycleTime[] = [
         {
           issueNumber: 1,
           issueTitle: "Issue 1",
@@ -465,7 +465,7 @@ describe("GitHub Cycle Time", () => {
     });
 
     it("完了したIssueがない場合は空の結果を返す", () => {
-      const cycleTimeData: GitHubIssueCycleTime[] = [
+      const cycleTimeData: IssueCycleTime[] = [
         {
           issueNumber: 1,
           issueTitle: "Issue 1 (未完了)",
