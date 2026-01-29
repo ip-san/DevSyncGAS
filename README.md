@@ -220,6 +220,30 @@ removeRepo('your-org/repo-name');
 | `syncReworkRate(days?)` | 手戻り率を計測 |
 | `syncReviewEfficiency(days?)` | レビュー効率を計測 |
 | `syncPRSize(days?)` | PRサイズを計測 |
+| `syncHistoricalMetrics(days)` | 過去データを一括収集 |
+| `syncLast30Days()` | 過去30日分を収集 |
+| `syncLast90Days()` | 過去90日分を収集 |
+
+### 設定（サイクルタイム）
+
+| 関数 | 説明 |
+|------|------|
+| `configureProductionBranch(pattern)` | productionブランチパターンを設定 |
+| `showProductionBranch()` | 現在のパターンを表示 |
+| `resetProductionBranch()` | パターンをデフォルトにリセット |
+| `configureCycleTimeLabels(labels)` | 対象Issueラベルを設定 |
+| `showCycleTimeLabels()` | 現在のラベル設定を表示 |
+| `resetCycleTimeLabelsConfig()` | ラベル設定をリセット |
+| `showCycleTimeConfig()` | 全設定を表示 |
+
+### 設定（コーディング時間）
+
+| 関数 | 説明 |
+|------|------|
+| `configureCodingTimeLabels(labels)` | 対象Issueラベルを設定 |
+| `showCodingTimeLabels()` | 現在のラベル設定を表示 |
+| `resetCodingTimeLabelsConfig()` | ラベル設定をリセット |
+| `showCodingTimeConfig()` | 全設定を表示 |
 
 ### 運用・メンテナンス
 
@@ -228,6 +252,7 @@ removeRepo('your-org/repo-name');
 | `createDailyTrigger()` | 日次トリガーを設定 |
 | `generateSummary()` | サマリーシートを作成 |
 | `cleanup(days)` | 古いデータを削除 |
+| `testPermissions()` | 権限テスト（初回実行で承認ダイアログ表示） |
 
 ### スキーママイグレーション
 
@@ -282,17 +307,24 @@ DevSyncGAS/
 │   ├── main.ts           # エントリーポイント
 │   ├── init.example.ts   # 初期設定テンプレート
 │   ├── init.ts           # 初期設定（git管理外）
+│   ├── container.ts      # DIコンテナ
 │   ├── config/
-│   │   └── settings.ts   # 設定管理
+│   │   ├── settings.ts   # 設定管理
+│   │   └── doraThresholds.ts # DORAレベル閾値
 │   ├── services/
 │   │   ├── github.ts     # GitHub API
-│   │   └── spreadsheet.ts # スプレッドシート操作
+│   │   ├── githubAuth.ts # GitHub認証（PAT/Apps）
+│   │   ├── spreadsheet.ts # スプレッドシート操作
+│   │   └── migration.ts  # スキーママイグレーション
+│   ├── schemas/
+│   │   └── index.ts      # スプレッドシートスキーマ定義
 │   ├── types/
 │   │   └── index.ts      # 型定義
 │   └── utils/
 │       └── metrics.ts    # 指標計算
 ├── dist/                 # ビルド出力
 ├── tests/                # テスト
+├── docs/                 # ドキュメント
 ├── package.json
 ├── tsconfig.json
 ├── esbuild.config.ts

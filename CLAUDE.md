@@ -25,7 +25,11 @@ src/
 │   └── doraThresholds.ts # DORAパフォーマンスレベル閾値（年次更新）
 ├── services/
 │   ├── github.ts        # GitHub API連携
-│   └── spreadsheet.ts   # スプレッドシート書き出し
+│   ├── githubAuth.ts    # GitHub認証（PAT/Apps）
+│   ├── spreadsheet.ts   # スプレッドシート書き出し
+│   └── migration.ts     # スキーママイグレーション
+├── schemas/
+│   └── index.ts         # スプレッドシートスキーマ定義
 ├── types/
 │   └── index.ts         # 型定義
 └── utils/
@@ -56,7 +60,12 @@ bun run lint     # リント
 - [x] DORA metrics計算（Deployment Frequency, Lead Time, CFR, MTTR）
 - [x] サイクルタイム計測（Issue作成→Productionマージ）
 - [x] コーディング時間計測（Issue作成→PR作成）
+- [x] 手戻り率計測（追加コミット数・Force Push回数）
+- [x] レビュー効率計測（レビュー待ち時間・レビュー時間）
+- [x] PRサイズ計測（変更行数・変更ファイル数）
+- [x] GitHub Apps認証サポート
 - [x] スプレッドシート書き出し
+- [x] スキーママイグレーション
 - [x] 日次トリガー設定
 
 ## TODO / 拡張案
