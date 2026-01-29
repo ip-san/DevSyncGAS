@@ -1,4 +1,4 @@
-import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, DevOpsMetrics, NotionTask, CycleTimeMetrics, IssueCycleTimeDetail, CodingTimeMetrics, IssueCodingTimeDetail, ReworkRateMetrics, PRReworkData, ReviewEfficiencyMetrics, PRReviewData, PRSizeMetrics, PRSizeData, DeveloperSatisfactionMetrics, TaskSatisfactionData, GitHubIssueCycleTime, GitHubIssueCodingTime } from "../types";
+import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, DevOpsMetrics, NotionTask, CycleTimeMetrics, IssueCycleTimeDetail, CodingTimeMetrics, IssueCodingTimeDetail, ReworkRateMetrics, PRReworkData, ReviewEfficiencyMetrics, PRReviewData, PRSizeMetrics, PRSizeData, DeveloperSatisfactionMetrics, TaskSatisfactionData, IssueCycleTime, IssueCodingTime } from "../types";
 import { getFrequencyCategory } from "../config/doraThresholds";
 
 /** ミリ秒から時間への変換定数 */
@@ -403,7 +403,7 @@ export function calculateMetricsForRepository(
  * @param period - 計測期間の表示文字列（例: "2024-01"）
  */
 export function calculateCycleTime(
-  cycleTimeData: GitHubIssueCycleTime[],
+  cycleTimeData: IssueCycleTime[],
   period: string
 ): CycleTimeMetrics {
   // productionマージが完了しているIssueのみ対象
@@ -480,7 +480,7 @@ export function calculateCycleTime(
  * @param period - 計測期間の表示文字列
  */
 export function calculateCodingTime(
-  codingTimeData: GitHubIssueCodingTime[],
+  codingTimeData: IssueCodingTime[],
   period: string
 ): CodingTimeMetrics {
   // PRがリンクされているIssueのみ対象

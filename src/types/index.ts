@@ -95,7 +95,7 @@ export interface PRChainItem {
 /**
  * Issue→productionマージのサイクルタイムデータ
  */
-export interface GitHubIssueCycleTime {
+export interface IssueCycleTime {
   issueNumber: number;
   issueTitle: string;
   repository: string;
@@ -128,7 +128,7 @@ export interface NotionTask {
 
 /**
  * サイクルタイム指標
- * Issue作成（GitHub）〜productionマージ（GitHub）の時間を測定
+ * Issue作成〜productionマージの時間を測定
  */
 export interface CycleTimeMetrics {
   /** 計測期間 */
@@ -168,7 +168,7 @@ export interface IssueCycleTimeDetail {
  * Issue→PR作成のコーディングタイムデータ
  * Issue作成日時からPR作成日時までの時間を計測
  */
-export interface GitHubIssueCodingTime {
+export interface IssueCodingTime {
   issueNumber: number;
   issueTitle: string;
   repository: string;
@@ -201,7 +201,7 @@ export interface IssueCodingTimeDetail {
 
 /**
  * コーディング時間指標
- * Issue作成（GitHub）〜 PR作成（GitHub）の時間を測定
+ * Issue作成〜 PR作成の時間を測定
  */
 export interface CodingTimeMetrics {
   /** 計測期間 */

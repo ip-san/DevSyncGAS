@@ -1,4 +1,4 @@
-import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, GitHubRepository, ApiResponse, NotionTask, PRReworkData, PRReviewData, PRSizeData, GitHubIssue, PRChainItem, GitHubIssueCycleTime, GitHubIssueCodingTime } from "../types";
+import type { GitHubPullRequest, GitHubWorkflowRun, GitHubDeployment, GitHubIncident, GitHubRepository, ApiResponse, NotionTask, PRReworkData, PRReviewData, PRSizeData, GitHubIssue, PRChainItem, IssueCycleTime, IssueCodingTime } from "../types";
 import { getContainer } from "../container";
 
 const GITHUB_API_BASE = "https://api.github.com";
@@ -1371,7 +1371,7 @@ export function trackToProductionMerge(
  * @param options - オプション（日付範囲、productionブランチパターン、ラベルフィルタ）
  * @returns サイクルタイムデータ配列
  */
-export function getGitHubCycleTimeData(
+export function getCycleTimeData(
   repositories: GitHubRepository[],
   token: string,
   options: {
@@ -1379,10 +1379,10 @@ export function getGitHubCycleTimeData(
     productionBranchPattern?: string;
     labels?: string[];
   } = {}
-): ApiResponse<GitHubIssueCycleTime[]> {
+): ApiResponse<IssueCycleTime[]> {
   const { logger } = getContainer();
   const productionPattern = options.productionBranchPattern ?? "production";
-  const allCycleTimeData: GitHubIssueCycleTime[] = [];
+  const allCycleTimeData: IssueCycleTime[] = [];
 
   for (const repo of repositories) {
     logger.log(`🔍 Processing ${repo.fullName}...`);
@@ -1486,16 +1486,16 @@ export function getGitHubCycleTimeData(
  * @param options - オプション（日付範囲、ラベルフィルタ）
  * @returns コーディングタイムデータ配列
  */
-export function getGitHubCodingTimeData(
+export function getCodingTimeData(
   repositories: GitHubRepository[],
   token: string,
   options: {
     dateRange?: DateRange;
     labels?: string[];
   } = {}
-): ApiResponse<GitHubIssueCodingTime[]> {
+): ApiResponse<IssueCodingTime[]> {
   const { logger } = getContainer();
-  const allCodingTimeData: GitHubIssueCodingTime[] = [];
+  const allCodingTimeData: IssueCodingTime[] = [];
 
   for (const repo of repositories) {
     logger.log(`🔍 Processing ${repo.fullName} for coding time...`);

@@ -4,11 +4,11 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import {
-  getGitHubCodingTimeData,
+  getCodingTimeData,
 } from "../../src/services/github";
 import { calculateCodingTime } from "../../src/utils/metrics";
 import { setupTestContainer, teardownTestContainer, type TestContainer } from "../helpers/setup";
-import type { GitHubRepository, GitHubIssueCodingTime } from "../../src/types";
+import type { GitHubRepository, IssueCodingTime } from "../../src/types";
 
 describe("GitHub Coding Time", () => {
   let container: TestContainer;
@@ -27,7 +27,7 @@ describe("GitHub Coding Time", () => {
     fullName: "test-owner/test-repo",
   };
 
-  describe("getGitHubCodingTimeData", () => {
+  describe("getCodingTimeData", () => {
     it("IssueとリンクPRからコーディングタイムを計算する", () => {
       // Issue一覧を取得
       container.httpClient.setJsonResponse(
@@ -95,7 +95,7 @@ describe("GitHub Coding Time", () => {
         }
       );
 
-      const result = getGitHubCodingTimeData([testRepo], "test-token");
+      const result = getCodingTimeData([testRepo], "test-token");
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
@@ -142,7 +142,7 @@ describe("GitHub Coding Time", () => {
         []
       );
 
-      const result = getGitHubCodingTimeData([testRepo], "test-token");
+      const result = getCodingTimeData([testRepo], "test-token");
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
@@ -246,7 +246,7 @@ describe("GitHub Coding Time", () => {
         }
       );
 
-      const result = getGitHubCodingTimeData([testRepo], "test-token");
+      const result = getCodingTimeData([testRepo], "test-token");
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
@@ -257,7 +257,7 @@ describe("GitHub Coding Time", () => {
 
   describe("calculateCodingTime", () => {
     it("コーディングタイムを正しく計算する", () => {
-      const codingTimeData: GitHubIssueCodingTime[] = [
+      const codingTimeData: IssueCodingTime[] = [
         {
           issueNumber: 1,
           issueTitle: "Issue 1",
@@ -298,7 +298,7 @@ describe("GitHub Coding Time", () => {
     });
 
     it("PRがリンクされたIssueがない場合は空の結果を返す", () => {
-      const codingTimeData: GitHubIssueCodingTime[] = [
+      const codingTimeData: IssueCodingTime[] = [
         {
           issueNumber: 1,
           issueTitle: "Issue 1 (PRなし)",
@@ -318,7 +318,7 @@ describe("GitHub Coding Time", () => {
     });
 
     it("負のコーディングタイムは除外される", () => {
-      const codingTimeData: GitHubIssueCodingTime[] = [
+      const codingTimeData: IssueCodingTime[] = [
         {
           issueNumber: 1,
           issueTitle: "Issue 1 (正常)",
@@ -348,7 +348,7 @@ describe("GitHub Coding Time", () => {
     });
 
     it("中央値を正しく計算する（奇数個）", () => {
-      const codingTimeData: GitHubIssueCodingTime[] = [
+      const codingTimeData: IssueCodingTime[] = [
         {
           issueNumber: 1,
           issueTitle: "Issue 1",

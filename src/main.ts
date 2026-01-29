@@ -1,6 +1,6 @@
 import { getConfig, setConfig, addRepository, removeRepository, getGitHubToken, getGitHubAuthMode, setNotionPropertyNames, getNotionPropertyNames, resetNotionPropertyNames, getProductionBranchPattern, setProductionBranchPattern, resetProductionBranchPattern, getCycleTimeIssueLabels, setCycleTimeIssueLabels, resetCycleTimeIssueLabels, getCodingTimeIssueLabels, setCodingTimeIssueLabels, resetCodingTimeIssueLabels } from "./config/settings";
 import "./init";
-import { getAllRepositoriesData, DateRange, getPullRequests, getReworkDataForPRs, getReviewEfficiencyDataForPRs, getPRSizeDataForPRs, getGitHubCycleTimeData, getGitHubCodingTimeData } from "./services/github";
+import { getAllRepositoriesData, DateRange, getPullRequests, getReworkDataForPRs, getReviewEfficiencyDataForPRs, getPRSizeDataForPRs, getCycleTimeData, getCodingTimeData } from "./services/github";
 import { getTasksForSatisfaction } from "./services/notion";
 import { writeMetricsToSheet, clearOldData, createSummarySheet, writeCycleTimeToSheet, writeCodingTimeToSheet, writeReworkRateToSheet, writeReviewEfficiencyToSheet, writePRSizeToSheet, writeDeveloperSatisfactionToSheet } from "./services/spreadsheet";
 import { calculateMetricsForRepository, calculateCycleTime, calculateCodingTime, calculateReworkRate, calculateReviewEfficiency, calculatePRSize, calculateDeveloperSatisfaction } from "./utils/metrics";
@@ -259,7 +259,7 @@ function syncCycleTime(days: number = 30): void {
   const productionPattern = getProductionBranchPattern();
   const labels = getCycleTimeIssueLabels();
 
-  Logger.log(`⏱️ Calculating Cycle Time (GitHub) for ${days} days`);
+  Logger.log(`⏱️ Calculating Cycle Time for ${days} days`);
   Logger.log(`   Period: ${period}`);
   Logger.log(`   Production branch pattern: "${productionPattern}"`);
   if (labels.length > 0) {
@@ -268,8 +268,8 @@ function syncCycleTime(days: number = 30): void {
     Logger.log(`   Issue labels: (all issues)`);
   }
 
-  // GitHubからサイクルタイムデータを取得
-  const cycleTimeResult = getGitHubCycleTimeData(
+  // サイクルタイムデータを取得
+  const cycleTimeResult = getCycleTimeData(
     config.github.repositories,
     token,
     {
@@ -334,7 +334,7 @@ function showCycleTimeDetails(days: number = 30): void {
   const productionPattern = getProductionBranchPattern();
   const labels = getCycleTimeIssueLabels();
 
-  const cycleTimeResult = getGitHubCycleTimeData(
+  const cycleTimeResult = getCycleTimeData(
     config.github.repositories,
     token,
     {
@@ -400,7 +400,7 @@ function syncCodingTime(days: number = 30): void {
 
   const labels = getCodingTimeIssueLabels();
 
-  Logger.log(`⌨️ Calculating Coding Time (GitHub) for ${days} days`);
+  Logger.log(`⌨️ Calculating Coding Time for ${days} days`);
   Logger.log(`   Period: ${period}`);
   if (labels.length > 0) {
     Logger.log(`   Issue labels: ${labels.join(", ")}`);
@@ -408,8 +408,8 @@ function syncCodingTime(days: number = 30): void {
     Logger.log(`   Issue labels: (all issues)`);
   }
 
-  // GitHubからコーディングタイムデータを取得
-  const codingTimeResult = getGitHubCodingTimeData(
+  // コーディングタイムデータを取得
+  const codingTimeResult = getCodingTimeData(
     config.github.repositories,
     token,
     {
@@ -472,7 +472,7 @@ function showCodingTimeDetails(days: number = 30): void {
 
   const labels = getCodingTimeIssueLabels();
 
-  const codingTimeResult = getGitHubCodingTimeData(
+  const codingTimeResult = getCodingTimeData(
     config.github.repositories,
     token,
     {
