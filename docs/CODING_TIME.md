@@ -67,7 +67,7 @@ Issue作成（GitHub）────────→ PR作成（GitHub）
 
 本実装では**GitHub Issue作成日時**を開始点として使用しています。これは以下の理由によります：
 
-1. **GitHub完結**: Notionなどの外部ツール連携が不要
+1. **GitHub完結**: 外部ツール連携が不要
 2. **サイクルタイムとの一貫性**: サイクルタイムと同様にIssue起点で計測
 3. **Issue-PR連携**: `Fixes #123` などのキーワードで自動的にIssueとPRがリンク
 
@@ -250,7 +250,7 @@ Issue作成 ──→ コーディング ──→ PR作成 ──→ レビュ�
 
 | 指標 | 推奨値 | 出典 |
 |------|--------|------|
-| コーディング時間 | 4時間以内 | Hatica |
+| コーディング時間 | 4時間以内 | Multitudes |
 | サイクルタイム | 1-2日 | Kanban/Lean |
 
 ---
@@ -359,7 +359,7 @@ GitHub Token または GitHub Apps認証が設定されているか確認して�
 
 3. **Hatica - Coding Time**
    - https://www.hatica.io/docs/metrics/coding-time/
-   - コーディング時間の定義: 最初のコミットからPR作成まで。推奨値は4時間以内
+   - コーディング時間の定義: 最初のコミットからPR作成まで。高パフォーマンスチームは2日未満
 
 4. **Multitudes - Coding Time**
    - https://docs.multitudes.com/metrics-and-definitions/process-metrics/flow-of-work/coding-time
@@ -391,5 +391,4 @@ GitHub Token または GitHub Apps認証が設定されているか確認して�
 
 | 日付 | 内容 |
 |------|------|
-| 2025-01 | 初版作成。Notion + GitHubベースのコーディング時間計測機能を追加 |
-| 2025-01 | GitHub完結版に移行。Notion依存を排除し、Issue作成日時を開始点に変更 |
+| 2025-01 | GitHub完結版として実装。Issue作成日時を開始点に使用 |

@@ -1,6 +1,6 @@
 # DevSyncGAS
 
-GitHub複数リポジトリとNotionを連携してDevOps指標（DORA metrics）をGoogleスプレッドシートに書き出すGASプロダクト。
+GitHub複数リポジトリからDevOps指標（DORA metrics）を収集し、Googleスプレッドシートに書き出すGASプロダクト。
 
 ## 目次
 
@@ -34,14 +34,14 @@ Claude CodeやCopilotなどのAIツールを導入して「コードを書く速
 |---------|------|-----------|
 | **スピードと効率** | ★デプロイ頻度、★リードタイム、サイクルタイム、コーディング時間 | AIで実装サイクルが本当に早まっているか |
 | **安定性と品質** | ★変更障害率、★MTTR、手戻り率、レビュー効率 | 速さの代償として品質が犠牲になっていないか |
-| **開発体験** | PRサイズ、開発者満足度 | コードの肥大化や開発者の疲弊が起きていないか |
+| **開発体験** | PRサイズ | コードの肥大化が起きていないか |
 
 > ★ = DORA指標（業界標準の4つの主要指標）
 
 ## 機能
 
 - 複数GitHubリポジトリからPR・デプロイメント情報を取得
-- DORA 4 Key Metrics を自動計算（[詳細ドキュメント](docs/DORA_METRICS.md)）
+- DORA 4 Key Metrics を自動計算
   - Deployment Frequency（デプロイ頻度）
   - Lead Time for Changes（変更のリードタイム）
   - Change Failure Rate（変更失敗率）
@@ -49,14 +49,11 @@ Claude CodeやCopilotなどのAIツールを導入して「コードを書く速
 - サイクルタイム計測（[詳細ドキュメント](docs/CYCLE_TIME.md)）
   - GitHub Issue作成〜Productionマージまでの時間を自動集計
 - コーディング時間計測（[詳細ドキュメント](docs/CODING_TIME.md)）
-  - Notionのタスク着手〜GitHub PR作成までの時間を自動集計
+  - GitHub Issue作成〜PR作成までの時間を自動集計
 - レビュー効率計測（[詳細ドキュメント](docs/REVIEW_EFFICIENCY.md)）
   - PRのレビュー待ち時間・レビュー時間・マージ待ち時間を自動集計
 - PRサイズ計測（[詳細ドキュメント](docs/PR_SIZE.md)）
   - PRの変更行数・変更ファイル数を自動集計
-- 開発者満足度計測（[詳細ドキュメント](docs/DEVELOPER_SATISFACTION.md)）
-  - Notionタスク完了時の満足度スコア（★1〜5）を自動集計
-- Notionデータベースとの連携
 - Googleスプレッドシートへの自動書き出し
 - 日次トリガーによる定期実行
 
@@ -117,10 +114,6 @@ const REPOSITORIES = [
   { owner: "your-org", name: "backend" },
   { owner: "your-org", name: "api-server" },
 ];
-
-// Notion連携を使用する場合（オプション）
-const NOTION_TOKEN = "";        // 空欄のままでもOK
-const NOTION_DATABASE_ID = "";  // 空欄のままでもOK
 ```
 
 > **Note**: `src/init.ts` はgit管理外です。トークンをコミットしないでください。
@@ -189,7 +182,7 @@ removeRepo('your-org/repo-name');
 3. 実行ログで「✅ Synced metrics for X repositories」と表示されれば成功
 4. スプレッドシートを開いて「DevOps Metrics」シートにデータが書き込まれていることを確認
 
-> **出力されるシート**: DevOps Metrics, DevOps Metrics - Summary, サイクルタイム, コーディング時間, 手戻り率, レビュー効率, PRサイズ, 開発者満足度（各メトリクス収集関数を実行すると対応するシートが作成されます）
+> **出力されるシート**: DevOps Metrics, DevOps Metrics - Summary, サイクルタイム, コーディング時間, 手戻り率, レビュー効率, PRサイズ（各メトリクス収集関数を実行すると対応するシートが作成されます）
 
 ### 11. 日次トリガーの設定（推奨）
 
@@ -210,8 +203,8 @@ removeRepo('your-org/repo-name');
 | 関数 | 説明 |
 |------|------|
 | `initConfig()` | 初期設定を実行（init.tsで定義） |
-| `setup(github, spreadsheet, notion?, notionDb?)` | 設定をScript Propertiesに保存（PAT認証） |
-| `setupWithGitHubApp(appId, key, instId, spreadsheet, ...)` | GitHub Apps認証で設定 |
+| `setup(github, spreadsheet)` | 設定をScript Propertiesに保存（PAT認証） |
+| `setupWithGitHubApp(appId, key, instId, spreadsheet)` | GitHub Apps認証で設定 |
 | `showAuthMode()` | 現在の認証モードを表示 |
 | `addRepo(owner, name)` | リポジトリを追加 |
 | `removeRepo(fullName)` | リポジトリを削除 |
@@ -222,12 +215,35 @@ removeRepo('your-org/repo-name');
 | 関数 | 説明 |
 |------|------|
 | `syncDevOpsMetrics()` | 手動でメトリクスを同期 |
-| `syncCycleTime(days?)` | サイクルタイムを計測（GitHub連携必須） |
-| `syncCodingTime()` | コーディング時間を計測（Notion + GitHub連携必須） |
-| `syncReworkRate(days?)` | 手戻り率を計測（GitHub連携必須） |
-| `syncReviewEfficiency(days?)` | レビュー効率を計測（GitHub連携必須） |
-| `syncPRSize(days?)` | PRサイズを計測（GitHub連携必須） |
-| `syncDeveloperSatisfaction(days?)` | 開発者満足度を計測（Notion連携必須） |
+| `syncCycleTime(days?)` | サイクルタイムを計測 |
+| `syncCodingTime(days?)` | コーディング時間を計測 |
+| `syncReworkRate(days?)` | 手戻り率を計測 |
+| `syncReviewEfficiency(days?)` | レビュー効率を計測 |
+| `syncPRSize(days?)` | PRサイズを計測 |
+| `syncHistoricalMetrics(days)` | 過去データを一括収集 |
+| `syncLast30Days()` | 過去30日分を収集 |
+| `syncLast90Days()` | 過去90日分を収集 |
+
+### 設定（サイクルタイム）
+
+| 関数 | 説明 |
+|------|------|
+| `configureProductionBranch(pattern)` | productionブランチパターンを設定 |
+| `showProductionBranch()` | 現在のパターンを表示 |
+| `resetProductionBranch()` | パターンをデフォルトにリセット |
+| `configureCycleTimeLabels(labels)` | 対象Issueラベルを設定 |
+| `showCycleTimeLabels()` | 現在のラベル設定を表示 |
+| `resetCycleTimeLabelsConfig()` | ラベル設定をリセット |
+| `showCycleTimeConfig()` | 全設定を表示 |
+
+### 設定（コーディング時間）
+
+| 関数 | 説明 |
+|------|------|
+| `configureCodingTimeLabels(labels)` | 対象Issueラベルを設定 |
+| `showCodingTimeLabels()` | 現在のラベル設定を表示 |
+| `resetCodingTimeLabelsConfig()` | ラベル設定をリセット |
+| `showCodingTimeConfig()` | 全設定を表示 |
 
 ### 運用・メンテナンス
 
@@ -236,6 +252,7 @@ removeRepo('your-org/repo-name');
 | `createDailyTrigger()` | 日次トリガーを設定 |
 | `generateSummary()` | サマリーシートを作成 |
 | `cleanup(days)` | 古いデータを削除 |
+| `testPermissions()` | 権限テスト（初回実行で承認ダイアログ表示） |
 
 ### スキーママイグレーション
 
@@ -282,18 +299,6 @@ Organization運用やセキュリティ要件が厳しい環境では、GitHub A
 
 詳細は [GitHub Apps 認証ガイド](docs/GITHUB_APPS_AUTH.md) を参照してください。
 
-### Notion Integration Token（オプション）
-
-Notion連携を使用する場合のみ必要です。コーディング時間、開発者満足度の計測に使用します。
-
-**クイックスタート:**
-
-1. [Notion Integrations](https://www.notion.so/profile/integrations) でインテグレーションを作成
-2. 対象データベースで「Add connections」からインテグレーションを接続
-3. `setup()` でトークンとDatabase IDを設定
-
-詳細な手順は **[Notion連携セットアップガイド](docs/NOTION_SETUP.md)** を参照してください。
-
 ## ディレクトリ構成
 
 ```
@@ -302,18 +307,24 @@ DevSyncGAS/
 │   ├── main.ts           # エントリーポイント
 │   ├── init.example.ts   # 初期設定テンプレート
 │   ├── init.ts           # 初期設定（git管理外）
+│   ├── container.ts      # DIコンテナ
 │   ├── config/
-│   │   └── settings.ts   # 設定管理
+│   │   ├── settings.ts   # 設定管理
+│   │   └── doraThresholds.ts # DORAレベル閾値
 │   ├── services/
 │   │   ├── github.ts     # GitHub API
-│   │   ├── notion.ts     # Notion API
-│   │   └── spreadsheet.ts # スプレッドシート操作
+│   │   ├── githubAuth.ts # GitHub認証（PAT/Apps）
+│   │   ├── spreadsheet.ts # スプレッドシート操作
+│   │   └── migration.ts  # スキーママイグレーション
+│   ├── schemas/
+│   │   └── index.ts      # スプレッドシートスキーマ定義
 │   ├── types/
 │   │   └── index.ts      # 型定義
 │   └── utils/
 │       └── metrics.ts    # 指標計算
 ├── dist/                 # ビルド出力
 ├── tests/                # テスト
+├── docs/                 # ドキュメント
 ├── package.json
 ├── tsconfig.json
 ├── esbuild.config.ts
@@ -340,9 +351,8 @@ bun run lint
 ## ドキュメント
 
 ### スピードと効率
-- [DORA Metrics 実装ガイド](docs/DORA_METRICS.md) - デプロイ頻度・リードタイム・変更障害率・MTTRの計測方法
 - [サイクルタイム実装ガイド](docs/CYCLE_TIME.md) - GitHub Issue作成〜Productionマージの計測方法
-- [コーディング時間実装ガイド](docs/CODING_TIME.md) - Notion着手〜GitHub PR作成時間の計測方法
+- [コーディング時間実装ガイド](docs/CODING_TIME.md) - GitHub Issue作成〜PR作成時間の計測方法
 
 ### 安定性と品質
 - [手戻り率実装ガイド](docs/REWORK_RATE.md) - PR作成後の追加コミット数・Force Push回数の計測方法
@@ -350,10 +360,8 @@ bun run lint
 
 ### 開発体験
 - [PRサイズ実装ガイド](docs/PR_SIZE.md) - PRの変更行数・変更ファイル数の計測方法
-- [開発者満足度実装ガイド](docs/DEVELOPER_SATISFACTION.md) - タスク完了時の満足度スコアの計測方法
 
 ### 導入・運用
-- [Notion連携セットアップガイド](docs/NOTION_SETUP.md) - Notion連携の設定方法、プロパティ名のカスタマイズ
 - [GitHub Apps 認証ガイド](docs/GITHUB_APPS_AUTH.md) - Organization向けのGitHub Apps認証の設定方法
 - [組織導入ガイド＆トラブルシューティング](docs/SETUP_AND_TROUBLESHOOTING.md) - 組織での導入手順、権限設定、トラブル対応
 

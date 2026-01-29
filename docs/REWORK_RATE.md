@@ -335,7 +335,7 @@ addRepo('owner', 'repo-name');
 | # | 資料 | 説明 |
 |---|------|------|
 | 4 | [Code Climate - Rework](https://docs.velocity.codeclimate.com/en/articles/2913574-rework) | 30日以内の書き換え。シニアで9-14% |
-| 5 | [Hatica - Code Churn](https://www.hatica.io/blog/code-churn-rate/) | 15-25%が許容範囲 |
+| 5 | [Hatica - Code Churn](https://www.hatica.io/blog/code-churn-rate/) | チャーン率の定義と文脈による判断基準 |
 | 6 | [LinearB - Code Churn](https://linearb.io/blog/what-is-code-churn) | サイクルタイム内訳としての解説 |
 
 ### GitHub API

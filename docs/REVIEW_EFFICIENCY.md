@@ -348,7 +348,7 @@ addRepo('owner', 'repo-name');
 | # | 資料 | 説明 |
 |---|------|------|
 | 4 | [LinearB - Cycle Time](https://linearb.io/blog/cycle-time) | Review Timeを含むサイクルタイム解説 |
-| 5 | [Sleuth - Review Time](https://www.sleuth.io/metrics/review-time) | レビュー時間の定義と測定 |
+| 5 | [Sleuth - Metrics](https://www.sleuth.io/metrics/) | レビュー時間を含むCycle Time内訳 |
 | 6 | [Code Climate - Review Lag](https://docs.velocity.codeclimate.com/en/articles/2913574) | レビュー遅延の測定 |
 
 ### GitHub API
