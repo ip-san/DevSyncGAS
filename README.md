@@ -112,7 +112,29 @@ bun run push
 
 > **Note**: 一度実行すれば設定はScript Propertiesに永続化されます。以降は `syncDevOpsMetrics` を実行するだけでOKです。
 
-### 8. 日次トリガーの設定（推奨）
+### 8. リポジトリの登録
+
+計測対象のGitHubリポジトリを登録します。GASエディタで以下の関数を実行してください。
+
+```javascript
+// リポジトリを追加（owner と name を指定）
+addRepo('your-org', 'repo-name');
+
+// 複数リポジトリを追加する場合は、それぞれ実行
+addRepo('your-org', 'frontend');
+addRepo('your-org', 'backend');
+addRepo('your-org', 'api-server');
+
+// 登録済みリポジトリの確認
+listRepos();
+
+// リポジトリを削除する場合
+removeRepo('your-org/repo-name');
+```
+
+> **Note**: リポジトリは何個でも追加できます。追加したリポジトリすべてのメトリクスが1つのスプレッドシートに集約されます。
+
+### 9. 日次トリガーの設定（推奨）
 
 毎日自動でメトリクスを収集するには、トリガーを設定します。
 
