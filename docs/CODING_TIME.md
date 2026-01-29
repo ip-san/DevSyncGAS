@@ -250,7 +250,7 @@ Issue作成 ──→ コーディング ──→ PR作成 ──→ レビュ�
 
 | 指標 | 推奨値 | 出典 |
 |------|--------|------|
-| コーディング時間 | 4時間以内 | Hatica |
+| コーディング時間 | 4時間以内 | Multitudes |
 | サイクルタイム | 1-2日 | Kanban/Lean |
 
 ---
@@ -359,7 +359,7 @@ GitHub Token または GitHub Apps認証が設定されているか確認して�
 
 3. **Hatica - Coding Time**
    - https://www.hatica.io/docs/metrics/coding-time/
-   - コーディング時間の定義: 最初のコミットからPR作成まで。推奨値は4時間以内
+   - コーディング時間の定義: 最初のコミットからPR作成まで。高パフォーマンスチームは2日未満
 
 4. **Multitudes - Coding Time**
    - https://docs.multitudes.com/metrics-and-definitions/process-metrics/flow-of-work/coding-time
