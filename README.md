@@ -89,12 +89,17 @@ cp src/init.example.ts src/init.ts
 const GITHUB_TOKEN = "your_github_token_here";
 const SPREADSHEET_ID = "your_spreadsheet_id_here";
 
+// 計測対象のリポジトリを追加（複数可）
 const REPOSITORIES = [
-  { owner: "owner1", name: "repo1" },
+  { owner: "your-org", name: "frontend" },
+  { owner: "your-org", name: "backend" },
+  { owner: "your-org", name: "api-server" },
 ];
 ```
 
 > **Note**: `src/init.ts` はgit管理外です。トークンをコミットしないでください。
+>
+> **Tip**: リポジトリは `init.ts` で事前に定義しておくか、デプロイ後にGASエディタで `addRepo()` を使って追加できます（手順8参照）。
 
 ### 6. ビルド＆デプロイ
 
@@ -112,9 +117,11 @@ bun run push
 
 > **Note**: 一度実行すれば設定はScript Propertiesに永続化されます。以降は `syncDevOpsMetrics` を実行するだけでOKです。
 
-### 8. リポジトリの登録
+### 8. リポジトリの登録（init.tsで設定済みの場合はスキップ可）
 
-計測対象のGitHubリポジトリを登録します。GASエディタで以下の関数を実行してください。
+手順5で `init.ts` にリポジトリを設定した場合、`initConfig` 実行時に自動登録されます。
+
+追加・変更が必要な場合は、GASエディタで以下の関数を実行してください。
 
 ```javascript
 // リポジトリを追加（owner と name を指定）
