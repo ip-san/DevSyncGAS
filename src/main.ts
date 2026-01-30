@@ -5,7 +5,7 @@ import { writeMetricsToSheet, clearOldData, createSummarySheet, writeCycleTimeTo
 import { calculateMetricsForRepository, calculateCycleTime, calculateCodingTime, calculateReworkRate, calculateReviewEfficiency, calculatePRSize } from "./utils/metrics";
 import { initializeContainer, isContainerInitialized, getContainer } from "./container";
 import { createGasAdapters } from "./adapters/gas";
-import type { DevOpsMetrics, CycleTimeMetrics, GitHubPullRequest } from "./types";
+import type { DevOpsMetrics, GitHubPullRequest } from "./types";
 import { ALL_SCHEMAS, findSchemaBySheetName } from "./schemas";
 import { getMigrationPreview, migrateSheetSchema, updateSheetHeadersOnly, logMigrationPreview, logMigrationResult, logMigrationSummary, logBackupCleanupInstructions } from "./services/migration";
 
