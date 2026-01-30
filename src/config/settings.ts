@@ -1,4 +1,4 @@
-import type { Config, GitHubRepository, GitHubAppConfig } from "../types";
+import type { Config, GitHubRepository, GitHubAppConfig, ProjectGroup } from "../types";
 import { getContainer } from "../container";
 import { resolveGitHubToken } from "../services/githubAuth";
 
@@ -31,11 +31,17 @@ export function getConfig(): Config {
   const spreadsheetId = storageClient.getProperty("SPREADSHEET_ID");
   const sheetName = storageClient.getProperty("SHEET_NAME") ?? "DevOps Metrics";
   const repositoriesJson = storageClient.getProperty("GITHUB_REPOSITORIES");
+  const projectsJson = storageClient.getProperty("PROJECTS");
 
-  if (!spreadsheetId) {
+  // projectsが設定されている場合はそちらを使用、なければ従来の単一スプレッドシート設定
+  const projects: ProjectGroup[] = projectsJson ? JSON.parse(projectsJson) : [];
+
+  // projectsがない場合は従来の設定が必須
+  if (projects.length === 0 && !spreadsheetId) {
     throw new Error(
       "SPREADSHEET_ID is not set\n" +
       "→ setup('GITHUB_TOKEN', 'SPREADSHEET_ID') または setupWithGitHubApp() で設定してください\n" +
+      "→ 複数スプレッドシートを使う場合は createProject() でプロジェクトを作成してください\n" +
       "→ 設定状況を確認するには checkConfig() を実行してください"
     );
   }
@@ -83,7 +89,8 @@ export function getConfig(): Config {
 
     return {
       github: { appConfig, repositories },
-      spreadsheet: { id: spreadsheetId, sheetName },
+      spreadsheet: { id: spreadsheetId ?? "", sheetName },
+      projects: projects.length > 0 ? projects : undefined,
     };
   }
 
@@ -92,7 +99,8 @@ export function getConfig(): Config {
 
   return {
     github: { token: githubToken, repositories },
-    spreadsheet: { id: spreadsheetId, sheetName },
+    spreadsheet: { id: spreadsheetId ?? "", sheetName },
+    projects: projects.length > 0 ? projects : undefined,
   };
 }
 
@@ -116,6 +124,95 @@ export function setConfig(config: Partial<Config>): void {
   if (config.spreadsheet?.sheetName) {
     storageClient.setProperty("SHEET_NAME", config.spreadsheet.sheetName);
   }
+  if (config.projects) {
+    storageClient.setProperty("PROJECTS", JSON.stringify(config.projects));
+  }
+}
+
+/**
+ * プロジェクトグループを取得
+ */
+export function getProjects(): ProjectGroup[] {
+  const config = getConfig();
+  return config.projects ?? [];
+}
+
+/**
+ * プロジェクトグループを追加
+ */
+export function addProject(project: ProjectGroup): void {
+  const config = getConfig();
+  const projects = config.projects ?? [];
+
+  const exists = projects.some((p) => p.name === project.name);
+  if (exists) {
+    throw new Error(`Project "${project.name}" already exists`);
+  }
+
+  projects.push(project);
+  setConfig({ projects });
+}
+
+/**
+ * プロジェクトグループを更新
+ */
+export function updateProject(name: string, updates: Partial<Omit<ProjectGroup, "name">>): void {
+  const config = getConfig();
+  const projects = config.projects ?? [];
+
+  const index = projects.findIndex((p) => p.name === name);
+  if (index === -1) {
+    throw new Error(`Project "${name}" not found`);
+  }
+
+  projects[index] = { ...projects[index], ...updates };
+  setConfig({ projects });
+}
+
+/**
+ * プロジェクトグループを削除
+ */
+export function removeProject(name: string): void {
+  const config = getConfig();
+  const projects = (config.projects ?? []).filter((p) => p.name !== name);
+  setConfig({ projects });
+}
+
+/**
+ * プロジェクトグループにリポジトリを追加
+ */
+export function addRepositoryToProject(projectName: string, owner: string, repoName: string): void {
+  const config = getConfig();
+  const projects = config.projects ?? [];
+
+  const project = projects.find((p) => p.name === projectName);
+  if (!project) {
+    throw new Error(`Project "${projectName}" not found`);
+  }
+
+  const newRepo: GitHubRepository = { owner, name: repoName, fullName: `${owner}/${repoName}` };
+  const exists = project.repositories.some((r) => r.fullName === newRepo.fullName);
+
+  if (!exists) {
+    project.repositories.push(newRepo);
+    setConfig({ projects });
+  }
+}
+
+/**
+ * プロジェクトグループからリポジトリを削除
+ */
+export function removeRepositoryFromProject(projectName: string, fullName: string): void {
+  const config = getConfig();
+  const projects = config.projects ?? [];
+
+  const project = projects.find((p) => p.name === projectName);
+  if (!project) {
+    throw new Error(`Project "${projectName}" not found`);
+  }
+
+  project.repositories = project.repositories.filter((r) => r.fullName !== fullName);
+  setConfig({ projects });
 }
 
 /**
