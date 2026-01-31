@@ -16,13 +16,19 @@ GitHub複数リポジトリからDevOps指標（DORA metrics）を収集し、Go
 
 ## 開発コマンド
 ```bash
-bun run build        # TypeScript → GAS用JSにビルド
-bun run push         # ビルド＆GASにデプロイ
-bun test             # テスト実行
-bun run lint         # ESLintチェック
-bun run lint:fix     # ESLint自動修正
-bun run format       # Prettierフォーマット
-bun run format:check # Prettierチェック（CI用）
+bun run build          # TypeScript → GAS用JSにビルド
+bun run push           # ビルド＆GASにデプロイ
+bun test               # テスト実行
+bun run lint           # ESLintチェック
+bun run lint:fix       # ESLint自動修正
+bun run format         # Prettierフォーマット
+bun run format:check   # Prettierチェック（CI用）
+
+# コード品質チェック
+bun run check:circular # 循環依存チェック
+bun run check:unused   # 未使用コードチェック
+bun run check:types    # 型カバレッジチェック（95%以上）
+bun run check:all      # 全チェックを一括実行
 ```
 
 ## Claude Code カスタムskill
@@ -137,15 +143,19 @@ Claude Codeに以下のように質問してください：
 
 ```bash
 bunx tsc --noEmit      # 型エラーなし
-bun run lint           # Lint警告なし
+bun run lint           # Lint警告なし（複雑度チェック含む）
 bun test               # テスト通過
 bun run build          # ビルド成功
+bun run check:all      # 全品質チェック実行（推奨）
 ```
 
 確認項目：
 - 未使用のimport/変数がないか
 - 新機能にテストを追加したか
 - 必要に応じてドキュメントを更新したか
+- 複雑度警告が出た場合はリファクタリングを検討
+
+詳細は [docs/CODE_QUALITY.md](docs/CODE_QUALITY.md) を参照。
 
 ## 設計判断の記録
 

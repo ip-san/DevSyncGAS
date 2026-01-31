@@ -31,6 +31,15 @@ jobs:
       - name: Run TypeScript type check
         run: bunx tsc --noEmit
 
+      - name: Check circular dependencies
+        run: bun run check:circular
+
+      - name: Check unused exports
+        run: bun run check:unused
+
+      - name: Check type coverage
+        run: bun run check:types
+
       - name: Run tests
         run: bun test
 

@@ -35,7 +35,18 @@
     "eqeqeq": ["error", "always"],
     "curly": ["error", "all"],
     "prefer-const": "error",
-    "no-var": "error"
+    "no-var": "error",
+    "complexity": ["warn", 10],
+    "max-depth": ["warn", 3],
+    "max-lines-per-function": [
+      "warn",
+      {
+        "max": 50,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "max-params": ["warn", 4]
   },
   "ignorePatterns": ["dist/", "node_modules/", "*.js"]
 }
