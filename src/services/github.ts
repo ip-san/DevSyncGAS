@@ -23,6 +23,16 @@ export interface DateRange {
 }
 
 /**
+ * Issue取得用の日付範囲（文字列形式）
+ */
+export interface IssueDateRange {
+  /** 開始日（YYYY-MM-DD形式） */
+  start?: string;
+  /** 終了日（YYYY-MM-DD形式） */
+  end?: string;
+}
+
+/**
  * GitHub REST APIを呼び出すヘルパー関数
  *
  * @param endpoint - APIエンドポイント（例: "/repos/owner/repo/pulls"）
@@ -150,7 +160,7 @@ export function getWorkflowRuns(
 
     if (!response.success || !response.data) {
       if (page === 1) {
-        return response as ApiResponse<GitHubWorkflowRun[]>;
+        return { success: false, error: response.error };
       }
       break;
     }
@@ -560,7 +570,7 @@ function getPRForcePushCount(
 
     if (!response.success || !response.data) {
       if (page === 1) {
-        return response as ApiResponse<number>;
+        return { success: false, error: response.error };
       }
       break;
     }
@@ -734,7 +744,7 @@ function getPRReadyForReviewAt(
 
     if (!response.success || !response.data) {
       if (page === 1) {
-        return response as ApiResponse<string | null>;
+        return { success: false, error: response.error };
       }
       break;
     }
@@ -990,7 +1000,7 @@ export function getIssues(
   repo: GitHubRepository,
   token: string,
   options?: {
-    dateRange?: DateRange;
+    dateRange?: IssueDateRange;
     labels?: string[];
   }
 ): ApiResponse<GitHubIssue[]> {
@@ -1134,6 +1144,7 @@ export function getPullRequestWithBranches(
     title: pr.title,
     state: pr.state,
     createdAt: pr.created_at,
+    closedAt: pr.closed_at,
     mergedAt: pr.merged_at,
     repository: `${owner}/${repo}`,
     author: pr.user?.login ?? "unknown",
@@ -1168,7 +1179,7 @@ export function findPRContainingCommit(
     if (response.error?.includes("404")) {
       return { success: true, data: null };
     }
-    return response as ApiResponse<GitHubPullRequest | null>;
+    return { success: false, error: response.error };
   }
 
   if (!response.data || response.data.length === 0) {
@@ -1185,6 +1196,7 @@ export function findPRContainingCommit(
     title: targetPR.title,
     state: targetPR.state,
     createdAt: targetPR.created_at,
+    closedAt: targetPR.closed_at,
     mergedAt: targetPR.merged_at,
     repository: `${owner}/${repo}`,
     author: targetPR.user?.login ?? "unknown",
@@ -1286,7 +1298,7 @@ export function getCycleTimeData(
   repositories: GitHubRepository[],
   token: string,
   options: {
-    dateRange?: DateRange;
+    dateRange?: IssueDateRange;
     productionBranchPattern?: string;
     labels?: string[];
   } = {}
@@ -1401,7 +1413,7 @@ export function getCodingTimeData(
   repositories: GitHubRepository[],
   token: string,
   options: {
-    dateRange?: DateRange;
+    dateRange?: IssueDateRange;
     labels?: string[];
   } = {}
 ): ApiResponse<IssueCodingTime[]> {

@@ -25,7 +25,7 @@ export interface HttpClient {
 export interface SheetRange {
   getValues(): unknown[][];
   setValues(values: unknown[][]): void;
-  setFontWeight(weight: string): void;
+  setFontWeight(weight: "bold" | "normal" | null): void;
   setNumberFormat(format: string): void;
 }
 
