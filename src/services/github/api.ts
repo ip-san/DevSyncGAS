@@ -78,7 +78,7 @@ export function fetchGitHub<T>(endpoint: string, token: string): ApiResponse<T> 
     }
     return {
       success: false,
-      error: `GitHub API error: ${response.statusCode} - ${response.content}`,
+      error: `GitHub API error: ${response.statusCode}`,
     };
   } catch (error) {
     return {
