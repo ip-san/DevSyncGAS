@@ -9,6 +9,12 @@ import {
 } from '../utils/validation';
 import { auditLog } from '../utils/auditLog';
 import { validateSpreadsheetAccess } from '../utils/spreadsheetValidator';
+import { CONFIG_KEYS } from './propertyKeys';
+import {
+  safeParseJSON,
+  GitHubRepositoriesSchema,
+  ProjectGroupsSchema,
+} from '../utils/configSchemas';
 
 // =============================================================================
 // API モード設定
@@ -23,7 +29,7 @@ export type GitHubApiMode = 'rest' | 'graphql';
  */
 export function getGitHubApiMode(): GitHubApiMode {
   const { storageClient } = getContainer();
-  const mode = storageClient.getProperty('GITHUB_API_MODE');
+  const mode = storageClient.getProperty(CONFIG_KEYS.GITHUB_API.API_MODE);
   return mode === 'rest' ? 'rest' : 'graphql';
 }
 
@@ -33,7 +39,7 @@ export function getGitHubApiMode(): GitHubApiMode {
  */
 export function setGitHubApiMode(mode: GitHubApiMode): void {
   const { storageClient } = getContainer();
-  storageClient.setProperty('GITHUB_API_MODE', mode);
+  storageClient.setProperty(CONFIG_KEYS.GITHUB_API.API_MODE, mode);
 }
 
 /**
@@ -41,7 +47,7 @@ export function setGitHubApiMode(mode: GitHubApiMode): void {
  */
 export function resetGitHubApiMode(): void {
   const { storageClient } = getContainer();
-  storageClient.deleteProperty('GITHUB_API_MODE');
+  storageClient.deleteProperty(CONFIG_KEYS.GITHUB_API.API_MODE);
 }
 
 /**
@@ -51,15 +57,15 @@ export function resetGitHubApiMode(): void {
 export function getGitHubAuthMode(): 'app' | 'pat' | 'none' {
   const { storageClient } = getContainer();
 
-  const appId = storageClient.getProperty('GITHUB_APP_ID');
-  const privateKey = storageClient.getProperty('GITHUB_APP_PRIVATE_KEY');
-  const installationId = storageClient.getProperty('GITHUB_APP_INSTALLATION_ID');
+  const appId = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_ID);
+  const privateKey = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_PRIVATE_KEY);
+  const installationId = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_INSTALLATION_ID);
 
   if (appId && privateKey && installationId) {
     return 'app';
   }
 
-  const token = storageClient.getProperty('GITHUB_TOKEN');
+  const token = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.TOKEN);
   if (token) {
     return 'pat';
   }
@@ -68,15 +74,15 @@ export function getGitHubAuthMode(): 'app' | 'pat' | 'none' {
 }
 
 export function getConfig(): Config {
-  const { storageClient } = getContainer();
+  const { storageClient, logger } = getContainer();
 
-  const spreadsheetId = storageClient.getProperty('SPREADSHEET_ID');
+  const spreadsheetId = storageClient.getProperty(CONFIG_KEYS.SPREADSHEET.ID);
   const sheetName = storageClient.getProperty('SHEET_NAME') ?? 'DevOps Metrics';
-  const repositoriesJson = storageClient.getProperty('GITHUB_REPOSITORIES');
-  const projectsJson = storageClient.getProperty('PROJECTS');
+  const repositoriesJson = storageClient.getProperty(CONFIG_KEYS.GITHUB_API.REPOSITORIES);
+  const projectsJson = storageClient.getProperty(CONFIG_KEYS.SPREADSHEET.PROJECT_GROUPS);
 
   // projectsが設定されている場合はそちらを使用、なければ従来の単一スプレッドシート設定
-  const projects: ProjectGroup[] = projectsJson ? (JSON.parse(projectsJson) as ProjectGroup[]) : [];
+  const projects = safeParseJSON(projectsJson, ProjectGroupsSchema, [], logger);
 
   // projectsがない場合は従来の設定が必須
   if (projects.length === 0 && !spreadsheetId) {
@@ -88,17 +94,15 @@ export function getConfig(): Config {
     );
   }
 
-  const repositories: GitHubRepository[] = repositoriesJson
-    ? (JSON.parse(repositoriesJson) as GitHubRepository[])
-    : [];
+  const repositories = safeParseJSON(repositoriesJson, GitHubRepositoriesSchema, [], logger);
 
   const authMode = getGitHubAuthMode();
 
   if (authMode === 'none') {
     // 部分的に設定されているか確認して、より詳細なエラーを出す
-    const appId = storageClient.getProperty('GITHUB_APP_ID');
-    const privateKey = storageClient.getProperty('GITHUB_APP_PRIVATE_KEY');
-    const installationId = storageClient.getProperty('GITHUB_APP_INSTALLATION_ID');
+    const appId = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_ID);
+    const privateKey = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_PRIVATE_KEY);
+    const installationId = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_INSTALLATION_ID);
 
     // 部分的に設定されているかチェック（||はブール値コンテキストなので適切）
     const hasPartialConfig = appId !== null || privateKey !== null || installationId !== null;
@@ -132,9 +136,9 @@ export function getConfig(): Config {
   // GitHub Apps認証
   if (authMode === 'app') {
     const appConfig: GitHubAppConfig = {
-      appId: storageClient.getProperty('GITHUB_APP_ID')!,
-      privateKey: storageClient.getProperty('GITHUB_APP_PRIVATE_KEY')!,
-      installationId: storageClient.getProperty('GITHUB_APP_INSTALLATION_ID')!,
+      appId: storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_ID)!,
+      privateKey: storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_PRIVATE_KEY)!,
+      installationId: storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_INSTALLATION_ID)!,
     };
 
     return {
@@ -145,7 +149,7 @@ export function getConfig(): Config {
   }
 
   // PAT認証
-  const githubToken = storageClient.getProperty('GITHUB_TOKEN')!;
+  const githubToken = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.TOKEN)!;
 
   return {
     github: { token: githubToken, repositories },
@@ -158,24 +162,36 @@ export function setConfig(config: Partial<Config>): void {
   const { storageClient } = getContainer();
 
   if (config.github?.token) {
-    storageClient.setProperty('GITHUB_TOKEN', config.github.token);
+    storageClient.setProperty(CONFIG_KEYS.GITHUB_AUTH.TOKEN, config.github.token);
   }
   if (config.github?.appConfig) {
-    storageClient.setProperty('GITHUB_APP_ID', config.github.appConfig.appId);
-    storageClient.setProperty('GITHUB_APP_PRIVATE_KEY', config.github.appConfig.privateKey);
-    storageClient.setProperty('GITHUB_APP_INSTALLATION_ID', config.github.appConfig.installationId);
+    storageClient.setProperty(CONFIG_KEYS.GITHUB_AUTH.APP_ID, config.github.appConfig.appId);
+    storageClient.setProperty(
+      CONFIG_KEYS.GITHUB_AUTH.APP_PRIVATE_KEY,
+      config.github.appConfig.privateKey
+    );
+    storageClient.setProperty(
+      CONFIG_KEYS.GITHUB_AUTH.APP_INSTALLATION_ID,
+      config.github.appConfig.installationId
+    );
   }
   if (config.github?.repositories) {
-    storageClient.setProperty('GITHUB_REPOSITORIES', JSON.stringify(config.github.repositories));
+    storageClient.setProperty(
+      CONFIG_KEYS.GITHUB_API.REPOSITORIES,
+      JSON.stringify(config.github.repositories)
+    );
   }
   if (config.spreadsheet?.id) {
-    storageClient.setProperty('SPREADSHEET_ID', config.spreadsheet.id);
+    storageClient.setProperty(CONFIG_KEYS.SPREADSHEET.ID, config.spreadsheet.id);
   }
   if (config.spreadsheet?.sheetName) {
     storageClient.setProperty('SHEET_NAME', config.spreadsheet.sheetName);
   }
   if (config.projects) {
-    storageClient.setProperty('PROJECTS', JSON.stringify(config.projects));
+    storageClient.setProperty(
+      CONFIG_KEYS.SPREADSHEET.PROJECT_GROUPS,
+      JSON.stringify(config.projects)
+    );
   }
 }
 
