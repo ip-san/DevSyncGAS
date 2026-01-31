@@ -5,7 +5,9 @@
  *
  * 構成:
  * - helpers.ts: 共通ヘルパー関数
- * - devops.ts: DORA Four Key Metrics書き出し
+ * - repositorySheet.ts: リポジトリ別シート書き出し
+ * - dashboard.ts: Dashboardシート生成
+ * - metricsSummary.ts: 指標別Summaryシート生成
  * - cycleTime.ts: サイクルタイム指標書き出し
  * - codingTime.ts: コーディング時間指標書き出し
  * - reworkRate.ts: 手戻り率指標書き出し
@@ -13,13 +15,34 @@
  * - prSize.ts: PRサイズ指標書き出し
  */
 
-// DevOps Metrics（DORA指標）
+// リポジトリ別シート
 export {
-  writeMetricsToSheet,
-  writeMetricsWithDuplicateCheck,
-  clearOldData,
-  createSummarySheet,
-} from './devops';
+  getRepositorySheetName,
+  groupMetricsByRepository,
+  writeMetricsToRepositorySheet,
+  writeMetricsToAllRepositorySheets,
+  readMetricsFromRepositorySheet,
+  readMetricsFromAllRepositorySheets,
+} from './repositorySheet';
+
+// Dashboard
+export {
+  determineHealthStatus,
+  extractLatestMetricsByRepository,
+  calculateWeeklyTrends,
+  writeDashboard,
+  writeDashboardTrends,
+} from './dashboard';
+
+// 指標別Summary
+export {
+  createDevOpsSummaryFromRepositorySheets,
+  createDevOpsSummaryFromMetrics,
+} from './metricsSummary';
+
+// マイグレーション
+export { migrateToRepositorySheets, previewMigration, removeLegacySheet } from './sheetMigration';
+export type { SheetMigrationResult } from './sheetMigration';
 
 // サイクルタイム指標
 export { writeCycleTimeToSheet } from './cycleTime';

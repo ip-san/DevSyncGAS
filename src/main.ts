@@ -22,9 +22,6 @@ import {
   backfillAllProjectsDaily,
   backfillLast30Days,
   backfillLast90Days,
-  cleanup,
-  generateSummary,
-  generateAllProjectSummaries,
   // 拡張指標同期
   syncCycleTime,
   syncCodingTime,
@@ -63,7 +60,7 @@ import {
   configureApiMode,
   showApiMode,
   resetApiMode,
-  // マイグレーション
+  // スキーママイグレーション
   previewMigration,
   migrateAllSchemas,
   migrateSheet,
@@ -91,9 +88,6 @@ global.syncHistoricalMetrics = syncHistoricalMetrics;
 global.syncAllProjectsHistorical = syncAllProjectsHistorical;
 global.syncLast30Days = syncLast30Days;
 global.syncLast90Days = syncLast90Days;
-global.cleanup = cleanup;
-global.generateSummary = generateSummary;
-global.generateAllProjectSummaries = generateAllProjectSummaries;
 
 // 日別バックフィル
 global.syncDailyBackfill = syncDailyBackfill;

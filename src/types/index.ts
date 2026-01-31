@@ -66,3 +66,15 @@ export type {
   GitHubEventResponse,
   GitHubTimelineCrossReferenceEvent,
 } from './github-api';
+
+// ダッシュボード関連の型
+export type {
+  HealthStatus,
+  RepositoryLatestMetrics,
+  ProjectLatestSummary,
+  WeeklyTrend,
+  TrendSummary,
+  DashboardData,
+  HealthThresholds,
+} from './dashboard';
+export { DEFAULT_HEALTH_THRESHOLDS } from './dashboard';

@@ -57,9 +57,12 @@ bun run format:check # Prettierチェック（CI用）
 - [x] プロジェクトグループ（複数スプレッドシート対応）
 - [x] 複数リポジトリの横断集計（全体平均）
 - [x] GitHub GraphQL API対応（レート制限対策、デフォルト有効）
+- [x] リポジトリ別シート構造
+- [x] Dashboardシート（全リポジトリ×全指標の俯瞰 + ステータス表示）
+- [x] 週次トレンドシート
 
 ## TODO / 拡張案
-- [ ] 複数期間（週次/月次）のサマリー
+- [ ] 拡張指標（サイクルタイム等）のリポジトリ別シート対応
 - [ ] Slack通知連携
 - [ ] ダッシュボード用のチャート生成
 
@@ -78,6 +81,28 @@ addRepo('owner', 'repo-name');
 configureApiMode('rest');   // REST APIを使用
 configureApiMode('graphql'); // GraphQL APIを使用（デフォルト）
 showApiMode();              // 現在のモードを確認
+```
+
+## リポジトリ別シート構造
+
+リポジトリごとに別シートに分離され、Dashboard・Summaryが自動生成されます。
+
+### シート構造
+```
+プロジェクトA (スプレッドシート)
+├── Dashboard                    # 全リポ×全指標の俯瞰 + ステータス
+├── Dashboard - Trend            # 週次トレンド
+├── DevOps Summary               # リポジトリ比較サマリー
+├── owner/repo-a                 # リポジトリ別データ
+├── owner/repo-b
+└── owner/repo-c
+```
+
+### 同期
+```javascript
+syncDevOpsMetrics();        // DORA指標を同期（Dashboard/Summary自動生成）
+syncDailyBackfill(30);      // 過去30日分をバックフィル
+syncAllProjects();          // 全プロジェクトを同期
 ```
 
 ## コードの理解に困ったら

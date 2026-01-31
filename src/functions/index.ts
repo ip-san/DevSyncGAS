@@ -30,9 +30,6 @@ export {
   backfillAllProjectsDaily,
   backfillLast30Days,
   backfillLast90Days,
-  cleanup,
-  generateSummary,
-  generateAllProjectSummaries,
 } from './sync';
 
 // 拡張指標同期
