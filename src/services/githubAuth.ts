@@ -93,7 +93,7 @@ export function getInstallationToken(appConfig: GitHubAppConfig): string {
       token: string;
       expires_at: string;
     }>(url, {
-      method: "POST",
+      method: "post",
       headers: {
         Authorization: `Bearer ${jwt}`,
         Accept: "application/vnd.github.v3+json",

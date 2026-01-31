@@ -671,7 +671,7 @@ export function isBackupSheet(sheetName: string): boolean {
 /**
  * バックアップシートの一覧を取得
  */
-export function listBackupSheets(spreadsheet: Spreadsheet): string[] {
+export function listBackupSheets(_spreadsheet: Spreadsheet): string[] {
   const { logger } = getContainer();
   const backupSheets: string[] = [];
 

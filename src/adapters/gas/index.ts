@@ -55,7 +55,7 @@ class GasSheetRange implements SheetRange {
     this.range.setValues(values);
   }
 
-  setFontWeight(weight: string): void {
+  setFontWeight(weight: "bold" | "normal" | null): void {
     this.range.setFontWeight(weight);
   }
 
