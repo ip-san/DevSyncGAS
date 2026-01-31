@@ -99,13 +99,19 @@ bun run push
 - [拡張指標の詳細](docs/EXTENDED_METRICS.md) - サイクルタイム、コーディング時間、手戻り率など
 - [計測思想](docs/MEASUREMENT_PHILOSOPHY.md) - なぜこの指標を、この方法で測るのか
 
+### アーキテクチャ・開発
+- [アーキテクチャ](docs/ARCHITECTURE.md) - システム構造・データフロー・設計原則
+- [コード品質管理](docs/CODE_QUALITY.md) - 自動チェックの仕組み・複雑度管理
+- [開発ガイド](CLAUDE.md) - Claude Codeでの開発方法
+
 ## 開発者向け
 
 ```bash
-bun run build    # ビルド
-bun run push     # ビルド＆GASにデプロイ
-bun test         # テスト実行
-bun run lint     # Lintチェック
+bun run build       # ビルド
+bun run push        # ビルド＆GASにデプロイ
+bun test            # テスト実行
+bun run lint        # Lintチェック
+bun run check:all   # 全品質チェック
 ```
 
 詳細は [CLAUDE.md](CLAUDE.md) を参照してください。
