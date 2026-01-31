@@ -3,9 +3,11 @@
  *
  * Google Apps Scriptで実行可能な関数をグローバルスコープにエクスポート。
  * 各機能は src/functions/ 以下のモジュールで実装。
+ *
+ * NOTE: src/init.ts は開発者のローカル設定ファイル（.gitignore対象）。
+ * 初期設定が必要な場合は init.example.ts を init.ts にコピーして編集し、
+ * ローカルビルド後にGASエディタで initConfig() を実行してください。
  */
-
-import "./init";
 import {
   // DORA指標同期
   syncDevOpsMetrics,
@@ -68,13 +70,13 @@ import {
   showReworkRateDetails,
   showReviewEfficiencyDetails,
   showPRSizeDetails,
-} from "./functions";
+} from './functions';
 
 // =============================================================================
 // GASグローバルスコープにエクスポート
 // =============================================================================
 
-declare const global: any;
+/// <reference path="./types/gas-global.d.ts" />
 
 // DORA指標同期
 global.syncDevOpsMetrics = syncDevOpsMetrics;
