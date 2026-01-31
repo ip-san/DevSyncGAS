@@ -11,35 +11,8 @@ GitHub複数リポジトリからDevOps指標（DORA metrics）を収集し、Go
 - **ターゲット**: Google Apps Script
 
 ## ディレクトリ構成
-```
-src/
-├── main.ts              # GASエントリーポイント（グローバル関数をエクスポート）
-├── container.ts         # DIコンテナ（サービスの依存性注入）
-├── interfaces/
-│   └── index.ts         # 抽象インターフェース（HttpClient, SpreadsheetClient等）
-├── adapters/
-│   └── gas/
-│       └── index.ts     # GAS固有API実装
-├── config/
-│   ├── settings.ts      # スクリプトプロパティ管理
-│   └── doraThresholds.ts # DORAパフォーマンスレベル閾値（年次更新）
-├── services/
-│   ├── github.ts        # GitHub API連携
-│   ├── githubAuth.ts    # GitHub認証（PAT/Apps）
-│   ├── spreadsheet.ts   # スプレッドシート書き出し
-│   └── migration.ts     # スキーママイグレーション
-├── schemas/
-│   └── index.ts         # スプレッドシートスキーマ定義
-├── types/
-│   └── index.ts         # 型定義
-└── utils/
-    └── metrics.ts       # DORA指標計算ロジック
-tests/
-├── unit/                # ユニットテスト
-├── integration/         # 統合テスト
-├── mocks/               # モック実装
-└── helpers/             # テストヘルパー
-```
+
+詳細は [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) を参照。
 
 ## 開発コマンド
 ```bash
@@ -148,3 +121,13 @@ bun run build          # ビルド成功
 | 小 | コミットメッセージ | バグ修正、軽微な改善 |
 | 中 | PR Description | 機能追加、リファクタリング |
 | 大 | ADR（docs/adr/） | アーキテクチャ変更、技術選定 |
+
+### ADRの作成手順
+
+[docs/adr/README.md](docs/adr/README.md) を参照。
+
+## 新しい指標の追加
+
+新しいDevOps指標を追加する場合は、以下のガイドを参照してください：
+
+- [docs/ADDING_METRICS.md](docs/ADDING_METRICS.md) - 指標追加の手順・チェックリスト
