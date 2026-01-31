@@ -6,9 +6,27 @@
 
 ---
 
-## DORA指標とは？
+## AIを使って、本当に速くなった？
 
-Google Cloud の DevOps Research and Assessment（DORA）チームが提唱する、**ソフトウェア開発チームのパフォーマンスを測る4つの指標**です。
+Claude CodeやCopilotを導入して「コードを書く速度は上がった気がする」。
+
+でも、こんな疑問はありませんか？
+
+- レビューに時間がかかるようになった気がする
+- 手戻りが増えてないか心配
+- 「速くなった」を数字で証明できない
+
+DevSyncGASは、**感覚ではなくデータで判断する**ためのツールです。
+
+---
+
+## なぜDORA指標なのか？
+
+スプリントベロシティ（こなしたストーリーポイント数）は、AI時代には[虚栄の指標になりつつあります](https://www.scrum.org/resources/blog/velocity-agent-efficiency-evidence-based-management-ai-era)。AIが4秒でコードを生成しても、検証の複雑さは変わらないからです。
+
+代わりに注目されているのが、**DORA指標（DevOps Research and Assessment）**です。
+
+Google Cloudの研究チームが7年以上の研究で確立した、**ソフトウェア開発チームのパフォーマンスを測る4つの指標**です。
 
 | 指標 | 何を測るか | なぜ重要か |
 |------|-----------|-----------|
@@ -18,6 +36,13 @@ Google Cloud の DevOps Research and Assessment（DORA）チームが提唱す�
 | **平均修復時間（MTTR）** | 障害発生から復旧までの時間 | 回復力の高さ |
 
 これら4指標は、**「速く」かつ「安定して」価値を届けられているか**を客観的に評価します。
+
+### ベロシティとの違い
+
+| 指標 | 測るもの | AI時代の課題 |
+|------|---------|-------------|
+| **ベロシティ** | こなしたストーリーポイント数 | AIがコード生成を高速化しても、検証の複雑さは変わらず、[虚栄の指標化](https://www.scrum.org/resources/blog/velocity-agent-efficiency-evidence-based-management-ai-era) |
+| **DORA指標** | デプロイの速さと安定性 | 本番リリースまでの実際の価値提供を測定。[Evidence-Based Management](https://www.scrum.org/resources/evidence-based-management)でも推奨 |
 
 > 詳細：[DORA指標の詳しい解説](docs/DORA_METRICS.md)
 
