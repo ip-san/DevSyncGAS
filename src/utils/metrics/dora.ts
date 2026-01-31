@@ -475,6 +475,19 @@ export function calculateMetricsForRepository(
   const { total, failed, rate } = calculateChangeFailureRate(repoDeployments, repoRuns);
   const leadTimeResult = calculateLeadTimeDetailed(repoPRs, repoDeployments);
 
+  // MTTR: Incident Issueを優先、フォールバックはデプロイメント/ワークフロー
+  let mttrHours: number | null = null;
+  let incidentMetrics;
+
+  if (repoIncidents.length > 0) {
+    // 優先: Incident Issueベースの真のMTTR
+    incidentMetrics = calculateIncidentMetrics(repoIncidents);
+    mttrHours = incidentMetrics.mttrHours;
+  } else {
+    // フォールバック: デプロイメント/ワークフローベース
+    mttrHours = calculateMTTR(repoDeployments, repoRuns);
+  }
+
   const metrics: DevOpsMetrics = {
     date: new Date().toISOString().split('T')[0],
     repository,
@@ -488,12 +501,11 @@ export function calculateMetricsForRepository(
     totalDeployments: total,
     failedDeployments: failed,
     changeFailureRate: rate,
-    meanTimeToRecoveryHours: calculateMTTR(repoDeployments, repoRuns),
+    meanTimeToRecoveryHours: mttrHours,
   };
 
-  // インシデントデータがある場合は真のMTTRを追加
-  if (repoIncidents.length > 0) {
-    const incidentMetrics = calculateIncidentMetrics(repoIncidents);
+  // インシデントメトリクスがある場合は追加情報として保持
+  if (incidentMetrics) {
     metrics.incidentMetrics = incidentMetrics;
   }
 
