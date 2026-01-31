@@ -286,14 +286,14 @@ showApiMode();
 
 ```javascript
 // デフォルト: "production"（部分一致）
-showProductionEnvironment();
+showProductionBranch();
 
 // 変更する場合
-configureProductionEnvironment("prod");
-configureProductionEnvironment("production-us");
+configureProductionBranch("prod");
+configureProductionBranch("production-us");
 
 // リセット
-resetProductionEnvironment();
+resetProductionBranch();
 ```
 
 ### MTTR（Incident）ラベル設定
@@ -358,8 +358,8 @@ DevSyncGASは、DORA指標に加えて**拡張指標**も提供します。
 ### デプロイ頻度が0件
 
 - **GitHub Deployments API**: 環境名が "production" にマッチするか確認
-  - `showProductionEnvironment()` で現在の設定を確認
-  - 環境名を変更: `configureProductionEnvironment("prod")`
+  - `showProductionBranch()` で現在の設定を確認
+  - 環境名を変更: `configureProductionBranch("prod")`
 - **フォールバック**: ワークフロー名に "deploy" が含まれるか確認
 
 ### リードタイムが計測されない
