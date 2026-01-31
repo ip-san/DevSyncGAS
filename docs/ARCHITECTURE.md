@@ -73,11 +73,9 @@ src/
 │   │   ├── issues.ts       #   Issue操作
 │   │   └── cycleTime.ts    #   サイクルタイム計測
 │   ├── spreadsheet/        # スプレッドシート書き出し
-│   │   ├── devops.ts       #   DORA指標シート（従来型）
-│   │   ├── repositorySheet.ts  #   リポジトリ別シート（V2）
+│   │   ├── repositorySheet.ts  #   リポジトリ別シート
 │   │   ├── dashboard.ts    #   Dashboardシート
 │   │   ├── metricsSummary.ts   #   Summaryシート
-│   │   ├── sheetMigration.ts   #   シート構造マイグレーション
 │   │   ├── cycleTime.ts    #   サイクルタイムシート
 │   │   └── ...             #   その他指標シート
 │   ├── migration.ts        # スキーママイグレーション
@@ -112,7 +110,9 @@ src/
    utils/metrics/dora.ts → Deployment Frequency, Lead Time, CFR, MTTR
 
 4. スプレッドシート書き出し
-   services/spreadsheet/devops.ts → 「DevOps Metrics」シート
+   services/spreadsheet/repositorySheet.ts → リポジトリ別シート
+   services/spreadsheet/dashboard.ts → Dashboard, Trend シート
+   services/spreadsheet/metricsSummary.ts → DevOps Summary シート
 ```
 
 ### サイクルタイム計測（syncCycleTime）
@@ -183,9 +183,9 @@ previewMigration();   // 変更内容を確認
 migrateAllSchemas();  // 実行
 ```
 
-### 5. リポジトリ別シート構造（V2）
+### 5. リポジトリ別シート構造
 
-従来は1シートに全リポジトリのデータが混在していたが、V2ではリポジトリごとに別シートに分離される。
+リポジトリごとに別シートに分離され、Dashboard・Summaryが自動生成される。
 
 ```
 プロジェクト (スプレッドシート)
@@ -203,11 +203,10 @@ migrateAllSchemas();  // 実行
 - Dashboardでステータス（良好/要注意/要対応）を表示
 
 ```typescript
-// 新構造で同期
-syncDevOpsMetricsV2();
-
-// 従来構造からマイグレーション
-migrateToNewStructure();
+// DORA指標同期（Dashboard/Summary自動生成）
+syncDevOpsMetrics();
+syncDailyBackfill(30);  // 過去30日分をバックフィル
+syncAllProjects();      // 全プロジェクト一括同期
 ```
 
 ---

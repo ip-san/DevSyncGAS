@@ -57,7 +57,7 @@ bun run format:check # Prettierチェック（CI用）
 - [x] プロジェクトグループ（複数スプレッドシート対応）
 - [x] 複数リポジトリの横断集計（全体平均）
 - [x] GitHub GraphQL API対応（レート制限対策、デフォルト有効）
-- [x] リポジトリ別シート構造（V2）
+- [x] リポジトリ別シート構造
 - [x] Dashboardシート（全リポジトリ×全指標の俯瞰 + ステータス表示）
 - [x] 週次トレンドシート
 
@@ -83,9 +83,9 @@ configureApiMode('graphql'); // GraphQL APIを使用（デフォルト）
 showApiMode();              // 現在のモードを確認
 ```
 
-## リポジトリ別シート構造（V2）
+## リポジトリ別シート構造
 
-従来は1シートに全リポジトリのデータが混在していましたが、V2ではリポジトリごとに別シートに分離されます。
+リポジトリごとに別シートに分離され、Dashboard・Summaryが自動生成されます。
 
 ### シート構造
 ```
@@ -98,16 +98,11 @@ showApiMode();              // 現在のモードを確認
 └── owner/repo-c
 ```
 
-### 新構造で同期
+### 同期
 ```javascript
-syncDevOpsMetricsV2();      // 新構造で同期
-syncDailyBackfillV2(30);    // 過去30日分をバックフィル
-```
-
-### 従来構造からのマイグレーション
-```javascript
-previewMigrationToNewStructure();  // プレビュー（変更なし）
-migrateToNewStructure();           // 実行（従来シートは保持）
+syncDevOpsMetrics();        // DORA指標を同期（Dashboard/Summary自動生成）
+syncDailyBackfill(30);      // 過去30日分をバックフィル
+syncAllProjects();          // 全プロジェクトを同期
 ```
 
 ## コードの理解に困ったら
