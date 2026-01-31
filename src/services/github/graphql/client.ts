@@ -102,7 +102,7 @@ export function executeGraphQL<T>(
     if (response.statusCode !== 200) {
       return {
         success: false,
-        error: `GraphQL HTTP error: ${response.statusCode} - ${response.content}`,
+        error: `GraphQL HTTP error: ${response.statusCode}`,
       };
     }
 
