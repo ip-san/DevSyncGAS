@@ -71,6 +71,10 @@ export {
   showCodingTimeLabels,
   resetCodingTimeLabelsConfig,
   showCodingTimeConfig,
+  // API モード設定
+  configureApiMode,
+  showApiMode,
+  resetApiMode,
 } from "./config";
 
 // マイグレーション

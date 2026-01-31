@@ -3,14 +3,40 @@
  *
  * GitHub APIからDevOps指標を取得し、スプレッドシートに書き出す
  * メインの同期処理を提供。
+ *
+ * GraphQL API（デフォルト）を使用してAPI呼び出し回数を削減。
+ * REST APIにフォールバック可能（setGitHubApiMode('rest')）
  */
 
-import { getConfig, getGitHubToken, getProjects } from "../config/settings";
-import { getAllRepositoriesData, type DateRange } from "../services/github";
+import { getConfig, getGitHubToken, getProjects, getGitHubApiMode } from "../config/settings";
+import {
+  getAllRepositoriesData,
+  getAllRepositoriesDataGraphQL,
+  type DateRange,
+} from "../services/github";
 import { writeMetricsToSheet, createSummarySheet, clearOldData } from "../services/spreadsheet";
 import { calculateMetricsForRepository } from "../utils/metrics";
 import { ensureContainerInitialized } from "./helpers";
-import type { DevOpsMetrics } from "../types";
+import type { DevOpsMetrics, GitHubRepository } from "../types";
+
+/**
+ * APIモードに応じたデータ取得関数を選択
+ */
+function fetchRepositoriesData(
+  repositories: GitHubRepository[],
+  token: string,
+  options: { dateRange?: DateRange } = {}
+) {
+  const apiMode = getGitHubApiMode();
+
+  if (apiMode === "graphql") {
+    Logger.log("🚀 Using GraphQL API (efficient mode)");
+    return getAllRepositoriesDataGraphQL(repositories, token, options);
+  } else {
+    Logger.log("📡 Using REST API (legacy mode)");
+    return getAllRepositoriesData(repositories, token, options);
+  }
+}
 
 // =============================================================================
 // DORA Metrics 同期
@@ -35,7 +61,7 @@ export function syncDevOpsMetrics(dateRange?: DateRange): void {
   }
 
   const token = getGitHubToken();
-  const { pullRequests, workflowRuns, deployments } = getAllRepositoriesData(
+  const { pullRequests, workflowRuns, deployments } = fetchRepositoriesData(
     config.github.repositories,
     token,
     { dateRange }
@@ -99,7 +125,7 @@ export function syncAllProjects(dateRange?: DateRange): void {
       Logger.log(`     - ${repo.fullName}`);
     });
 
-    const { pullRequests, workflowRuns, deployments } = getAllRepositoriesData(
+    const { pullRequests, workflowRuns, deployments } = fetchRepositoriesData(
       project.repositories,
       token,
       { dateRange }
@@ -149,7 +175,7 @@ export function syncProject(projectName: string, dateRange?: DateRange): void {
   }
 
   const token = getGitHubToken();
-  const { pullRequests, workflowRuns, deployments } = getAllRepositoriesData(
+  const { pullRequests, workflowRuns, deployments } = fetchRepositoriesData(
     project.repositories,
     token,
     { dateRange }

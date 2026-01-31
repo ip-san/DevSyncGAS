@@ -15,6 +15,10 @@ import {
   getCodingTimeIssueLabels,
   setCodingTimeIssueLabels,
   resetCodingTimeIssueLabels,
+  getGitHubApiMode,
+  setGitHubApiMode,
+  resetGitHubApiMode,
+  type GitHubApiMode,
 } from "../config/settings";
 import { ensureContainerInitialized } from "./helpers";
 
@@ -146,4 +150,47 @@ export function showCodingTimeConfig(): void {
   } else {
     Logger.log("   Issue labels: (all issues)");
   }
+}
+
+// =============================================================================
+// GitHub API モード設定
+// =============================================================================
+
+/**
+ * GitHub APIモードを設定
+ *
+ * @param mode - "graphql" または "rest"
+ *
+ * @example
+ * configureApiMode("graphql");  // GraphQL APIを使用（デフォルト、効率的）
+ * configureApiMode("rest");     // REST APIを使用（従来互換）
+ */
+export function configureApiMode(mode: "graphql" | "rest"): void {
+  ensureContainerInitialized();
+  setGitHubApiMode(mode as GitHubApiMode);
+  if (mode === "graphql") {
+    Logger.log("✅ API mode set to: GraphQL (efficient mode)");
+    Logger.log("   Benefits: Reduced API calls, batch operations, better rate limit usage");
+  } else {
+    Logger.log("✅ API mode set to: REST (legacy mode)");
+    Logger.log("   Note: This may result in more API calls. Use GraphQL for better performance.");
+  }
+}
+
+/** 現在のAPIモードを表示 */
+export function showApiMode(): void {
+  ensureContainerInitialized();
+  const mode = getGitHubApiMode();
+  if (mode === "graphql") {
+    Logger.log("📋 Current API mode: GraphQL (efficient mode)");
+  } else {
+    Logger.log("📋 Current API mode: REST (legacy mode)");
+  }
+}
+
+/** APIモードをリセット（GraphQLに戻す） */
+export function resetApiMode(): void {
+  ensureContainerInitialized();
+  resetGitHubApiMode();
+  Logger.log("✅ API mode reset to: GraphQL (default)");
 }

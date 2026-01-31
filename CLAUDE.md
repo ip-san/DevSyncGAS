@@ -69,9 +69,9 @@ bun run lint     # リント
 - [x] 日次トリガー設定
 - [x] プロジェクトグループ（複数スプレッドシート対応）
 - [x] 複数リポジトリの横断集計（全体平均）
+- [x] GitHub GraphQL API対応（レート制限対策、デフォルト有効）
 
 ## TODO / 拡張案
-- [ ] GitHub GraphQL APIに移行（レート制限対策）
 - [ ] 複数期間（週次/月次）のサマリー
 - [ ] Slack通知連携
 - [ ] ダッシュボード用のチャート生成
@@ -83,4 +83,12 @@ setup(
   'spreadsheet-id'      // Google Spreadsheet ID
 );
 addRepo('owner', 'repo-name');
+```
+
+## APIモード切替
+デフォルトでGraphQL APIを使用（API呼び出し回数削減）。REST APIに戻す場合：
+```javascript
+configureApiMode('rest');   // REST APIを使用
+configureApiMode('graphql'); // GraphQL APIを使用（デフォルト）
+showApiMode();              // 現在のモードを確認
 ```

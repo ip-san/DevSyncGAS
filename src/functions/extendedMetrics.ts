@@ -3,21 +3,36 @@
  *
  * サイクルタイム、コーディング時間、手戻り率、レビュー効率、PRサイズなど
  * DORA Four Key Metrics以外の拡張指標を提供。
+ *
+ * GraphQL API（デフォルト）を使用してAPI呼び出し回数を削減。
  */
 
-import { getConfig, getGitHubToken, getGitHubAuthMode } from "../config/settings";
+import {
+  getConfig,
+  getGitHubToken,
+  getGitHubAuthMode,
+  getGitHubApiMode,
+} from "../config/settings";
 import {
   getProductionBranchPattern,
   getCycleTimeIssueLabels,
   getCodingTimeIssueLabels,
 } from "../config/settings";
 import {
+  // REST API版
   getPullRequests,
   getCycleTimeData,
   getCodingTimeData,
   getReworkDataForPRs,
   getReviewEfficiencyDataForPRs,
   getPRSizeDataForPRs,
+  // GraphQL API版
+  getPullRequestsGraphQL,
+  getCycleTimeDataGraphQL,
+  getCodingTimeDataGraphQL,
+  getReworkDataForPRsGraphQL,
+  getReviewEfficiencyDataForPRsGraphQL,
+  getPRSizeDataForPRsGraphQL,
 } from "../services/github";
 import {
   writeCycleTimeToSheet,
@@ -71,7 +86,12 @@ export function syncCycleTime(days = 30): void {
       : `   Issue labels: (all issues)`
   );
 
-  const result = getCycleTimeData(config.github.repositories, token, {
+  const apiMode = getGitHubApiMode();
+  const getCycleTime = apiMode === "graphql" ? getCycleTimeDataGraphQL : getCycleTimeData;
+
+  Logger.log(`🚀 Using ${apiMode === "graphql" ? "GraphQL" : "REST"} API`);
+
+  const result = getCycleTime(config.github.repositories, token, {
     dateRange: { start: startDateStr, end: endDateStr },
     productionBranchPattern: productionPattern,
     labels: labels.length > 0 ? labels : undefined,
@@ -126,7 +146,12 @@ export function syncCodingTime(days = 30): void {
       : `   Issue labels: (all issues)`
   );
 
-  const result = getCodingTimeData(config.github.repositories, token, {
+  const apiMode = getGitHubApiMode();
+  const getCodingTime = apiMode === "graphql" ? getCodingTimeDataGraphQL : getCodingTimeData;
+
+  Logger.log(`🚀 Using ${apiMode === "graphql" ? "GraphQL" : "REST"} API`);
+
+  const result = getCodingTime(config.github.repositories, token, {
     dateRange: { start: startDateStr, end: endDateStr },
     labels: labels.length > 0 ? labels : undefined,
   });
@@ -167,12 +192,16 @@ function fetchMergedPRs(days: number): GitHubPullRequest[] | null {
 
   const token = getGitHubToken();
   const { startDate, endDate } = createDateRange(days);
+  const apiMode = getGitHubApiMode();
+
+  Logger.log(`🚀 Using ${apiMode === "graphql" ? "GraphQL" : "REST"} API`);
 
   const allPRs: GitHubPullRequest[] = [];
+  const getPRs = apiMode === "graphql" ? getPullRequestsGraphQL : getPullRequests;
 
   for (const repo of config.github.repositories) {
     Logger.log(`📡 Fetching PRs from ${repo.fullName}...`);
-    const result = getPullRequests(repo, token, "all", {
+    const result = getPRs(repo, token, "all", {
       since: startDate,
       until: endDate,
     });
@@ -215,7 +244,9 @@ export function syncReworkRate(days = 30): void {
 
   Logger.log(`📊 Fetching rework data for ${allPRs.length} PRs...`);
   const token = getGitHubToken();
-  const reworkData = getReworkDataForPRs(allPRs, token);
+  const apiMode = getGitHubApiMode();
+  const getReworkData = apiMode === "graphql" ? getReworkDataForPRsGraphQL : getReworkDataForPRs;
+  const reworkData = getReworkData(allPRs, token);
 
   const metrics = calculateReworkRate(reworkData, period);
 
@@ -254,7 +285,9 @@ export function syncReviewEfficiency(days = 30): void {
 
   Logger.log(`📊 Fetching review data for ${allPRs.length} PRs...`);
   const token = getGitHubToken();
-  const reviewData = getReviewEfficiencyDataForPRs(allPRs, token);
+  const apiMode = getGitHubApiMode();
+  const getReviewData = apiMode === "graphql" ? getReviewEfficiencyDataForPRsGraphQL : getReviewEfficiencyDataForPRs;
+  const reviewData = getReviewData(allPRs, token);
 
   const metrics = calculateReviewEfficiency(reviewData, period);
 
@@ -292,7 +325,9 @@ export function syncPRSize(days = 30): void {
 
   Logger.log(`📊 Fetching PR size data for ${allPRs.length} PRs...`);
   const token = getGitHubToken();
-  const sizeData = getPRSizeDataForPRs(allPRs, token);
+  const apiMode = getGitHubApiMode();
+  const getSizeData = apiMode === "graphql" ? getPRSizeDataForPRsGraphQL : getPRSizeDataForPRs;
+  const sizeData = getSizeData(allPRs, token);
 
   const metrics = calculatePRSize(sizeData, period);
 
