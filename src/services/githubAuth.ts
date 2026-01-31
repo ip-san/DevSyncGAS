@@ -1,6 +1,7 @@
 import { KJUR } from 'jsrsasign';
 import type { GitHubAppConfig } from '../types';
 import { getContainer } from '../container';
+import { getGitHubPrivateKey } from '../utils/secretManager';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
@@ -116,11 +117,20 @@ export function getInstallationToken(appConfig: GitHubAppConfig): string {
 
   logger.log('🔑 Fetching new GitHub App Installation Token...');
 
+  // Private Keyを取得
+  // 優先順位: 1. appConfig.privateKey, 2. Secret Manager, 3. PropertiesService
+  let privateKey: string;
+  if (appConfig.privateKey && appConfig.privateKey !== '') {
+    privateKey = appConfig.privateKey;
+  } else {
+    privateKey = getGitHubPrivateKey();
+  }
+
   // Private Keyの形式を検証
-  validatePrivateKey(appConfig.privateKey);
+  validatePrivateKey(privateKey);
 
   // JWTを生成
-  const jwt = generateJWT(appConfig.appId, appConfig.privateKey);
+  const jwt = generateJWT(appConfig.appId, privateKey);
 
   // Installation Access Tokenを取得
   const url = `${GITHUB_API_BASE}/app/installations/${appConfig.installationId}/access_tokens`;

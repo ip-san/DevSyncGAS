@@ -150,7 +150,7 @@ describe("githubAuth", () => {
       };
 
       expect(() => resolveGitHubToken(undefined, appConfig)).toThrow(
-        "GitHub App Private Key is empty"
+        "GitHub App Private Key not found"
       );
     });
 

@@ -99,3 +99,14 @@ export {
 
 // 監査ログ
 export { exportAuditLogs, showAuditLogs } from './audit';
+
+// Secret Manager
+export {
+  enableSecretManager,
+  disableSecretManager,
+  showSecretManagerStatus,
+  storeSecret,
+  getSecret,
+  deleteSecret,
+  migratePrivateKey,
+} from './secretManager';

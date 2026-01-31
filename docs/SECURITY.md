@@ -240,26 +240,67 @@ export function validateCustomField(value: string): void {
 2. 閲覧権限のみのユーザーはPropertiesを見られない
 3. 編集権限のユーザーは全てのPropertiesを閲覧可能
 
-### Google Secret Managerの検討
+### Google Secret Manager統合（推奨）
 
-より高度なセキュリティが必要な場合は、Google Secret Managerの利用を推奨します。
+**組織利用では必須**の機密情報保護機能です。Private KeyをSecret Managerで管理できます。
 
 **メリット:**
-- バージョン管理
-- アクセス制御の細分化
-- 監査ログの自動記録
-- ローテーション機能
+- ✅ バージョン管理（過去のキーにロールバック可能）
+- ✅ アクセス制御の細分化（IAMで管理）
+- ✅ 監査ログの自動記録（Cloud Audit Logs）
+- ✅ 自動ローテーション機能
+- ✅ PropertiesServiceの平文保存リスクを解消
 
-**実装例:**
+**セットアップ手順:**
+
 ```javascript
-// Secret Managerからトークンを取得（要実装）
-function getSecretFromSecretManager(secretName) {
-  const projectId = 'your-gcp-project-id';
-  const url = `https://secretmanager.googleapis.com/v1/projects/${projectId}/secrets/${secretName}/versions/latest:access`;
+// 1. Secret Managerを有効化
+enableSecretManager('your-gcp-project-id');
 
-  // OAuth2認証が必要
-  // 実装の詳細は Google Secret Manager API ドキュメントを参照
+// 2. GitHub Apps認証をセットアップ
+// Private Keyは自動的にSecret Managerに保存されます
+setupWithGitHubApp(appId, privateKey, installationId, spreadsheetId);
+
+// 3. 既存のPrivate Keyを移行する場合
+migratePrivateKey();
+
+// 4. Secret Managerの状態を確認
+showSecretManagerStatus();
+```
+
+**必要な設定:**
+
+1. **GCP Console**で以下を実施:
+   - Secret Manager APIを有効化
+   - GASサービスアカウントに`Secret Manager Secret Accessor`ロールを付与
+
+2. **appsscript.json**にOAuth2スコープを追加:
+```json
+{
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.scriptapp",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/cloud-platform"
+  ]
 }
+```
+
+**フォールバック機構:**
+
+Secret Manager取得に失敗した場合、自動的にPropertiesServiceにフォールバックします。
+
+**その他のシークレット管理:**
+
+```javascript
+// カスタムシークレットの保存
+storeSecret('api-key', 'your-secret-value', { app: 'my-app' });
+
+// シークレットの取得
+const apiKey = getSecret('api-key');
+
+// シークレットの削除
+deleteSecret('old-api-key');
 ```
 
 ### Private Keyの定期ローテーション
