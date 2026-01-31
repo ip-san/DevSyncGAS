@@ -1,18 +1,21 @@
 /**
  * spreadsheet.ts のユニットテスト
+ *
+ * リポジトリ別シート構造のテスト
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import {
-  writeMetricsToSheet,
-  clearOldData,
-  createSummarySheet,
+  writeMetricsToRepositorySheet,
+  writeMetricsToAllRepositorySheets,
+  groupMetricsByRepository,
+  getRepositorySheetName,
 } from "../../src/services/spreadsheet";
 import { setupTestContainer, teardownTestContainer, type TestContainer } from "../helpers/setup";
 import type { DevOpsMetrics } from "../../src/types";
 import { MockSheet } from "../mocks";
 
-describe("spreadsheet", () => {
+describe("spreadsheet (repository-per-sheet)", () => {
   let container: TestContainer;
 
   beforeEach(() => {
@@ -23,7 +26,64 @@ describe("spreadsheet", () => {
     teardownTestContainer();
   });
 
-  describe("writeMetricsToSheet", () => {
+  describe("getRepositorySheetName", () => {
+    it("リポジトリ名をそのままシート名として返す", () => {
+      expect(getRepositorySheetName("owner/repo")).toBe("owner/repo");
+    });
+  });
+
+  describe("groupMetricsByRepository", () => {
+    it("リポジトリごとにメトリクスをグループ化する", () => {
+      const metrics: DevOpsMetrics[] = [
+        {
+          date: "2024-01-01",
+          repository: "owner/repo1",
+          deploymentCount: 10,
+          deploymentFrequency: "daily",
+          leadTimeForChangesHours: 2.5,
+          totalDeployments: 12,
+          failedDeployments: 2,
+          changeFailureRate: 16.7,
+          meanTimeToRecoveryHours: 1.5,
+        },
+        {
+          date: "2024-01-01",
+          repository: "owner/repo2",
+          deploymentCount: 5,
+          deploymentFrequency: "weekly",
+          leadTimeForChangesHours: 3.0,
+          totalDeployments: 6,
+          failedDeployments: 1,
+          changeFailureRate: 16.7,
+          meanTimeToRecoveryHours: 2.0,
+        },
+        {
+          date: "2024-01-02",
+          repository: "owner/repo1",
+          deploymentCount: 8,
+          deploymentFrequency: "daily",
+          leadTimeForChangesHours: 2.0,
+          totalDeployments: 20,
+          failedDeployments: 3,
+          changeFailureRate: 15.0,
+          meanTimeToRecoveryHours: 1.0,
+        },
+      ];
+
+      const grouped = groupMetricsByRepository(metrics);
+
+      expect(grouped.size).toBe(2);
+      expect(grouped.get("owner/repo1")).toHaveLength(2);
+      expect(grouped.get("owner/repo2")).toHaveLength(1);
+    });
+
+    it("空の配列を渡すと空のMapを返す", () => {
+      const grouped = groupMetricsByRepository([]);
+      expect(grouped.size).toBe(0);
+    });
+  });
+
+  describe("writeMetricsToRepositorySheet", () => {
     const testMetrics: DevOpsMetrics[] = [
       {
         date: "2024-01-01",
@@ -38,12 +98,12 @@ describe("spreadsheet", () => {
       },
     ];
 
-    it("シートがない場合は新規作成する", () => {
+    it("リポジトリ別シートを作成してメトリクスを書き込む", () => {
       const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
 
-      writeMetricsToSheet("test-id", "Test Sheet", testMetrics);
+      writeMetricsToRepositorySheet("test-id", "owner/repo", testMetrics);
 
-      const sheet = spreadsheet.getSheetByName("Test Sheet") as MockSheet;
+      const sheet = spreadsheet.getSheetByName("owner/repo") as MockSheet;
       expect(sheet).not.toBeNull();
       expect(sheet!.getFrozenRows()).toBe(1);
     });
@@ -51,13 +111,12 @@ describe("spreadsheet", () => {
     it("ヘッダー行を設定する", () => {
       const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
 
-      writeMetricsToSheet("test-id", "Test Sheet", testMetrics);
+      writeMetricsToRepositorySheet("test-id", "owner/repo", testMetrics);
 
-      const sheet = spreadsheet.getSheetByName("Test Sheet") as MockSheet;
+      const sheet = spreadsheet.getSheetByName("owner/repo") as MockSheet;
       const data = sheet!.getData();
       expect(data[0]).toEqual([
         "日付",
-        "リポジトリ",
         "デプロイ回数",
         "デプロイ頻度",
         "リードタイム (時間)",
@@ -71,13 +130,12 @@ describe("spreadsheet", () => {
     it("メトリクスデータを書き込む", () => {
       const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
 
-      writeMetricsToSheet("test-id", "Test Sheet", testMetrics);
+      writeMetricsToRepositorySheet("test-id", "owner/repo", testMetrics);
 
-      const sheet = spreadsheet.getSheetByName("Test Sheet") as MockSheet;
+      const sheet = spreadsheet.getSheetByName("owner/repo") as MockSheet;
       const data = sheet!.getData();
       expect(data[1]).toEqual([
         "2024-01-01",
-        "owner/repo",
         10,
         "daily",
         2.5,
@@ -97,134 +155,79 @@ describe("spreadsheet", () => {
         },
       ];
 
-      writeMetricsToSheet("test-id", "Test Sheet", metricsWithNullMTTR);
+      writeMetricsToRepositorySheet("test-id", "owner/repo", metricsWithNullMTTR);
 
-      const sheet = spreadsheet.getSheetByName("Test Sheet") as MockSheet;
+      const sheet = spreadsheet.getSheetByName("owner/repo") as MockSheet;
       const data = sheet!.getData();
-      expect(data[1][8]).toBe("N/A");
+      expect(data[1][7]).toBe("N/A");
     });
 
-    it("空のメトリクスの場合はログを出力して終了", () => {
-      const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
-
-      writeMetricsToSheet("test-id", "Test Sheet", []);
-
-      expect(container.logger.logs).toContain("⚠️ No metrics to write");
-    });
-
-    it("既存シートに追記する", () => {
-      const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
-      const sheet = spreadsheet.addSheet("Test Sheet", [
-        ["Date", "Repository", "Deployment Count", "Deployment Frequency", "Lead Time (hours)", "Total Deployments", "Failed Deployments", "Change Failure Rate (%)", "MTTR (hours)"],
-        ["2024-01-01", "owner/repo1", 5, "weekly", 3.0, 6, 1, 16.7, 2.0],
-      ]);
-
-      writeMetricsToSheet("test-id", "Test Sheet", testMetrics);
-
-      const data = sheet.getData();
-      expect(data).toHaveLength(3); // ヘッダー + 既存データ + 新規データ
-      expect(data[2][1]).toBe("owner/repo");
-    });
-  });
-
-  describe("clearOldData", () => {
-    it("古いデータを削除する", () => {
-      const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
-      const oldDate = new Date();
-      oldDate.setDate(oldDate.getDate() - 100); // 100日前
-      const recentDate = new Date();
-      recentDate.setDate(recentDate.getDate() - 30); // 30日前
-
-      const sheet = spreadsheet.addSheet("Test Sheet", [
-        ["Date", "Repository", "Data"],
-        [oldDate.toISOString(), "owner/old-repo", "old data"],
-        [recentDate.toISOString(), "owner/recent-repo", "recent data"],
-      ]);
-
-      clearOldData("test-id", "Test Sheet", 90);
-
-      const data = sheet.getData();
-      expect(data).toHaveLength(2); // ヘッダー + 最近のデータ
-      expect(data[1][1]).toBe("owner/recent-repo");
-    });
-
-    it("シートが存在しない場合は何もしない", () => {
+    it("空のメトリクスの場合は何も書き込まない", () => {
       container.spreadsheetClient.addSpreadsheet("test-id");
 
-      // エラーが発生しないことを確認
-      expect(() => clearOldData("test-id", "NonExistent Sheet", 90)).not.toThrow();
+      const result = writeMetricsToRepositorySheet("test-id", "owner/repo", []);
+
+      expect(result.written).toBe(0);
+      expect(result.skipped).toBe(0);
     });
 
-    it("全てのデータが新しい場合は削除しない", () => {
+    it("重複チェックが有効な場合、既存データをスキップする", () => {
       const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
-      const recentDate = new Date();
-      recentDate.setDate(recentDate.getDate() - 10);
-
-      const sheet = spreadsheet.addSheet("Test Sheet", [
-        ["Date", "Repository", "Data"],
-        [recentDate.toISOString(), "owner/repo1", "data1"],
-        [recentDate.toISOString(), "owner/repo2", "data2"],
+      spreadsheet.addSheet("owner/repo", [
+        ["日付", "デプロイ回数", "デプロイ頻度", "リードタイム (時間)", "総デプロイ数", "失敗デプロイ数", "変更障害率 (%)", "平均復旧時間 (時間)"],
+        ["2024-01-01", 10, "daily", 2.5, 12, 2, 16.7, 1.5],
       ]);
 
-      clearOldData("test-id", "Test Sheet", 90);
+      const result = writeMetricsToRepositorySheet("test-id", "owner/repo", testMetrics, { skipDuplicates: true });
 
-      const data = sheet.getData();
-      expect(data).toHaveLength(3);
+      expect(result.written).toBe(0);
+      expect(result.skipped).toBe(1);
     });
   });
 
-  describe("createSummarySheet", () => {
-    it("サマリーシートを新規作成する", () => {
+  describe("writeMetricsToAllRepositorySheets", () => {
+    it("複数リポジトリのメトリクスを各シートに書き込む", () => {
       const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
-      spreadsheet.addSheet("Source Sheet", [["Header1", "Header2"]]);
+      const metrics: DevOpsMetrics[] = [
+        {
+          date: "2024-01-01",
+          repository: "owner/repo1",
+          deploymentCount: 10,
+          deploymentFrequency: "daily",
+          leadTimeForChangesHours: 2.5,
+          totalDeployments: 12,
+          failedDeployments: 2,
+          changeFailureRate: 16.7,
+          meanTimeToRecoveryHours: 1.5,
+        },
+        {
+          date: "2024-01-01",
+          repository: "owner/repo2",
+          deploymentCount: 5,
+          deploymentFrequency: "weekly",
+          leadTimeForChangesHours: 3.0,
+          totalDeployments: 6,
+          failedDeployments: 1,
+          changeFailureRate: 16.7,
+          meanTimeToRecoveryHours: 2.0,
+        },
+      ];
 
-      createSummarySheet("test-id", "Source Sheet");
+      writeMetricsToAllRepositorySheets("test-id", metrics);
 
-      const summarySheet = spreadsheet.getSheetByName("Source Sheet - Summary");
-      expect(summarySheet).not.toBeNull();
+      const sheet1 = spreadsheet.getSheetByName("owner/repo1");
+      const sheet2 = spreadsheet.getSheetByName("owner/repo2");
+      expect(sheet1).not.toBeNull();
+      expect(sheet2).not.toBeNull();
     });
 
-    it("サマリーヘッダーを設定する", () => {
-      const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
-      spreadsheet.addSheet("Source Sheet", [["Header1", "Header2"]]);
+    it("空のメトリクスの場合は0リポジトリを処理", () => {
+      container.spreadsheetClient.addSpreadsheet("test-id");
 
-      createSummarySheet("test-id", "Source Sheet");
+      const results = writeMetricsToAllRepositorySheets("test-id", []);
 
-      const summarySheet = spreadsheet.getSheetByName("Source Sheet - Summary") as MockSheet;
-      const data = summarySheet!.getData();
-      expect(data[0]).toEqual([
-        "リポジトリ",
-        "データポイント数",
-        "平均デプロイ回数",
-        "平均リードタイム (時間)",
-        "平均変更障害率 (%)",
-        "平均復旧時間 (時間)",
-        "最終更新日時",
-      ]);
-    });
-
-    it("既存のサマリーシートをクリアして再作成する", () => {
-      const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
-      spreadsheet.addSheet("Source Sheet", [["Header"]]);
-      const existingSummary = spreadsheet.addSheet("Source Sheet - Summary", [
-        ["Old Header"],
-        ["Old Data"],
-      ]);
-
-      createSummarySheet("test-id", "Source Sheet");
-
-      const data = existingSummary.getData();
-      expect(data[0][0]).toBe("リポジトリ"); // 新しいヘッダー
-    });
-
-    it("ソースシートがない場合はヘッダーのみ設定", () => {
-      const spreadsheet = container.spreadsheetClient.addSpreadsheet("test-id");
-
-      createSummarySheet("test-id", "NonExistent Sheet");
-
-      // サマリーシートは作成されるがデータなし
-      const summarySheet = spreadsheet.getSheetByName("NonExistent Sheet - Summary");
-      expect(summarySheet).not.toBeNull();
+      expect(results.size).toBe(0);
+      expect(container.logger.logs).toContain("📊 Writing metrics to 0 repository sheets...");
     });
   });
 });

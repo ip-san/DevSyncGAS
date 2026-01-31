@@ -24,13 +24,16 @@ export interface HttpClient {
 // スプレッドシートの抽象化
 export interface SheetRange {
   getValues(): unknown[][];
+  getValue(): unknown;
   setValues(values: unknown[][]): void;
+  setValue(value: unknown): void;
   setFontWeight(weight: 'bold' | 'normal' | null): void;
   setNumberFormat(format: string): void;
 }
 
 export interface Sheet {
   getName(): string;
+  setName(name: string): void;
   getRange(row: number, col: number, numRows?: number, numCols?: number): SheetRange;
   getDataRange(): SheetRange;
   getLastRow(): number;
@@ -45,6 +48,9 @@ export interface Spreadsheet {
   getName(): string;
   getSheetByName(name: string): Sheet | null;
   insertSheet(name: string): Sheet;
+  deleteSheet(sheet: Sheet): void;
+  setActiveSheet(sheet: Sheet): void;
+  moveActiveSheet(position: number): void;
 }
 
 export interface SpreadsheetClient {

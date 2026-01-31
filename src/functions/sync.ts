@@ -15,10 +15,11 @@ import {
   type DateRange,
 } from '../services/github';
 import {
-  writeMetricsToSheet,
-  writeMetricsWithDuplicateCheck,
-  createSummarySheet,
-  clearOldData,
+  // リポジトリ別シート構造
+  writeMetricsToAllRepositorySheets,
+  writeDashboard,
+  writeDashboardTrends,
+  createDevOpsSummaryFromMetrics,
 } from '../services/spreadsheet';
 import { calculateMetricsForRepository, calculateDailyMetrics } from '../utils/metrics';
 import { ensureContainerInitialized } from './helpers';
@@ -62,12 +63,16 @@ function fetchRepositoriesData(
 
 /**
  * DevOps指標を収集してスプレッドシートに書き出す
+ *
+ * リポジトリごとに別シートに書き出し、
+ * Dashboard、Summaryシートも自動生成。
  */
 export function syncDevOpsMetrics(dateRange?: DateRange): void {
   ensureContainerInitialized();
   const config = getConfig();
 
-  Logger.log(`📊 Repositories: ${config.github.repositories.length}`);
+  Logger.log(`📊 Syncing metrics to repository sheets`);
+  Logger.log(`   Repositories: ${config.github.repositories.length}`);
   config.github.repositories.forEach((repo) => {
     Logger.log(`  - ${repo.fullName}`);
   });
@@ -95,13 +100,23 @@ export function syncDevOpsMetrics(dateRange?: DateRange): void {
 
   Logger.log(`📈 Calculated ${metrics.length} metrics`);
 
-  writeMetricsToSheet(config.spreadsheet.id, config.spreadsheet.sheetName, metrics);
+  // リポジトリ別シートに書き込み
+  writeMetricsToAllRepositorySheets(config.spreadsheet.id, metrics, { skipDuplicates: true });
 
-  Logger.log(`✅ Synced metrics for ${metrics.length} repositories`);
+  // Dashboard更新
+  writeDashboard(config.spreadsheet.id, metrics);
+  writeDashboardTrends(config.spreadsheet.id, metrics);
+
+  // Summary更新
+  createDevOpsSummaryFromMetrics(config.spreadsheet.id, metrics, 'DevOps Summary');
+
+  Logger.log(`✅ Synced metrics to ${config.github.repositories.length} repository sheets`);
 }
 
 /**
  * 全プロジェクトグループのDevOps指標を収集
+ *
+ * 各プロジェクトでリポジトリ別シート、Dashboard、Summaryを生成。
  */
 export function syncAllProjects(dateRange?: DateRange): void {
   ensureContainerInitialized();
@@ -109,7 +124,7 @@ export function syncAllProjects(dateRange?: DateRange): void {
   const projects = config.projects ?? [];
 
   if (projects.length === 0) {
-    Logger.log('⚠️ No projects configured. Using legacy single spreadsheet mode.');
+    Logger.log('⚠️ No projects configured. Using single spreadsheet mode.');
     syncDevOpsMetrics(dateRange);
     return;
   }
@@ -146,9 +161,17 @@ export function syncAllProjects(dateRange?: DateRange): void {
       calculateMetricsForRepository(repo.fullName, pullRequests, workflowRuns, deployments)
     );
 
-    writeMetricsToSheet(project.spreadsheetId, project.sheetName, metrics);
+    // リポジトリ別シートに書き込み
+    writeMetricsToAllRepositorySheets(project.spreadsheetId, metrics, { skipDuplicates: true });
 
-    Logger.log(`   ✅ Synced metrics for ${metrics.length} repositories`);
+    // Dashboard更新
+    writeDashboard(project.spreadsheetId, metrics);
+    writeDashboardTrends(project.spreadsheetId, metrics);
+
+    // Summary更新
+    createDevOpsSummaryFromMetrics(project.spreadsheetId, metrics, 'DevOps Summary');
+
+    Logger.log(`   ✅ Synced metrics to ${metrics.length} repository sheets`);
   }
 
   Logger.log(`\n✅ All ${projects.length} projects synced`);
@@ -156,6 +179,8 @@ export function syncAllProjects(dateRange?: DateRange): void {
 
 /**
  * 指定したプロジェクトのDevOps指標を収集
+ *
+ * リポジトリ別シート、Dashboard、Summaryを生成。
  */
 export function syncProject(projectName: string, dateRange?: DateRange): void {
   ensureContainerInitialized();
@@ -187,9 +212,17 @@ export function syncProject(projectName: string, dateRange?: DateRange): void {
     calculateMetricsForRepository(repo.fullName, pullRequests, workflowRuns, deployments)
   );
 
-  writeMetricsToSheet(project.spreadsheetId, project.sheetName, metrics);
+  // リポジトリ別シートに書き込み
+  writeMetricsToAllRepositorySheets(project.spreadsheetId, metrics, { skipDuplicates: true });
 
-  Logger.log(`✅ Synced metrics for ${metrics.length} repositories`);
+  // Dashboard更新
+  writeDashboard(project.spreadsheetId, metrics);
+  writeDashboardTrends(project.spreadsheetId, metrics);
+
+  // Summary更新
+  createDevOpsSummaryFromMetrics(project.spreadsheetId, metrics, 'DevOps Summary');
+
+  Logger.log(`✅ Synced metrics to ${metrics.length} repository sheets`);
 }
 
 // =============================================================================
@@ -243,7 +276,7 @@ export function syncLast90Days(): void {
 /**
  * 日別バックフィル: 過去N日分のメトリクスを日別に記録
  *
- * 30日分なら 30 × リポジトリ数 の行が追加される。
+ * 30日分なら 30 × リポジトリ数 の行がリポジトリ別シートに追加される。
  * 重複チェックにより、既に記録済みの(日付, リポジトリ)はスキップされる。
  *
  * @param days - バックフィル日数（デフォルト: 30）
@@ -285,12 +318,23 @@ export function syncDailyBackfill(days = 30): void {
 
   Logger.log(`📊 Generated ${dailyMetrics.length} daily records`);
 
-  // 4. 重複除外して書き込み
-  writeMetricsWithDuplicateCheck(config.spreadsheet.id, config.spreadsheet.sheetName, dailyMetrics);
+  // 4. リポジトリ別シートに書き込み
+  writeMetricsToAllRepositorySheets(config.spreadsheet.id, dailyMetrics, { skipDuplicates: true });
+
+  // 5. Dashboard更新
+  writeDashboard(config.spreadsheet.id, dailyMetrics);
+  writeDashboardTrends(config.spreadsheet.id, dailyMetrics);
+
+  // 6. Summary更新
+  createDevOpsSummaryFromMetrics(config.spreadsheet.id, dailyMetrics, 'DevOps Summary');
+
+  Logger.log(`✅ Daily backfill completed`);
 }
 
 /**
  * 全プロジェクトの日別バックフィル
+ *
+ * 各プロジェクトでリポジトリ別シート、Dashboard、Summaryを生成。
  *
  * @param days - バックフィル日数（デフォルト: 30）
  */
@@ -300,7 +344,7 @@ export function backfillAllProjectsDaily(days = 30): void {
   const projects = config.projects ?? [];
 
   if (projects.length === 0) {
-    Logger.log('⚠️ No projects configured. Using legacy single spreadsheet mode.');
+    Logger.log('⚠️ No projects configured. Using single spreadsheet mode.');
     syncDailyBackfill(days);
     return;
   }
@@ -344,7 +388,15 @@ export function backfillAllProjectsDaily(days = 30): void {
 
     Logger.log(`   📊 Generated ${dailyMetrics.length} daily records`);
 
-    writeMetricsWithDuplicateCheck(project.spreadsheetId, project.sheetName, dailyMetrics);
+    // リポジトリ別シートに書き込み
+    writeMetricsToAllRepositorySheets(project.spreadsheetId, dailyMetrics, { skipDuplicates: true });
+
+    // Dashboard更新
+    writeDashboard(project.spreadsheetId, dailyMetrics);
+    writeDashboardTrends(project.spreadsheetId, dailyMetrics);
+
+    // Summary更新
+    createDevOpsSummaryFromMetrics(project.spreadsheetId, dailyMetrics, 'DevOps Summary');
   }
 
   Logger.log(`\n✅ Daily backfill completed for ${projects.length} projects`);
@@ -364,37 +416,4 @@ export function backfillLast90Days(): void {
 // ユーティリティ
 // =============================================================================
 
-/** 古いデータのクリーンアップ */
-export function cleanup(daysToKeep = 90): void {
-  ensureContainerInitialized();
-  const config = getConfig();
-  clearOldData(config.spreadsheet.id, config.spreadsheet.sheetName, daysToKeep);
-  Logger.log(`✅ Cleaned up data older than ${daysToKeep} days`);
-}
 
-/** サマリーシートを作成 */
-export function generateSummary(): void {
-  ensureContainerInitialized();
-  const config = getConfig();
-  createSummarySheet(config.spreadsheet.id, config.spreadsheet.sheetName);
-  Logger.log('✅ Summary sheet created');
-}
-
-/** 全プロジェクトのサマリーシートを生成 */
-export function generateAllProjectSummaries(): void {
-  ensureContainerInitialized();
-  const projects = getProjects();
-
-  if (projects.length === 0) {
-    Logger.log('⚠️ No projects configured. Using legacy single spreadsheet mode.');
-    generateSummary();
-    return;
-  }
-
-  for (const project of projects) {
-    Logger.log(`📊 Generating summary for project: ${project.name}`);
-    createSummarySheet(project.spreadsheetId, project.sheetName);
-  }
-
-  Logger.log(`✅ Generated summaries for ${projects.length} projects`);
-}

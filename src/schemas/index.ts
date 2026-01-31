@@ -493,10 +493,96 @@ export const PR_SIZE_DETAIL_SCHEMA: SheetSchema = {
 };
 
 // =============================================================================
+// Dashboard スキーマ
+// =============================================================================
+
+export const DASHBOARD_SCHEMA: SheetSchema = {
+  version: '1.0.0',
+  sheetName: 'Dashboard',
+  columns: [
+    { id: 'repository', header: 'リポジトリ', type: 'string' },
+    { id: 'deploymentFrequency', header: 'デプロイ頻度', type: 'string' },
+    { id: 'leadTimeHours', header: 'リードタイム (時間)', type: 'number', numberFormat: '#,##0.0' },
+    {
+      id: 'changeFailureRate',
+      header: '変更障害率 (%)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+    },
+    { id: 'mttrHours', header: 'MTTR (時間)', type: 'number', numberFormat: '#,##0.0' },
+    {
+      id: 'cycleTimeHours',
+      header: 'サイクルタイム (時間)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+    },
+    {
+      id: 'timeToFirstReviewHours',
+      header: 'レビュー待ち (時間)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+    },
+    { id: 'avgLinesOfCode', header: 'PRサイズ (行)', type: 'number', numberFormat: '#,##0' },
+    { id: 'status', header: 'ステータス', type: 'string' },
+  ],
+};
+
+export const DASHBOARD_TREND_SCHEMA: SheetSchema = {
+  version: '1.0.0',
+  sheetName: 'Dashboard - Trend',
+  columns: [
+    { id: 'week', header: '週', type: 'string' },
+    { id: 'totalDeployments', header: 'デプロイ回数', type: 'number', numberFormat: '#,##0' },
+    { id: 'avgLeadTimeHours', header: 'リードタイム (時間)', type: 'number', numberFormat: '#,##0.0' },
+    {
+      id: 'avgChangeFailureRate',
+      header: '変更障害率 (%)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+    },
+    {
+      id: 'avgCycleTimeHours',
+      header: 'サイクルタイム (時間)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+    },
+    { id: 'changeIndicator', header: '前週比', type: 'string' },
+  ],
+};
+
+// =============================================================================
+// リポジトリ別 DevOps Metrics スキーマ
+// =============================================================================
+
+export const REPOSITORY_DEVOPS_SCHEMA: SheetSchema = {
+  version: '1.0.0',
+  sheetName: '', // 動的に設定（owner/repo形式）
+  columns: [
+    { id: 'date', header: '日付', type: 'date' },
+    { id: 'deploymentCount', header: 'デプロイ回数', type: 'number', numberFormat: '#,##0' },
+    { id: 'deploymentFrequency', header: 'デプロイ頻度', type: 'string' },
+    { id: 'leadTimeHours', header: 'リードタイム (時間)', type: 'number', numberFormat: '#,##0.0' },
+    { id: 'totalDeployments', header: '総デプロイ数', type: 'number', numberFormat: '#,##0' },
+    { id: 'failedDeployments', header: '失敗デプロイ数', type: 'number', numberFormat: '#,##0' },
+    { id: 'changeFailureRate', header: '変更障害率 (%)', type: 'number', numberFormat: '#,##0.0' },
+    {
+      id: 'mttrHours',
+      header: '平均復旧時間 (時間)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+      defaultValue: 'N/A',
+    },
+  ],
+};
+
+// =============================================================================
 // 全スキーマ一覧
 // =============================================================================
 
 export const ALL_SCHEMAS: SheetSchema[] = [
+  DASHBOARD_SCHEMA,
+  DASHBOARD_TREND_SCHEMA,
+  REPOSITORY_DEVOPS_SCHEMA,
   DEVOPS_METRICS_SCHEMA,
   DEVOPS_SUMMARY_SCHEMA,
   CYCLE_TIME_SCHEMA,

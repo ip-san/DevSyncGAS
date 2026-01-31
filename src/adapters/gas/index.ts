@@ -52,8 +52,16 @@ class GasSheetRange implements SheetRange {
     return this.range.getValues();
   }
 
+  getValue(): unknown {
+    return this.range.getValue();
+  }
+
   setValues(values: unknown[][]): void {
     this.range.setValues(values);
+  }
+
+  setValue(value: unknown): void {
+    this.range.setValue(value);
   }
 
   setFontWeight(weight: 'bold' | 'normal' | null): void {
@@ -70,6 +78,10 @@ class GasSheet implements Sheet {
 
   getName(): string {
     return this.sheet.getName();
+  }
+
+  setName(name: string): void {
+    this.sheet.setName(name);
   }
 
   getRange(row: number, col: number, numRows?: number, numCols?: number): SheetRange {
@@ -123,6 +135,24 @@ class GasSpreadsheet implements Spreadsheet {
 
   insertSheet(name: string): Sheet {
     return new GasSheet(this.spreadsheet.insertSheet(name));
+  }
+
+  deleteSheet(sheet: Sheet): void {
+    const gasSheet = this.spreadsheet.getSheetByName(sheet.getName());
+    if (gasSheet) {
+      this.spreadsheet.deleteSheet(gasSheet);
+    }
+  }
+
+  setActiveSheet(sheet: Sheet): void {
+    const gasSheet = this.spreadsheet.getSheetByName(sheet.getName());
+    if (gasSheet) {
+      this.spreadsheet.setActiveSheet(gasSheet);
+    }
+  }
+
+  moveActiveSheet(position: number): void {
+    this.spreadsheet.moveActiveSheet(position);
   }
 }
 

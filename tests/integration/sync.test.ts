@@ -1,11 +1,13 @@
 /**
  * 統合テスト - DevOps指標の同期フロー全体をテスト
+ *
+ * リポジトリ別シート構造のテスト
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { getConfig, setConfig, addRepository } from "../../src/config/settings";
 import { getAllRepositoriesData } from "../../src/services/github";
-import { writeMetricsToSheet } from "../../src/services/spreadsheet";
+import { writeMetricsToAllRepositorySheets } from "../../src/services/spreadsheet";
 import { calculateMetricsForRepository } from "../../src/utils/metrics";
 import {
   setupTestContainer,
@@ -28,7 +30,7 @@ describe("Integration: syncDevOpsMetrics flow", () => {
     teardownTestContainer();
   });
 
-  it("設定取得 → GitHub データ取得 → メトリクス計算 → スプレッドシート書き込み", () => {
+  it("設定取得 → GitHub データ取得 → メトリクス計算 → リポジトリ別シート書き込み", () => {
     // Setup: GitHub API モックレスポンス
     container.httpClient.setJsonResponse(
       "https://api.github.com/repos/test-owner/test-repo/pulls?state=all&per_page=100&page=1&sort=updated&direction=desc",
@@ -131,17 +133,18 @@ describe("Integration: syncDevOpsMetrics flow", () => {
     expect(metrics[0].failedDeployments).toBe(1);
     expect(metrics[0].changeFailureRate).toBeCloseTo(33.3, 0);
 
-    // Step 4: スプレッドシートに書き込み
-    writeMetricsToSheet(config.spreadsheet.id, config.spreadsheet.sheetName, metrics);
+    // Step 4: リポジトリ別シートに書き込み
+    writeMetricsToAllRepositorySheets(config.spreadsheet.id, metrics);
 
-    const sheet = spreadsheet.getSheetByName(config.spreadsheet.sheetName) as MockSheet;
+    // リポジトリ名のシートが作成される
+    const sheet = spreadsheet.getSheetByName("test-owner/test-repo") as MockSheet;
     expect(sheet).not.toBeNull();
     const data = sheet!.getData();
     expect(data).toHaveLength(2); // ヘッダー + 1行
-    expect(data[1][1]).toBe("test-owner/test-repo");
+    expect(data[1][0]).toBe(metrics[0].date); // 日付
   });
 
-  it("複数リポジトリの同期", () => {
+  it("複数リポジトリの同期 - 各リポジトリに別シートを作成", () => {
     // 2つ目のリポジトリを追加
     addRepository("another-owner", "another-repo");
 
@@ -220,11 +223,13 @@ describe("Integration: syncDevOpsMetrics flow", () => {
 
     expect(metrics).toHaveLength(2);
 
-    writeMetricsToSheet(config.spreadsheet.id, config.spreadsheet.sheetName, metrics);
+    writeMetricsToAllRepositorySheets(config.spreadsheet.id, metrics);
 
-    const sheet = spreadsheet.getSheetByName(config.spreadsheet.sheetName) as MockSheet;
-    const data = sheet!.getData();
-    expect(data).toHaveLength(3); // ヘッダー + 2行
+    // 各リポジトリに別シートが作成される
+    const sheet1 = spreadsheet.getSheetByName("test-owner/test-repo");
+    const sheet2 = spreadsheet.getSheetByName("another-owner/another-repo");
+    expect(sheet1).not.toBeNull();
+    expect(sheet2).not.toBeNull();
   });
 
   it("API エラー時も処理を継続する", () => {

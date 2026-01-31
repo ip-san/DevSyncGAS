@@ -73,7 +73,11 @@ src/
 │   │   ├── issues.ts       #   Issue操作
 │   │   └── cycleTime.ts    #   サイクルタイム計測
 │   ├── spreadsheet/        # スプレッドシート書き出し
-│   │   ├── devops.ts       #   DORA指標シート
+│   │   ├── devops.ts       #   DORA指標シート（従来型）
+│   │   ├── repositorySheet.ts  #   リポジトリ別シート（V2）
+│   │   ├── dashboard.ts    #   Dashboardシート
+│   │   ├── metricsSummary.ts   #   Summaryシート
+│   │   ├── sheetMigration.ts   #   シート構造マイグレーション
 │   │   ├── cycleTime.ts    #   サイクルタイムシート
 │   │   └── ...             #   その他指標シート
 │   ├── migration.ts        # スキーママイグレーション
@@ -177,6 +181,33 @@ syncAllProjects();  // 全プロジェクト一括同期
 ```typescript
 previewMigration();   // 変更内容を確認
 migrateAllSchemas();  // 実行
+```
+
+### 5. リポジトリ別シート構造（V2）
+
+従来は1シートに全リポジトリのデータが混在していたが、V2ではリポジトリごとに別シートに分離される。
+
+```
+プロジェクト (スプレッドシート)
+├── Dashboard                    # 全リポ×全指標の俯瞰 + ステータス
+├── Dashboard - Trend            # 週次トレンド
+├── DevOps Summary               # リポジトリ比較サマリー
+├── owner/repo-a                 # リポジトリ別データ
+├── owner/repo-b
+└── owner/repo-c
+```
+
+**メリット**:
+- シートタブでリポジトリを即座に切り替え可能
+- 問題のあるリポジトリが一目瞭然
+- Dashboardでステータス（良好/要注意/要対応）を表示
+
+```typescript
+// 新構造で同期
+syncDevOpsMetricsV2();
+
+// 従来構造からマイグレーション
+migrateToNewStructure();
 ```
 
 ---
