@@ -70,8 +70,12 @@ export function determineHealthStatus(
   }
 
   // 最も悪いステータスを返す
-  if (statuses.includes('critical')) {return 'critical';}
-  if (statuses.includes('warning')) {return 'warning';}
+  if (statuses.includes('critical')) {
+    return 'critical';
+  }
+  if (statuses.includes('warning')) {
+    return 'warning';
+  }
   return 'good';
 }
 
@@ -179,10 +183,7 @@ function calculateOverallAverage(
  * @param spreadsheetId - スプレッドシートID
  * @param metrics - 全リポジトリのメトリクス
  */
-export function writeDashboard(
-  spreadsheetId: string,
-  metrics: DevOpsMetrics[]
-): void {
+export function writeDashboard(spreadsheetId: string, metrics: DevOpsMetrics[]): void {
   const { logger } = getContainer();
   const spreadsheet = openSpreadsheet(spreadsheetId);
 
@@ -274,7 +275,9 @@ export function writeDashboard(
  * Dashboardシートのフォーマット
  */
 function formatDashboardSheet(sheet: Sheet, rowCount: number, hasOverallRow: boolean): void {
-  if (rowCount === 0) {return;}
+  if (rowCount === 0) {
+    return;
+  }
 
   const lastCol = sheet.getLastColumn();
 
@@ -365,7 +368,8 @@ function getISOWeek(date: Date): string {
   d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
   const week1 = new Date(d.getFullYear(), 0, 4);
   const weekNum =
-    1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+    1 +
+    Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
   return `${d.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
 }
 
@@ -392,10 +396,7 @@ function calculateChange(current: number | null, previous: number | null): strin
 /**
  * トレンドシートを作成または更新
  */
-export function writeDashboardTrends(
-  spreadsheetId: string,
-  metrics: DevOpsMetrics[]
-): void {
+export function writeDashboardTrends(spreadsheetId: string, metrics: DevOpsMetrics[]): void {
   const { logger } = getContainer();
   const spreadsheet = openSpreadsheet(spreadsheetId);
 
@@ -407,7 +408,14 @@ export function writeDashboardTrends(
     sheet = spreadsheet.insertSheet(sheetName);
   }
 
-  const headers = ['週', 'デプロイ回数', 'リードタイム (時間)', '変更障害率 (%)', 'サイクルタイム (時間)', '前週比'];
+  const headers = [
+    '週',
+    'デプロイ回数',
+    'リードタイム (時間)',
+    '変更障害率 (%)',
+    'サイクルタイム (時間)',
+    '前週比',
+  ];
 
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');

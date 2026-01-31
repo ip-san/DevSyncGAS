@@ -41,11 +41,7 @@ export {
 } from './metricsSummary';
 
 // マイグレーション
-export {
-  migrateToRepositorySheets,
-  previewMigration,
-  removeLegacySheet,
-} from './sheetMigration';
+export { migrateToRepositorySheets, previewMigration, removeLegacySheet } from './sheetMigration';
 export type { SheetMigrationResult } from './sheetMigration';
 
 // サイクルタイム指標

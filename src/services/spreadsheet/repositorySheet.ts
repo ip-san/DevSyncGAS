@@ -35,9 +35,7 @@ export function getRepositorySheetName(repository: string): string {
  * @param metrics - 全メトリクス
  * @returns リポジトリ名をキーとしたマップ
  */
-export function groupMetricsByRepository(
-  metrics: DevOpsMetrics[]
-): Map<string, DevOpsMetrics[]> {
+export function groupMetricsByRepository(metrics: DevOpsMetrics[]): Map<string, DevOpsMetrics[]> {
   const grouped = new Map<string, DevOpsMetrics[]>();
 
   for (const metric of metrics) {
@@ -175,12 +173,7 @@ export function writeMetricsToAllRepositorySheets(
   logger.log(`📊 Writing metrics to ${grouped.size} repository sheets...`);
 
   for (const [repository, repoMetrics] of grouped) {
-    const result = writeMetricsToRepositorySheet(
-      spreadsheetId,
-      repository,
-      repoMetrics,
-      options
-    );
+    const result = writeMetricsToRepositorySheet(spreadsheetId, repository, repoMetrics, options);
     results.set(repository, result);
   }
 
@@ -192,7 +185,9 @@ export function writeMetricsToAllRepositorySheets(
     totalSkipped += result.skipped;
   }
 
-  logger.log(`✅ Total: ${totalWritten} written, ${totalSkipped} skipped across ${grouped.size} repositories`);
+  logger.log(
+    `✅ Total: ${totalWritten} written, ${totalSkipped} skipped across ${grouped.size} repositories`
+  );
 
   return results;
 }

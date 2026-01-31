@@ -533,7 +533,12 @@ export const DASHBOARD_TREND_SCHEMA: SheetSchema = {
   columns: [
     { id: 'week', header: '週', type: 'string' },
     { id: 'totalDeployments', header: 'デプロイ回数', type: 'number', numberFormat: '#,##0' },
-    { id: 'avgLeadTimeHours', header: 'リードタイム (時間)', type: 'number', numberFormat: '#,##0.0' },
+    {
+      id: 'avgLeadTimeHours',
+      header: 'リードタイム (時間)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+    },
     {
       id: 'avgChangeFailureRate',
       header: '変更障害率 (%)',

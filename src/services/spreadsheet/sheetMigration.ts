@@ -8,10 +8,7 @@
 import type { DevOpsMetrics } from '../../types';
 import { getContainer } from '../../container';
 import { openSpreadsheet } from './helpers';
-import {
-  writeMetricsToAllRepositorySheets,
-  groupMetricsByRepository,
-} from './repositorySheet';
+import { writeMetricsToAllRepositorySheets, groupMetricsByRepository } from './repositorySheet';
 import { writeDashboard, writeDashboardTrends } from './dashboard';
 import { createDevOpsSummaryFromMetrics } from './metricsSummary';
 
@@ -57,7 +54,9 @@ function parseDevOpsMetricsFromLegacySheet(
 
   for (const row of data) {
     // 空行をスキップ
-    if (!row[0] || !row[1]) {continue;}
+    if (!row[0] || !row[1]) {
+      continue;
+    }
 
     metrics.push({
       date: String(row[0]),
@@ -213,12 +212,7 @@ export function previewMigration(
   const grouped = groupMetricsByRepository(metrics);
   const repositories = Array.from(grouped.keys());
 
-  const sheetsToCreate = [
-    ...repositories,
-    'Dashboard',
-    'Dashboard - Trend',
-    'DevOps Summary',
-  ];
+  const sheetsToCreate = [...repositories, 'Dashboard', 'Dashboard - Trend', 'DevOps Summary'];
 
   return {
     sourceSheetExists: metrics.length > 0,

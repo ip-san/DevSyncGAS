@@ -154,4 +154,3 @@ global.showCodingTimeDetails = showCodingTimeDetails;
 global.showReworkRateDetails = showReworkRateDetails;
 global.showReviewEfficiencyDetails = showReviewEfficiencyDetails;
 global.showPRSizeDetails = showPRSizeDetails;
-

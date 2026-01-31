@@ -389,7 +389,9 @@ export function backfillAllProjectsDaily(days = 30): void {
     Logger.log(`   📊 Generated ${dailyMetrics.length} daily records`);
 
     // リポジトリ別シートに書き込み
-    writeMetricsToAllRepositorySheets(project.spreadsheetId, dailyMetrics, { skipDuplicates: true });
+    writeMetricsToAllRepositorySheets(project.spreadsheetId, dailyMetrics, {
+      skipDuplicates: true,
+    });
 
     // Dashboard更新
     writeDashboard(project.spreadsheetId, dailyMetrics);
@@ -415,5 +417,3 @@ export function backfillLast90Days(): void {
 // =============================================================================
 // ユーティリティ
 // =============================================================================
-
-

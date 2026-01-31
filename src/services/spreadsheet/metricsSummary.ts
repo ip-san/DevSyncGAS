@@ -103,14 +103,18 @@ export function createDevOpsSummaryFromRepositorySheets(
   // 各リポジトリシートへのリンクを追加（末尾に）
   addRepositoryLinks(sheet, repositories, rows.length + 2);
 
-  logger.log(`✅ DevOps Summary created with ${aggregated.repositorySummaries.length} repositories`);
+  logger.log(
+    `✅ DevOps Summary created with ${aggregated.repositorySummaries.length} repositories`
+  );
 }
 
 /**
  * サマリーシートのフォーマット
  */
 function formatSummarySheet(sheet: Sheet, rowCount: number, hasOverallRow: boolean): void {
-  if (rowCount === 0) {return;}
+  if (rowCount === 0) {
+    return;
+  }
 
   const lastCol = sheet.getLastColumn();
 
@@ -133,7 +137,9 @@ function formatSummarySheet(sheet: Sheet, rowCount: number, hasOverallRow: boole
  * リポジトリシートへのリンクを追加
  */
 function addRepositoryLinks(sheet: Sheet, repositories: string[], startRow: number): void {
-  if (repositories.length === 0) {return;}
+  if (repositories.length === 0) {
+    return;
+  }
 
   // 空行を挟む
   sheet.getRange(startRow, 1, 1, 1).setValues([['']]);
@@ -226,5 +232,7 @@ export function createDevOpsSummaryFromMetrics(
   const repositories = [...new Set(metrics.map((m) => m.repository))];
   addRepositoryLinks(sheet, repositories, rows.length + 2);
 
-  logger.log(`✅ DevOps Summary created from metrics with ${aggregated.repositorySummaries.length} repositories`);
+  logger.log(
+    `✅ DevOps Summary created from metrics with ${aggregated.repositorySummaries.length} repositories`
+  );
 }
