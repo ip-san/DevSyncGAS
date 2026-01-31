@@ -18,6 +18,7 @@ import {
   styleSummaryRow,
 } from './helpers';
 import { DASHBOARD_SCHEMA, getHeadersFromSchema } from '../../schemas';
+import { evaluateMetric, selectWorstStatus } from '../../utils/healthStatus';
 
 const DASHBOARD_HEADERS = getHeadersFromSchema(DASHBOARD_SCHEMA);
 
@@ -32,57 +33,16 @@ export function determineHealthStatus(
 ): HealthStatus {
   const thresholds = DEFAULT_HEALTH_THRESHOLDS;
 
-  // 各指標のステータスを判定
-  const statuses: HealthStatus[] = [];
+  // 各指標を評価
+  const statuses = [
+    evaluateMetric(leadTimeHours, thresholds.leadTime),
+    evaluateMetric(changeFailureRate, thresholds.changeFailureRate),
+    evaluateMetric(cycleTimeHours, thresholds.cycleTime),
+    evaluateMetric(timeToFirstReviewHours, thresholds.timeToFirstReview),
+  ];
 
-  if (leadTimeHours !== null) {
-    if (leadTimeHours <= thresholds.leadTime.good) {
-      statuses.push('good');
-    } else if (leadTimeHours <= thresholds.leadTime.warning) {
-      statuses.push('warning');
-    } else {
-      statuses.push('critical');
-    }
-  }
-
-  if (changeFailureRate !== null) {
-    if (changeFailureRate <= thresholds.changeFailureRate.good) {
-      statuses.push('good');
-    } else if (changeFailureRate <= thresholds.changeFailureRate.warning) {
-      statuses.push('warning');
-    } else {
-      statuses.push('critical');
-    }
-  }
-
-  if (cycleTimeHours !== null) {
-    if (cycleTimeHours <= thresholds.cycleTime.good) {
-      statuses.push('good');
-    } else if (cycleTimeHours <= thresholds.cycleTime.warning) {
-      statuses.push('warning');
-    } else {
-      statuses.push('critical');
-    }
-  }
-
-  if (timeToFirstReviewHours !== null) {
-    if (timeToFirstReviewHours <= thresholds.timeToFirstReview.good) {
-      statuses.push('good');
-    } else if (timeToFirstReviewHours <= thresholds.timeToFirstReview.warning) {
-      statuses.push('warning');
-    } else {
-      statuses.push('critical');
-    }
-  }
-
-  // 最も悪いステータスを返す
-  if (statuses.includes('critical')) {
-    return 'critical';
-  }
-  if (statuses.includes('warning')) {
-    return 'warning';
-  }
-  return 'good';
+  // 最も悪いステータスを選択
+  return selectWorstStatus(statuses);
 }
 
 /**

@@ -25,6 +25,7 @@ import {
   STATUS_FETCH_WARNING_THRESHOLD,
   type DateRange,
 } from './api';
+import { paginateAPI, paginateAndReduce } from '../../utils/pagination';
 
 // =============================================================================
 // PR一覧取得
@@ -46,52 +47,33 @@ export function getPullRequests(
   dateRange?: DateRange,
   maxPages = DEFAULT_MAX_PAGES
 ): ApiResponse<GitHubPullRequest[]> {
-  const allPRs: GitHubPullRequest[] = [];
-  let page = 1;
-
-  while (page <= maxPages) {
-    const endpoint = `/repos/${repo.fullName}/pulls?state=${state}&per_page=${PER_PAGE}&page=${page}&sort=updated&direction=desc`;
-    const response = fetchGitHub<GitHubPRResponse[]>(endpoint, token);
-
-    if (!response.success || !response.data) {
-      if (page === 1) {
-        return { success: false, error: response.error };
-      }
-      break;
-    }
-
-    if (response.data.length === 0) {
-      break;
-    }
-
-    for (const pr of response.data) {
-      const createdAt = new Date(pr.created_at);
-
-      // 期間フィルタリング
+  return paginateAPI({
+    getEndpoint: (page) =>
+      `/repos/${repo.fullName}/pulls?state=${state}&per_page=${PER_PAGE}&page=${page}&sort=updated&direction=desc`,
+    fetchFn: (endpoint) => fetchGitHub<GitHubPRResponse[]>(endpoint, token),
+    transform: (pr) => ({
+      id: pr.id,
+      number: pr.number,
+      title: pr.title,
+      state: pr.state as 'open' | 'closed',
+      createdAt: pr.created_at,
+      mergedAt: pr.merged_at,
+      closedAt: pr.closed_at,
+      author: pr.user?.login ?? 'unknown',
+      repository: repo.fullName,
+    }),
+    filter: (pr) => {
+      const createdAt = new Date(pr.createdAt);
       if (dateRange?.until && createdAt > dateRange.until) {
-        continue;
+        return false;
       }
       if (dateRange?.since && createdAt < dateRange.since) {
-        continue;
+        return false;
       }
-
-      allPRs.push({
-        id: pr.id,
-        number: pr.number,
-        title: pr.title,
-        state: pr.state as 'open' | 'closed',
-        createdAt: pr.created_at,
-        mergedAt: pr.merged_at,
-        closedAt: pr.closed_at,
-        author: pr.user?.login ?? 'unknown',
-        repository: repo.fullName,
-      });
-    }
-
-    page++;
-  }
-
-  return { success: true, data: allPRs };
+      return true;
+    },
+    config: { maxPages },
+  });
 }
 
 // =============================================================================
@@ -173,35 +155,16 @@ function getPRCommits(
   prNumber: number,
   token: string
 ): ApiResponse<{ sha: string; date: string }[]> {
-  const allCommits: { sha: string; date: string }[] = [];
-  let page = 1;
-
-  while (page <= DEFAULT_MAX_PAGES) {
-    const endpoint = `/repos/${owner}/${repo}/pulls/${prNumber}/commits?per_page=${PER_PAGE}&page=${page}`;
-    const response = fetchGitHub<GitHubCommitResponse[]>(endpoint, token);
-
-    if (!response.success || !response.data) {
-      if (page === 1) {
-        return { success: false, error: response.error };
-      }
-      break;
-    }
-
-    if (response.data.length === 0) {
-      break;
-    }
-
-    for (const commit of response.data) {
-      allCommits.push({
-        sha: commit.sha,
-        date: commit.commit?.author?.date ?? commit.commit?.committer?.date ?? '',
-      });
-    }
-
-    page++;
-  }
-
-  return { success: true, data: allCommits };
+  return paginateAPI({
+    getEndpoint: (page) =>
+      `/repos/${owner}/${repo}/pulls/${prNumber}/commits?per_page=${PER_PAGE}&page=${page}`,
+    fetchFn: (endpoint) => fetchGitHub<GitHubCommitResponse[]>(endpoint, token),
+    transform: (commit) => ({
+      sha: commit.sha,
+      date: commit.commit?.author?.date ?? commit.commit?.committer?.date ?? '',
+    }),
+    config: { maxPages: DEFAULT_MAX_PAGES },
+  });
 }
 
 /**
@@ -213,34 +176,17 @@ function getPRForcePushCount(
   prNumber: number,
   token: string
 ): ApiResponse<number> {
-  let forcePushCount = 0;
-  let page = 1;
-
-  while (page <= DEFAULT_MAX_PAGES) {
-    const endpoint = `/repos/${owner}/${repo}/issues/${prNumber}/timeline?per_page=${PER_PAGE}&page=${page}`;
-    const response = fetchGitHub<GitHubTimelineEventResponse[]>(endpoint, token);
-
-    if (!response.success || !response.data) {
-      if (page === 1) {
-        return { success: false, error: response.error };
-      }
-      break;
-    }
-
-    if (response.data.length === 0) {
-      break;
-    }
-
-    for (const event of response.data) {
-      if (event.event === 'head_ref_force_pushed') {
-        forcePushCount++;
-      }
-    }
-
-    page++;
-  }
-
-  return { success: true, data: forcePushCount };
+  return paginateAndReduce(
+    {
+      getEndpoint: (page) =>
+        `/repos/${owner}/${repo}/issues/${prNumber}/timeline?per_page=${PER_PAGE}&page=${page}`,
+      fetchFn: (endpoint) => fetchGitHub<GitHubTimelineEventResponse[]>(endpoint, token),
+      transform: (event) => event,
+      config: { maxPages: DEFAULT_MAX_PAGES },
+    },
+    (count, event) => (event.event === 'head_ref_force_pushed' ? count + 1 : count),
+    0
+  );
 }
 
 // =============================================================================

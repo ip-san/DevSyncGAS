@@ -10,6 +10,7 @@
  */
 
 import { getContainer } from '../container';
+import { CONFIG_KEYS } from '../config/propertyKeys';
 
 const SECRET_MANAGER_API_BASE = 'https://secretmanager.googleapis.com/v1';
 const SECRET_MANAGER_PROJECT_ID_KEY = 'SECRET_MANAGER_PROJECT_ID';
@@ -291,7 +292,7 @@ export function migratePrivateKeyToSecretManager(): void {
   const { storageClient, logger } = getContainer();
 
   // PropertiesServiceからPrivate Keyを取得
-  const privateKey = storageClient.getProperty('GITHUB_APP_PRIVATE_KEY');
+  const privateKey = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_PRIVATE_KEY);
   if (!privateKey) {
     throw new Error('No GitHub App Private Key found in PropertiesService');
   }
@@ -322,7 +323,7 @@ export function getGitHubPrivateKey(): string {
       return getSecretFromSecretManager('github-app-private-key');
     } catch (error) {
       // Secret Managerでの取得に失敗した場合はPropertiesServiceにフォールバック
-      const fallbackKey = storageClient.getProperty('GITHUB_APP_PRIVATE_KEY');
+      const fallbackKey = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_PRIVATE_KEY);
       if (fallbackKey) {
         return fallbackKey;
       }
@@ -331,7 +332,7 @@ export function getGitHubPrivateKey(): string {
   }
 
   // Secret Managerが無効な場合はPropertiesServiceから取得
-  const privateKey = storageClient.getProperty('GITHUB_APP_PRIVATE_KEY');
+  const privateKey = storageClient.getProperty(CONFIG_KEYS.GITHUB_AUTH.APP_PRIVATE_KEY);
   if (!privateKey) {
     throw new Error('GitHub App Private Key not found');
   }

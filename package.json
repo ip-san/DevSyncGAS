@@ -39,6 +39,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "jsrsasign": "^11.1.0"
+    "jsrsasign": "^11.1.0",
+    "zod": "^4.3.6"
   }
 }
