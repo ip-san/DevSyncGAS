@@ -22,6 +22,8 @@ GitHub IssueからProductionマージまでのサイクルタイムを計測す�
 
 本実装では、GitHubのIssue作成からProductionブランチへのマージまでの時間を計測します。
 
+> **Note**: なぜ「Issue作成」を計測起点としているかについては、[MEASUREMENT_PHILOSOPHY.md](MEASUREMENT_PHILOSOPHY.md) を参照してください。DORA、EBM、カンバンガイド等の公式フレームワークとの関係や、AI駆動開発との相性についても説明しています。
+
 ```
 Issue作成 ──────────→ Productionマージ
     ↑                      ↑
@@ -303,6 +305,12 @@ Issue作成 ─→ 着手 ─→ コーディング ─→ PR作成 ─→ マ�
 
 ## 出典・参考資料
 
+### 関連ドキュメント
+
+- [MEASUREMENT_PHILOSOPHY.md](MEASUREMENT_PHILOSOPHY.md) - 計測思想（なぜIssue作成から計測するか）
+- [CODING_TIME.md](CODING_TIME.md) - コーディング時間計測の技術詳細
+- [ARCHITECTURE.md](ARCHITECTURE.md) - 全体アーキテクチャ
+
 ### 公式ドキュメント
 
 1. **Microsoft Azure DevOps - Cycle Time and Lead Time**
@@ -317,15 +325,27 @@ Issue作成 ─→ 着手 ─→ コーディング ─→ PR作成 ─→ マ�
    - https://devlake.apache.org/docs/Metrics/LeadTimeForChanges/
    - DORAのLead Time for Changesの定義
 
+4. **DORA Metrics Guide**
+   - https://dora.dev/guides/dora-metrics/
+   - DORAの公式指標定義
+
+5. **Evidence-Based Management Guide (Scrum.org)**
+   - https://www.scrum.org/resources/evidence-based-management-guide
+   - EBMにおけるLead Time、Customer Cycle Timeの定義
+
+6. **Kanban Guide for Scrum Teams (Scrum.org)**
+   - https://www.scrum.org/resources/kanban-guide-scrum-teams
+   - サイクルタイムの公式定義とフローメトリクス
+
 ### Kanban/Lean関連
 
-4. **Kanban Tool - Cycle Time**
+7. **Kanban Tool - Cycle Time**
    - https://kanbantool.com/kanban-guide/cycle-time
    - Kanban文脈でのサイクルタイムの定義とWIPとの関係
 
 ### 書籍
 
-5. **Accelerate: The Science of Lean Software and DevOps**
+8. **Accelerate: The Science of Lean Software and DevOps**
    - Nicole Forsgren, Jez Humble, Gene Kim 著
    - DORA研究の基礎となった書籍
 

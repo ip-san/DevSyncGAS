@@ -233,9 +233,15 @@ syncAllProjects();      // 全プロジェクト一括同期
 
 ## 関連ドキュメント
 
-- [CLAUDE.md](../CLAUDE.md) - 開発コマンド、skill
+### 設計思想
+- [docs/MEASUREMENT_PHILOSOPHY.md](MEASUREMENT_PHILOSOPHY.md) - 計測思想（なぜIssue作成から計測するか）
+
+### 指標の詳細
 - [docs/CYCLE_TIME.md](CYCLE_TIME.md) - サイクルタイム計測の詳細
 - [docs/CODING_TIME.md](CODING_TIME.md) - コーディング時間計測の詳細
 - [docs/REWORK_RATE.md](REWORK_RATE.md) - 手戻り率計測の詳細
 - [docs/REVIEW_EFFICIENCY.md](REVIEW_EFFICIENCY.md) - レビュー効率計測の詳細
 - [docs/PR_SIZE.md](PR_SIZE.md) - PRサイズ計測の詳細
+
+### 開発ガイド
+- [CLAUDE.md](../CLAUDE.md) - 開発コマンド、skill
