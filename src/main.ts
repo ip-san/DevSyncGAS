@@ -52,6 +52,10 @@ import {
   showCodingTimeLabels,
   resetCodingTimeLabelsConfig,
   showCodingTimeConfig,
+  // APIモード設定
+  configureApiMode,
+  showApiMode,
+  resetApiMode,
   // マイグレーション
   previewMigration,
   migrateAllSchemas,
@@ -124,6 +128,11 @@ global.configureCodingTimeLabels = configureCodingTimeLabels;
 global.showCodingTimeLabels = showCodingTimeLabels;
 global.resetCodingTimeLabelsConfig = resetCodingTimeLabelsConfig;
 global.showCodingTimeConfig = showCodingTimeConfig;
+
+// APIモード設定
+global.configureApiMode = configureApiMode;
+global.showApiMode = showApiMode;
+global.resetApiMode = resetApiMode;
 
 // マイグレーション
 global.previewMigration = previewMigration;

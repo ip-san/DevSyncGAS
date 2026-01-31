@@ -2,6 +2,40 @@ import type { Config, GitHubRepository, GitHubAppConfig, ProjectGroup } from "..
 import { getContainer } from "../container";
 import { resolveGitHubToken } from "../services/githubAuth";
 
+// =============================================================================
+// API モード設定
+// =============================================================================
+
+/** GitHub APIモード */
+export type GitHubApiMode = "rest" | "graphql";
+
+/**
+ * GitHub APIモードを取得
+ * @returns "graphql" | "rest"（デフォルト: "graphql"）
+ */
+export function getGitHubApiMode(): GitHubApiMode {
+  const { storageClient } = getContainer();
+  const mode = storageClient.getProperty("GITHUB_API_MODE");
+  return mode === "rest" ? "rest" : "graphql";
+}
+
+/**
+ * GitHub APIモードを設定
+ * @param mode - "graphql" または "rest"
+ */
+export function setGitHubApiMode(mode: GitHubApiMode): void {
+  const { storageClient } = getContainer();
+  storageClient.setProperty("GITHUB_API_MODE", mode);
+}
+
+/**
+ * GitHub APIモードをリセット（デフォルトのgraphqlに戻す）
+ */
+export function resetGitHubApiMode(): void {
+  const { storageClient } = getContainer();
+  storageClient.deleteProperty("GITHUB_API_MODE");
+}
+
 /**
  * GitHub認証モードを判定
  * @returns "app" | "pat" | "none"
