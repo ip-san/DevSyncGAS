@@ -30,7 +30,6 @@ export function validateSpreadsheetAccess(spreadsheetId: string): void {
     if (!name) {
       throw new Error('Spreadsheet exists but has no name');
     }
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -38,27 +37,25 @@ export function validateSpreadsheetAccess(spreadsheetId: string): void {
     if (errorMessage.includes('perhaps it was deleted') || errorMessage.includes('not found')) {
       throw new Error(
         `Spreadsheet not found: ${spreadsheetId}\n` +
-        'Check if:\n' +
-        '1. The spreadsheet ID is correct\n' +
-        '2. The spreadsheet has not been deleted\n' +
-        '3. The spreadsheet is in your Google Drive or shared with you'
+          'Check if:\n' +
+          '1. The spreadsheet ID is correct\n' +
+          '2. The spreadsheet has not been deleted\n' +
+          '3. The spreadsheet is in your Google Drive or shared with you'
       );
     }
 
     if (errorMessage.includes('permission') || errorMessage.includes('access')) {
       throw new Error(
         `Cannot access spreadsheet ${spreadsheetId}\n` +
-        'Check if:\n' +
-        '1. You have edit permission for this spreadsheet\n' +
-        '2. The spreadsheet owner has granted access to your account\n' +
-        '3. The sharing settings allow access'
+          'Check if:\n' +
+          '1. You have edit permission for this spreadsheet\n' +
+          '2. The spreadsheet owner has granted access to your account\n' +
+          '3. The sharing settings allow access'
       );
     }
 
     // その他のエラーはそのまま再スロー
-    throw new Error(
-      `Failed to access spreadsheet ${spreadsheetId}: ${errorMessage}`
-    );
+    throw new Error(`Failed to access spreadsheet ${spreadsheetId}: ${errorMessage}`);
   }
 }
 
@@ -68,9 +65,10 @@ export function validateSpreadsheetAccess(spreadsheetId: string): void {
  * @param spreadsheetIds - 検証するスプレッドシートIDの配列
  * @returns 検証結果 { valid: 成功したID[], invalid: 失敗したID[] }
  */
-export function validateMultipleSpreadsheetAccess(
-  spreadsheetIds: string[]
-): { valid: string[]; invalid: Array<{ id: string; error: string }> } {
+export function validateMultipleSpreadsheetAccess(spreadsheetIds: string[]): {
+  valid: string[];
+  invalid: Array<{ id: string; error: string }>;
+} {
   const valid: string[] = [];
   const invalid: Array<{ id: string; error: string }> = [];
 

@@ -159,10 +159,7 @@ export function getAuditLogs(limit = 100): AuditLogEntry[] {
  * @param spreadsheetId - 書き出し先スプレッドシートID
  * @param sheetName - シート名（デフォルト: "Audit Log"）
  */
-export function exportAuditLogsToSheet(
-  spreadsheetId: string,
-  sheetName = 'Audit Log'
-): void {
+export function exportAuditLogsToSheet(spreadsheetId: string, sheetName = 'Audit Log'): void {
   const { spreadsheetClient, logger } = getContainer();
 
   const logs = getAuditLogs(1000); // 直近1000件

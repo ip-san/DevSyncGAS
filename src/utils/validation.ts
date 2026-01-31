@@ -92,7 +92,9 @@ export function validateSpreadsheetId(id: string): void {
 
   // 英数字、ハイフン、アンダースコアのみ
   if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
-    throw new Error('Spreadsheet ID must contain only alphanumeric characters, hyphens, or underscores');
+    throw new Error(
+      'Spreadsheet ID must contain only alphanumeric characters, hyphens, or underscores'
+    );
   }
 }
 

@@ -30,7 +30,7 @@ export function setSecretManagerProjectId(projectId: string): void {
   if (!/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(projectId)) {
     throw new Error(
       'Invalid GCP Project ID format. Must be 6-30 characters, ' +
-      'lowercase letters, digits, or hyphens, start with a letter, end with letter or digit.'
+        'lowercase letters, digits, or hyphens, start with a letter, end with letter or digit.'
     );
   }
 
@@ -72,7 +72,7 @@ export function storeSecretInSecretManager(
   if (!projectId) {
     throw new Error(
       'Secret Manager is not configured. ' +
-      'Run setSecretManagerProjectId("your-project-id") first.'
+        'Run setSecretManagerProjectId("your-project-id") first.'
     );
   }
 
@@ -96,7 +96,6 @@ export function storeSecretInSecretManager(
     // 2. 新しいバージョンを追加
     addSecretVersion(projectId, secretId, secretValue);
     logger.log(`✅ Stored secret version: ${secretId}`);
-
   } catch (error) {
     throw new Error(
       `Failed to store secret in Secret Manager: ${error instanceof Error ? error.message : String(error)}`
@@ -111,15 +110,12 @@ export function storeSecretInSecretManager(
  * @param version - バージョン（デフォルト: "latest"）
  * @returns シークレットの値
  */
-export function getSecretFromSecretManager(
-  secretId: string,
-  version = 'latest'
-): string {
+export function getSecretFromSecretManager(secretId: string, version = 'latest'): string {
   const projectId = getSecretManagerProjectId();
   if (!projectId) {
     throw new Error(
       'Secret Manager is not configured. ' +
-      'Run setSecretManagerProjectId("your-project-id") first.'
+        'Run setSecretManagerProjectId("your-project-id") first.'
     );
   }
 
@@ -151,7 +147,6 @@ export function getSecretFromSecretManager(
     ).getDataAsString();
 
     return secretValue;
-
   } catch (error) {
     throw new Error(
       `Failed to get secret from Secret Manager: ${error instanceof Error ? error.message : String(error)}`
@@ -187,11 +182,7 @@ function checkSecretExists(projectId: string, secretId: string): boolean {
  * @param secretId - シークレットID
  * @param labels - オプションのラベル
  */
-function createSecret(
-  projectId: string,
-  secretId: string,
-  labels?: Record<string, string>
-): void {
+function createSecret(projectId: string, secretId: string, labels?: Record<string, string>): void {
   const url = `${SECRET_MANAGER_API_BASE}/projects/${projectId}/secrets?secretId=${secretId}`;
 
   const payload = {
@@ -225,11 +216,7 @@ function createSecret(
  * @param secretId - シークレットID
  * @param secretValue - シークレットの値
  */
-function addSecretVersion(
-  projectId: string,
-  secretId: string,
-  secretValue: string
-): void {
+function addSecretVersion(projectId: string, secretId: string, secretValue: string): void {
   const url = `${SECRET_MANAGER_API_BASE}/projects/${projectId}/secrets/${secretId}:addVersion`;
 
   // Base64エンコード
@@ -289,7 +276,6 @@ export function deleteSecretFromSecretManager(secretId: string): void {
     }
 
     logger.log(`✅ Deleted secret: ${secretId}`);
-
   } catch (error) {
     throw new Error(
       `Failed to delete secret from Secret Manager: ${error instanceof Error ? error.message : String(error)}`
