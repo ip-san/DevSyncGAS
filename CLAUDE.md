@@ -42,6 +42,13 @@ bun run format:check # Prettierチェック（CI用）
 3. **ストレージ**: `PropertiesService.getScriptProperties()`でシークレット管理
 4. **型定義**: `@types/google-apps-script`を使用
 
+## 計測思想
+
+本ツールは「Issue作成 = 作業開始の意思表示」という前提に基づき、Issue作成時点からサイクルタイムを計測します。
+この設計判断の背景（イシュードリブン開発、AI駆動開発との相性、公式フレームワークとの関係等）については以下を参照してください：
+
+- [docs/MEASUREMENT_PHILOSOPHY.md](docs/MEASUREMENT_PHILOSOPHY.md) - 計測思想・設計判断の詳細
+
 ## 現在の機能
 - [x] GitHub PR/Workflow/Issue取得
 - [x] DORA metrics計算（Deployment Frequency, Lead Time, CFR, MTTR）
