@@ -84,6 +84,13 @@ import {
   removeWeeklyReportTrigger,
   showWeeklyReportTrigger,
 } from './functions/slackWeekly';
+import {
+  // Slack月次レポート
+  sendMonthlyReport,
+  setupMonthlyReportTrigger,
+  removeMonthlyReportTrigger,
+  showMonthlyReportTrigger,
+} from './functions/slackMonthly';
 
 // =============================================================================
 // GASグローバルスコープにエクスポート
@@ -174,3 +181,9 @@ global.sendWeeklyReport = sendWeeklyReport;
 global.setupWeeklyReportTrigger = setupWeeklyReportTrigger;
 global.removeWeeklyReportTrigger = removeWeeklyReportTrigger;
 global.showWeeklyReportTrigger = showWeeklyReportTrigger;
+
+// Slack月次レポート
+global.sendMonthlyReport = sendMonthlyReport;
+global.setupMonthlyReportTrigger = setupMonthlyReportTrigger;
+global.removeMonthlyReportTrigger = removeMonthlyReportTrigger;
+global.showMonthlyReportTrigger = showMonthlyReportTrigger;
