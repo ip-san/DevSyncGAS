@@ -489,6 +489,94 @@ export function migrateSheetSchema(spreadsheet: Spreadsheet, schema: SheetSchema
 }
 
 /**
+ * シートが存在しない場合のMigrationResultを構築
+ */
+function createSheetNotFoundResult(
+  sheetName: string,
+  version: string,
+  duration: number
+): MigrationResult {
+  return {
+    sheetName,
+    success: false,
+    status: 'skipped',
+    toVersion: version,
+    rowsMigrated: 0,
+    columnsAdded: [],
+    columnsRemoved: [],
+    columnsRenamed: [],
+    duration,
+    error: 'Sheet does not exist',
+  };
+}
+
+/**
+ * シート作成時のMigrationResultを構築
+ */
+function createSheetCreatedResult(
+  sheetName: string,
+  version: string,
+  headers: string[],
+  duration: number
+): MigrationResult {
+  return {
+    sheetName,
+    success: true,
+    status: 'created',
+    toVersion: version,
+    rowsMigrated: 0,
+    columnsAdded: headers,
+    columnsRemoved: [],
+    columnsRenamed: [],
+    duration,
+  };
+}
+
+/**
+ * ヘッダー更新成功時のMigrationResultを構築
+ */
+function createHeadersUpdatedResult(
+  sheetName: string,
+  version: string,
+  duration: number
+): MigrationResult {
+  return {
+    sheetName,
+    success: true,
+    status: 'migrated',
+    toVersion: version,
+    rowsMigrated: 0,
+    columnsAdded: [],
+    columnsRemoved: [],
+    columnsRenamed: [],
+    duration,
+  };
+}
+
+/**
+ * エラー時のMigrationResultを構築
+ */
+function createMigrationErrorResult(
+  sheetName: string,
+  version: string,
+  duration: number,
+  errorMessage: string
+): MigrationResult {
+  return {
+    sheetName,
+    success: false,
+    status: 'error',
+    toVersion: version,
+    rowsMigrated: 0,
+    columnsAdded: [],
+    columnsRemoved: [],
+    columnsRenamed: [],
+    duration,
+    error: errorMessage,
+  };
+}
+
+/**
  * ヘッダー行のみを更新（データの列順は変更しない）
  */
 export function updateSheetHeadersOnly(
@@ -503,34 +591,18 @@ export function updateSheetHeadersOnly(
     const targetHeaders = getHeadersFromSchema(schema);
 
     if (!sheet) {
-      return {
-        sheetName: schema.sheetName,
-        success: false,
-        status: 'skipped',
-        toVersion: schema.version,
-        rowsMigrated: 0,
-        columnsAdded: [],
-        columnsRemoved: [],
-        columnsRenamed: [],
-        duration: Date.now() - startTime,
-        error: 'Sheet does not exist',
-      };
+      return createSheetNotFoundResult(schema.sheetName, schema.version, Date.now() - startTime);
     }
 
     const lastRow = sheet.getLastRow();
     if (lastRow === 0) {
       initializeSheet(sheet, schema);
-      return {
-        sheetName: schema.sheetName,
-        success: true,
-        status: 'created',
-        toVersion: schema.version,
-        rowsMigrated: 0,
-        columnsAdded: targetHeaders,
-        columnsRemoved: [],
-        columnsRenamed: [],
-        duration: Date.now() - startTime,
-      };
+      return createSheetCreatedResult(
+        schema.sheetName,
+        schema.version,
+        targetHeaders,
+        Date.now() - startTime
+      );
     }
 
     // ヘッダー行のみ更新
@@ -539,31 +611,15 @@ export function updateSheetHeadersOnly(
 
     logger.log(`✅ Headers updated: ${schema.sheetName}`);
 
-    return {
-      sheetName: schema.sheetName,
-      success: true,
-      status: 'migrated',
-      toVersion: schema.version,
-      rowsMigrated: 0,
-      columnsAdded: [],
-      columnsRemoved: [],
-      columnsRenamed: [],
-      duration: Date.now() - startTime,
-    };
+    return createHeadersUpdatedResult(schema.sheetName, schema.version, Date.now() - startTime);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      sheetName: schema.sheetName,
-      success: false,
-      status: 'error',
-      toVersion: schema.version,
-      rowsMigrated: 0,
-      columnsAdded: [],
-      columnsRemoved: [],
-      columnsRenamed: [],
-      duration: Date.now() - startTime,
-      error: errorMessage,
-    };
+    return createMigrationErrorResult(
+      schema.sheetName,
+      schema.version,
+      Date.now() - startTime,
+      errorMessage
+    );
   }
 }
 
