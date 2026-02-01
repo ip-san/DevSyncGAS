@@ -7,6 +7,7 @@
 import { getContainer } from '../container.js';
 import type { GitHubRepository } from '../types/index.js';
 import { getGitHubAuthMode } from './authMode.js';
+import { GitHubRepositoriesSchema } from '../utils/configSchemas.js';
 
 export interface ConfigDiagnosticItem {
   name: string;
@@ -168,7 +169,8 @@ function diagnoseRepositories(): ConfigDiagnosticItem {
 
   let repositories: GitHubRepository[] = [];
   try {
-    repositories = repositoriesJson ? (JSON.parse(repositoriesJson) as GitHubRepository[]) : [];
+    const parsed: unknown = repositoriesJson ? JSON.parse(repositoriesJson) : [];
+    repositories = GitHubRepositoriesSchema.parse(parsed);
   } catch {
     return {
       name: 'リポジトリ設定',

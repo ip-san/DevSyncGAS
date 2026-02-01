@@ -135,6 +135,22 @@ function convertToDeployment(deployment: GraphQLDeployment, repository: string):
 }
 
 /**
+ * 文字列が有効なデプロイメントステータスかをチェックする型ガード
+ */
+function isValidDeploymentStatus(value: string): value is NonNullable<GitHubDeployment['status']> {
+  const validStatuses: Array<NonNullable<GitHubDeployment['status']>> = [
+    'success',
+    'failure',
+    'error',
+    'inactive',
+    'in_progress',
+    'queued',
+    'pending',
+  ];
+  return validStatuses.includes(value as NonNullable<GitHubDeployment['status']>);
+}
+
+/**
  * GraphQL DeploymentState/DeploymentStatusState を REST API互換のステータスに変換
  */
 function mapDeploymentStatus(
@@ -143,18 +159,8 @@ function mapDeploymentStatus(
 ): GitHubDeployment['status'] {
   // latestStatus がある場合はそちらを優先
   if (statusState) {
-    const mapped = statusState.toLowerCase() as GitHubDeployment['status'];
-    // 有効なステータス値かチェック
-    const validStatuses = [
-      'success',
-      'failure',
-      'error',
-      'inactive',
-      'in_progress',
-      'queued',
-      'pending',
-    ];
-    if (validStatuses.includes(mapped as string)) {
+    const mapped = statusState.toLowerCase();
+    if (isValidDeploymentStatus(mapped)) {
       return mapped;
     }
     return null;
