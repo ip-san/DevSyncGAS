@@ -361,7 +361,7 @@ export function writeDashboard(spreadsheetId: string, metrics: DevOpsMetrics[]):
   const sheet = initializeDashboardSheet(spreadsheet);
 
   if (metrics.length === 0) {
-    logger.log('⚠️ No metrics for dashboard');
+    logger.warn('⚠️ No metrics for dashboard');
     return;
   }
 
@@ -384,7 +384,7 @@ export function writeDashboard(spreadsheetId: string, metrics: DevOpsMetrics[]):
   // フォーマット
   formatDashboardSheet(sheet, rows.length, repoDataList.length > 1);
 
-  logger.log(`✅ Dashboard updated with ${repoDataList.length} repositories`);
+  logger.info(`✅ Dashboard updated with ${repoDataList.length} repositories`);
 }
 
 /**
@@ -602,7 +602,7 @@ export function writeDashboardTrends(spreadsheetId: string, metrics: DevOpsMetri
   const trends = calculateWeeklyTrends(metrics);
 
   if (trends.length === 0) {
-    logger.log('⚠️ No trend data available');
+    logger.warn('⚠️ No trend data available');
     return;
   }
 
@@ -614,5 +614,5 @@ export function writeDashboardTrends(spreadsheetId: string, metrics: DevOpsMetri
 
   formatTrendSheet(sheet, rows.length);
 
-  logger.log(`✅ Trend sheet updated with ${trends.length} weeks`);
+  logger.info(`✅ Trend sheet updated with ${trends.length} weeks`);
 }

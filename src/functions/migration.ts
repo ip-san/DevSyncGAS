@@ -28,15 +28,15 @@ export function previewMigration(): void {
   const { spreadsheetClient, logger } = getContainer();
   const spreadsheet = spreadsheetClient.openById(config.spreadsheet.id);
 
-  logger.log('=== Schema Migration Preview ===');
-  logger.log('This is a dry run. No changes will be made.\n');
+  logger.info('=== Schema Migration Preview ===');
+  logger.info('This is a dry run. No changes will be made.\n');
 
   for (const schema of ALL_SCHEMAS) {
     const preview = getMigrationPreview(spreadsheet, schema);
     logMigrationPreview(preview);
   }
 
-  logger.log('\nTo apply migrations, run: migrateAllSchemas()');
+  logger.info('\nTo apply migrations, run: migrateAllSchemas()');
 }
 
 /**
@@ -48,10 +48,10 @@ export function migrateAllSchemas(): void {
   const { spreadsheetClient, logger } = getContainer();
   const spreadsheet = spreadsheetClient.openById(config.spreadsheet.id);
 
-  logger.log('=== Starting Schema Migration ===\n');
+  logger.info('=== Starting Schema Migration ===\n');
 
   const results = ALL_SCHEMAS.map((schema) => {
-    logger.log(`Migrating: ${schema.sheetName}...`);
+    logger.info(`Migrating: ${schema.sheetName}...`);
     const result = migrateSheetSchema(spreadsheet, schema);
     logMigrationResult(result);
     return result;
@@ -70,9 +70,9 @@ export function migrateSheet(sheetName: string): void {
 
   const schema = findSchemaBySheetName(sheetName);
   if (!schema) {
-    logger.log(`❌ Error: Unknown sheet name: ${sheetName}`);
-    logger.log('Available sheets:');
-    ALL_SCHEMAS.forEach((s) => logger.log(`  - ${s.sheetName}`));
+    logger.error(`❌ Error: Unknown sheet name: ${sheetName}`);
+    logger.info('Available sheets:');
+    ALL_SCHEMAS.forEach((s) => logger.info(`  - ${s.sheetName}`));
     return;
   }
 
@@ -90,10 +90,10 @@ export function updateHeadersOnly(): void {
   const { spreadsheetClient, logger } = getContainer();
   const spreadsheet = spreadsheetClient.openById(config.spreadsheet.id);
 
-  logger.log('=== Updating Headers Only ===\n');
+  logger.info('=== Updating Headers Only ===\n');
 
   const results = ALL_SCHEMAS.map((schema) => {
-    logger.log(`Updating headers: ${schema.sheetName}...`);
+    logger.info(`Updating headers: ${schema.sheetName}...`);
     const result = updateSheetHeadersOnly(spreadsheet, schema);
     logMigrationResult(result);
     return result;

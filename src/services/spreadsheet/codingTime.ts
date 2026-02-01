@@ -74,7 +74,7 @@ export function writeCodingTimeToSheet(spreadsheetId: string, metrics: CodingTim
   // リポジトリ別シートに書き込み
   writeCodingTimeToAllRepositorySheets(spreadsheetId, metrics);
 
-  logger.log(`📝 Wrote coding time metrics to repository sheets`);
+  logger.info(`📝 Wrote coding time metrics to repository sheets`);
 }
 
 /**
@@ -228,7 +228,7 @@ export function writeCodingTimeToRepositorySheet(
   sheet.getRange(lastRow + 1, 1, rows.length, REPOSITORY_DETAIL_HEADERS.length).setValues(rows);
 
   formatRepositoryCodingTimeSheet(sheet);
-  logger.log(`✅ [${repository}] Wrote ${detailsToWrite.length} coding time records`);
+  logger.info(`✅ [${repository}] Wrote ${detailsToWrite.length} coding time records`);
 
   return { written: detailsToWrite.length, skipped: skippedCount };
 }
@@ -261,7 +261,7 @@ export function writeCodingTimeToAllRepositorySheets(
   const grouped = groupCodingTimeDetailsByRepository(metrics.issueDetails);
   const results = new Map<string, { written: number; skipped: number }>();
 
-  logger.log(`📊 Writing coding time to ${grouped.size} repository sheets...`);
+  logger.info(`📊 Writing coding time to ${grouped.size} repository sheets...`);
 
   for (const [repository, repoDetails] of grouped) {
     const result = writeCodingTimeToRepositorySheet(
@@ -280,7 +280,7 @@ export function writeCodingTimeToAllRepositorySheets(
     totalSkipped += result.skipped;
   }
 
-  logger.log(
+  logger.info(
     `✅ Total: ${totalWritten} written, ${totalSkipped} skipped across ${grouped.size} repositories`
   );
 
