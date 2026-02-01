@@ -58,6 +58,12 @@ export {
   getCodingTimeIssueLabels,
   setCodingTimeIssueLabels,
   resetCodingTimeIssueLabels,
+  getExcludeMetricsLabels,
+  setExcludeMetricsLabels,
+  resetExcludeMetricsLabels,
+  getIncidentLabels,
+  setIncidentLabels,
+  resetIncidentLabels,
 } from './metrics.js';
 
 // =============================================================================

@@ -154,3 +154,73 @@ export function setCodingTimeIssueLabels(labels: string[]): void {
 export function resetCodingTimeIssueLabels(): void {
   deleteProperty('CODING_TIME_ISSUE_LABELS');
 }
+
+// ============================================================
+// 除外ラベル設定
+// ============================================================
+
+/**
+ * 計測から除外するIssue/PRラベルを取得
+ *
+ * @returns ラベル配列（デフォルト: ['exclude-metrics']）
+ */
+export function getExcludeMetricsLabels(): string[] {
+  const labels = getPropertyAsStringArray('EXCLUDE_METRICS_LABELS');
+  return labels.length > 0 ? labels : ['exclude-metrics'];
+}
+
+/**
+ * 計測から除外するIssue/PRラベルを設定
+ *
+ * @example
+ * // 特定ラベルを除外
+ * setExcludeMetricsLabels(['exclude-metrics', 'dependencies', 'bot']);
+ *
+ * // 除外しない（空配列）
+ * setExcludeMetricsLabels([]);
+ */
+export function setExcludeMetricsLabels(labels: string[]): void {
+  setPropertyAsStringArray('EXCLUDE_METRICS_LABELS', labels);
+}
+
+/**
+ * 除外ラベル設定をリセット（デフォルトに戻す）
+ */
+export function resetExcludeMetricsLabels(): void {
+  deleteProperty('EXCLUDE_METRICS_LABELS');
+}
+
+// ============================================================
+// インシデントラベル設定
+// ============================================================
+
+/**
+ * インシデント判定に使用するラベルを取得
+ *
+ * @returns ラベル配列（デフォルト: ['incident']）
+ */
+export function getIncidentLabels(): string[] {
+  const labels = getPropertyAsStringArray('INCIDENT_LABELS');
+  return labels.length > 0 ? labels : ['incident'];
+}
+
+/**
+ * インシデント判定に使用するラベルを設定
+ *
+ * @example
+ * // カスタムラベルを設定
+ * setIncidentLabels(['incident', 'bug', 'p0']);
+ *
+ * // デフォルトに戻す（空配列を設定するとデフォルトの 'incident' が使われる）
+ * setIncidentLabels([]);
+ */
+export function setIncidentLabels(labels: string[]): void {
+  setPropertyAsStringArray('INCIDENT_LABELS', labels);
+}
+
+/**
+ * インシデントラベル設定をリセット（デフォルトに戻す）
+ */
+export function resetIncidentLabels(): void {
+  deleteProperty('INCIDENT_LABELS');
+}
