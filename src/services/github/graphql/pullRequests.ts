@@ -51,6 +51,57 @@ export interface GetPullRequestsGraphQLParams {
 }
 
 /**
+ * PR状態をGraphQL形式のstatesに変換
+ */
+function convertPRStateToGraphQLStates(state: 'open' | 'closed' | 'all'): string[] {
+  if (state === 'all') {
+    return ['MERGED', 'OPEN', 'CLOSED'];
+  }
+  if (state === 'open') {
+    return ['OPEN'];
+  }
+  return ['MERGED', 'CLOSED'];
+}
+
+/**
+ * GraphQL Pull Requests Query用の変数を構築
+ */
+function buildPullRequestsQueryVariables(
+  repo: GitHubRepository,
+  cursor: string | null,
+  states: string[]
+): Record<string, unknown> {
+  return {
+    owner: repo.owner,
+    name: repo.name,
+    first: DEFAULT_PAGE_SIZE,
+    after: cursor,
+    states,
+  };
+}
+
+/**
+ * 日付範囲でPRをフィルタリング
+ */
+function filterPRsByDateRange(
+  prs: GraphQLPullRequest[],
+  dateRange: DateRange | undefined,
+  repository: string
+): GitHubPullRequest[] {
+  const filtered: GitHubPullRequest[] = [];
+
+  for (const pr of prs) {
+    const createdAt = new Date(pr.createdAt);
+
+    if (isWithinPRDateRange(createdAt, dateRange)) {
+      filtered.push(convertToPullRequest(pr, repository));
+    }
+  }
+
+  return filtered;
+}
+
+/**
  * リポジトリのPR一覧を取得（GraphQL版）
  *
  * REST APIとの違い:
@@ -66,54 +117,29 @@ export function getPullRequestsGraphQL(
   let cursor: string | null = null;
   let page = 0;
 
-  // GraphQL用のstate変換
-  const states =
-    state === 'all'
-      ? ['MERGED', 'OPEN', 'CLOSED']
-      : state === 'open'
-        ? ['OPEN']
-        : ['MERGED', 'CLOSED'];
+  const states = convertPRStateToGraphQLStates(state);
 
   while (page < maxPages) {
+    const variables = buildPullRequestsQueryVariables(repo, cursor, states);
     const queryResult: ApiResponse<PullRequestsQueryResponse> =
-      executeGraphQLWithRetry<PullRequestsQueryResponse>(
-        PULL_REQUESTS_QUERY,
-        {
-          owner: repo.owner,
-          name: repo.name,
-          first: DEFAULT_PAGE_SIZE,
-          after: cursor,
-          states,
-        },
-        token
-      );
+      executeGraphQLWithRetry<PullRequestsQueryResponse>(PULL_REQUESTS_QUERY, variables, token);
 
     const validationError = validatePaginatedResponse(queryResult, page, 'repository.pullRequests');
     if (validationError) {
       return validationError;
     }
     if (!queryResult.success) {
-      break; // 2ページ目以降のエラー
+      break;
     }
 
     const prsData = queryResult.data!.repository!.pullRequests;
-    const nodes: GraphQLPullRequest[] = prsData.nodes;
-    const pageInfo = prsData.pageInfo;
+    const filteredPRs = filterPRsByDateRange(prsData.nodes, dateRange, repo.fullName);
+    allPRs.push(...filteredPRs);
 
-    for (const pr of nodes) {
-      // 期間フィルタリング（Early Return）
-      const createdAt = new Date(pr.createdAt);
-      if (!isWithinPRDateRange(createdAt, dateRange)) {
-        continue;
-      }
-
-      allPRs.push(convertToPullRequest(pr, repo.fullName));
-    }
-
-    if (!pageInfo.hasNextPage) {
+    if (!prsData.pageInfo.hasNextPage) {
       break;
     }
-    cursor = pageInfo.endCursor;
+    cursor = prsData.pageInfo.endCursor;
     page++;
   }
 
