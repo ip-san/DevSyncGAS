@@ -21,6 +21,30 @@ export interface HttpClient {
   fetch<T = unknown>(url: string, options?: HttpRequestOptions): HttpResponse<T>;
 }
 
+// Slack通知の抽象化
+export interface SlackMessage {
+  text: string;
+  blocks?: SlackBlock[];
+}
+
+export interface SlackBlock {
+  type: string;
+  text?: {
+    type: string;
+    text: string;
+  };
+  fields?: Array<{
+    type: string;
+    text: string;
+  }>;
+  elements?: Array<unknown>;
+  accessory?: unknown;
+}
+
+export interface SlackClient {
+  sendMessage(message: SlackMessage): void;
+}
+
 // スプレッドシートの抽象化
 
 /** Border設定オプション */
@@ -142,4 +166,5 @@ export interface ServiceContainer {
   storageClient: StorageClient;
   logger: LoggerClient;
   triggerClient: TriggerClient;
+  slackClient: SlackClient;
 }

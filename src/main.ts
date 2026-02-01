@@ -71,6 +71,12 @@ import {
   configureLogLevel,
   resetLogLevelConfig,
 } from './functions';
+import {
+  // Slack通知設定
+  configureSlackWebhook,
+  removeSlackWebhook,
+  showSlackConfig,
+} from './functions/slackConfig';
 
 // =============================================================================
 // GASグローバルスコープにエクスポート
@@ -150,3 +156,8 @@ global.showBackupCleanupHelp = showBackupCleanupHelp;
 global.showLogLevel = showLogLevel;
 global.configureLogLevel = configureLogLevel;
 global.resetLogLevelConfig = resetLogLevelConfig;
+
+// Slack通知設定
+global.configureSlackWebhook = configureSlackWebhook;
+global.removeSlackWebhook = removeSlackWebhook;
+global.showSlackConfig = showSlackConfig;

@@ -87,6 +87,14 @@ export const CODING_TIME_KEYS = {
 } as const;
 
 /**
+ * Slack通知設定キー
+ */
+export const SLACK_KEYS = {
+  /** Slack Incoming Webhook URL */
+  WEBHOOK_URL: 'SLACK_WEBHOOK_URL',
+} as const;
+
+/**
  * 全ての設定キーを統合したオブジェクト
  */
 export const CONFIG_KEYS = {
@@ -97,6 +105,7 @@ export const CONFIG_KEYS = {
   LABEL: LABEL_KEYS,
   CYCLE_TIME: CYCLE_TIME_KEYS,
   CODING_TIME: CODING_TIME_KEYS,
+  SLACK: SLACK_KEYS,
 } as const;
 
 /**
@@ -110,4 +119,5 @@ export type ConfigKeyValue =
   | (typeof PRODUCTION_KEYS)[keyof typeof PRODUCTION_KEYS]
   | (typeof LABEL_KEYS)[keyof typeof LABEL_KEYS]
   | (typeof CYCLE_TIME_KEYS)[keyof typeof CYCLE_TIME_KEYS]
-  | (typeof CODING_TIME_KEYS)[keyof typeof CODING_TIME_KEYS];
+  | (typeof CODING_TIME_KEYS)[keyof typeof CODING_TIME_KEYS]
+  | (typeof SLACK_KEYS)[keyof typeof SLACK_KEYS];
