@@ -192,6 +192,9 @@ describe('GraphQL Queries', () => {
                   additions: 100,
                   deletions: 50,
                   changedFiles: 5,
+                  labels: {
+                    nodes: [],
+                  },
                 },
               ],
             },
