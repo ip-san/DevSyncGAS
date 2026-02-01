@@ -28,6 +28,9 @@ import {
   validateGitHubAppId,
   validateGitHubInstallationId,
   validatePrivateKey,
+  validateRepositoryOwner,
+  validateRepositoryName,
+  validateProjectName,
 } from '../utils/validation';
 import { auditLog } from '../utils/auditLog';
 import { validateSpreadsheetAccess } from '../utils/spreadsheetValidator';
@@ -144,8 +147,27 @@ export function showAuthMode(): void {
 /** リポジトリ追加 */
 export function addRepo(owner: string, name: string): void {
   ensureContainerInitialized();
-  addRepository(owner, name);
-  Logger.log(`✅ Added repository: ${owner}/${name}`);
+
+  // 入力検証
+  try {
+    validateRepositoryOwner(owner);
+    validateRepositoryName(name);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    Logger.log(`❌ Validation error: ${errorMessage}`);
+    auditLog('repository.add', { owner, name }, 'failure', errorMessage);
+    throw error;
+  }
+
+  try {
+    addRepository(owner, name);
+    Logger.log(`✅ Added repository: ${owner}/${name}`);
+    auditLog('repository.add', { fullName: `${owner}/${name}` });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    auditLog('repository.add', { owner, name }, 'failure', errorMessage);
+    throw error;
+  }
 }
 
 /** リポジトリ削除 */
@@ -213,10 +235,30 @@ export function createProject(
   sheetName = 'DevOps Metrics'
 ): void {
   ensureContainerInitialized();
-  addProject({ name, spreadsheetId, sheetName, repositories: [] });
-  Logger.log(`✅ Project "${name}" created`);
-  Logger.log(`   Spreadsheet: ${spreadsheetId}`);
-  Logger.log(`   Sheet: ${sheetName}`);
+
+  // 入力検証
+  try {
+    validateProjectName(name);
+    validateSpreadsheetId(spreadsheetId);
+    validateSpreadsheetAccess(spreadsheetId);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    Logger.log(`❌ Validation error: ${errorMessage}`);
+    auditLog('project.create', { name, spreadsheetId }, 'failure', errorMessage);
+    throw error;
+  }
+
+  try {
+    addProject({ name, spreadsheetId, sheetName, repositories: [] });
+    Logger.log(`✅ Project "${name}" created`);
+    Logger.log(`   Spreadsheet: ${spreadsheetId}`);
+    Logger.log(`   Sheet: ${sheetName}`);
+    auditLog('project.create', { name, spreadsheetId, sheetName });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    auditLog('project.create', { name, spreadsheetId }, 'failure', errorMessage);
+    throw error;
+  }
 }
 
 /** プロジェクトグループを削除 */
@@ -252,8 +294,28 @@ export function listProjects(): void {
 /** プロジェクトにリポジトリを追加 */
 export function addRepoToProject(projectName: string, owner: string, repoName: string): void {
   ensureContainerInitialized();
-  addRepositoryToProject(projectName, owner, repoName);
-  Logger.log(`✅ Repository "${owner}/${repoName}" added to project "${projectName}"`);
+
+  // 入力検証
+  try {
+    validateProjectName(projectName);
+    validateRepositoryOwner(owner);
+    validateRepositoryName(repoName);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    Logger.log(`❌ Validation error: ${errorMessage}`);
+    auditLog('project.add_repository', { projectName, owner, repoName }, 'failure', errorMessage);
+    throw error;
+  }
+
+  try {
+    addRepositoryToProject(projectName, owner, repoName);
+    Logger.log(`✅ Repository "${owner}/${repoName}" added to project "${projectName}"`);
+    auditLog('project.add_repository', { projectName, fullName: `${owner}/${repoName}` });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    auditLog('project.add_repository', { projectName, owner, repoName }, 'failure', errorMessage);
+    throw error;
+  }
 }
 
 /** プロジェクトからリポジトリを削除 */
