@@ -77,6 +77,13 @@ import {
   removeSlackWebhook,
   showSlackConfig,
 } from './functions/slackConfig';
+import {
+  // Slackアラート通知
+  checkAndSendAlerts,
+  setupAlertTrigger,
+  removeAlertTrigger,
+  showAlertTrigger,
+} from './functions/slackAlerts';
 
 // =============================================================================
 // GASグローバルスコープにエクスポート
@@ -161,3 +168,9 @@ global.resetLogLevelConfig = resetLogLevelConfig;
 global.configureSlackWebhook = configureSlackWebhook;
 global.removeSlackWebhook = removeSlackWebhook;
 global.showSlackConfig = showSlackConfig;
+
+// Slackアラート通知
+global.checkAndSendAlerts = checkAndSendAlerts;
+global.setupAlertTrigger = setupAlertTrigger;
+global.removeAlertTrigger = removeAlertTrigger;
+global.showAlertTrigger = showAlertTrigger;
