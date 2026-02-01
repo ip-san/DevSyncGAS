@@ -19,6 +19,7 @@ import {
 } from './helpers';
 import { DASHBOARD_SCHEMA, getHeadersFromSchema } from '../../schemas';
 import { evaluateMetric, selectWorstStatus } from '../../utils/healthStatus';
+import { getExtendedMetricSheetName } from './extendedMetricsRepositorySheet';
 
 const DASHBOARD_HEADERS = getHeadersFromSchema(DASHBOARD_SCHEMA);
 
@@ -69,11 +70,14 @@ interface RepositoryLatestData {
   leadTimeHours: number | null;
   changeFailureRate: number | null;
   mttrHours: number | null;
-  // 拡張指標（将来的に統合）
+  // 拡張指標
   cycleTimeHours: number | null;
+  codingTimeHours: number | null;
   timeToFirstReviewHours: number | null;
+  reviewDurationHours: number | null;
   avgLinesOfCode: number | null;
   avgAdditionalCommits: number | null;
+  avgForcePushCount: number | null;
 }
 
 /**
@@ -95,16 +99,89 @@ export function extractLatestMetricsByRepository(
         leadTimeHours: metric.leadTimeForChangesHours,
         changeFailureRate: metric.changeFailureRate,
         mttrHours: metric.meanTimeToRecoveryHours,
-        // 拡張指標は現時点ではnull（後で統合）
+        // 拡張指標は後で統合
         cycleTimeHours: null,
+        codingTimeHours: null,
         timeToFirstReviewHours: null,
+        reviewDurationHours: null,
         avgLinesOfCode: null,
         avgAdditionalCommits: null,
+        avgForcePushCount: null,
       });
     }
   }
 
   return latestByRepo;
+}
+
+/**
+ * リポジトリ別シートから数値列の平均を計算
+ */
+function calculateAverageFromSheet(
+  spreadsheet: Spreadsheet,
+  sheetName: string,
+  columnIndex: number
+): number | null {
+  const sheet = spreadsheet.getSheetByName(sheetName);
+  if (!sheet) {
+    return null;
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) {
+    // ヘッダーのみまたは空
+    return null;
+  }
+
+  const data = sheet.getRange(2, columnIndex, lastRow - 1, 1).getValues();
+  const validValues: number[] = [];
+
+  for (const row of data) {
+    const value = row[0];
+    if (typeof value === 'number' && !isNaN(value) && value !== null) {
+      validValues.push(value);
+    }
+  }
+
+  if (validValues.length === 0) {
+    return null;
+  }
+
+  return validValues.reduce((sum, v) => sum + v, 0) / validValues.length;
+}
+
+/**
+ * リポジトリの拡張指標を読み取って統合
+ */
+export function enrichWithExtendedMetrics(
+  spreadsheetId: string,
+  latestByRepo: Map<string, RepositoryLatestData>
+): void {
+  const spreadsheet = openSpreadsheet(spreadsheetId);
+
+  for (const [repository, data] of latestByRepo) {
+    // サイクルタイム (6列目: コーディング時間 (時間))
+    const cycleTimeSheetName = getExtendedMetricSheetName(repository, 'サイクルタイム');
+    data.cycleTimeHours = calculateAverageFromSheet(spreadsheet, cycleTimeSheetName, 5);
+
+    // コーディング時間 (6列目: コーディング時間 (時間))
+    const codingTimeSheetName = getExtendedMetricSheetName(repository, 'コーディング時間');
+    data.codingTimeHours = calculateAverageFromSheet(spreadsheet, codingTimeSheetName, 6);
+
+    // レビュー効率 (8列目: レビュー待ち時間、9列目: レビュー時間)
+    const reviewEffSheetName = getExtendedMetricSheetName(repository, 'レビュー効率');
+    data.timeToFirstReviewHours = calculateAverageFromSheet(spreadsheet, reviewEffSheetName, 8);
+    data.reviewDurationHours = calculateAverageFromSheet(spreadsheet, reviewEffSheetName, 9);
+
+    // PRサイズ (7列目: 変更行数)
+    const prSizeSheetName = getExtendedMetricSheetName(repository, 'PRサイズ');
+    data.avgLinesOfCode = calculateAverageFromSheet(spreadsheet, prSizeSheetName, 7);
+
+    // 手戻り率 (7列目: 追加コミット数、8列目: Force Push回数)
+    const reworkRateSheetName = getExtendedMetricSheetName(repository, '手戻り率');
+    data.avgAdditionalCommits = calculateAverageFromSheet(spreadsheet, reworkRateSheetName, 7);
+    data.avgForcePushCount = calculateAverageFromSheet(spreadsheet, reworkRateSheetName, 8);
+  }
 }
 
 /**
@@ -120,9 +197,12 @@ function calculateOverallAverage(
       changeFailureRate: null,
       mttrHours: null,
       cycleTimeHours: null,
+      codingTimeHours: null,
       timeToFirstReviewHours: null,
+      reviewDurationHours: null,
       avgLinesOfCode: null,
       avgAdditionalCommits: null,
+      avgForcePushCount: null,
     };
   }
 
@@ -137,10 +217,23 @@ function calculateOverallAverage(
     changeFailureRate: avgOrNull(repoDataList.map((d) => d.changeFailureRate)),
     mttrHours: avgOrNull(repoDataList.map((d) => d.mttrHours)),
     cycleTimeHours: avgOrNull(repoDataList.map((d) => d.cycleTimeHours)),
+    codingTimeHours: avgOrNull(repoDataList.map((d) => d.codingTimeHours)),
     timeToFirstReviewHours: avgOrNull(repoDataList.map((d) => d.timeToFirstReviewHours)),
+    reviewDurationHours: avgOrNull(repoDataList.map((d) => d.reviewDurationHours)),
     avgLinesOfCode: avgOrNull(repoDataList.map((d) => d.avgLinesOfCode)),
     avgAdditionalCommits: avgOrNull(repoDataList.map((d) => d.avgAdditionalCommits)),
+    avgForcePushCount: avgOrNull(repoDataList.map((d) => d.avgForcePushCount)),
   };
+}
+
+/**
+ * メトリクス値をフォーマット
+ */
+function formatMetric(value: number | null | string): number | string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  return value ?? 'N/A';
 }
 
 /**
@@ -157,12 +250,16 @@ function createRepositoryRow(data: RepositoryLatestData): (string | number)[] {
   return [
     data.repository,
     data.deploymentFrequency,
-    data.leadTimeHours ?? 'N/A',
-    data.changeFailureRate ?? 'N/A',
-    data.mttrHours ?? 'N/A',
-    data.cycleTimeHours ?? 'N/A',
-    data.timeToFirstReviewHours ?? 'N/A',
-    data.avgLinesOfCode ?? 'N/A',
+    formatMetric(data.leadTimeHours),
+    formatMetric(data.changeFailureRate),
+    formatMetric(data.mttrHours),
+    formatMetric(data.cycleTimeHours),
+    formatMetric(data.codingTimeHours),
+    formatMetric(data.timeToFirstReviewHours),
+    formatMetric(data.reviewDurationHours),
+    formatMetric(data.avgLinesOfCode),
+    formatMetric(data.avgAdditionalCommits),
+    formatMetric(data.avgForcePushCount),
     formatStatus(status),
   ];
 }
@@ -183,12 +280,16 @@ function createOverallAverageRow(
   return [
     '【全体平均】',
     overall.deploymentFrequency,
-    overall.leadTimeHours ?? 'N/A',
-    overall.changeFailureRate ?? 'N/A',
-    overall.mttrHours ?? 'N/A',
-    overall.cycleTimeHours ?? 'N/A',
-    overall.timeToFirstReviewHours ?? 'N/A',
-    overall.avgLinesOfCode ?? 'N/A',
+    formatMetric(overall.leadTimeHours),
+    formatMetric(overall.changeFailureRate),
+    formatMetric(overall.mttrHours),
+    formatMetric(overall.cycleTimeHours),
+    formatMetric(overall.codingTimeHours),
+    formatMetric(overall.timeToFirstReviewHours),
+    formatMetric(overall.reviewDurationHours),
+    formatMetric(overall.avgLinesOfCode),
+    formatMetric(overall.avgAdditionalCommits),
+    formatMetric(overall.avgForcePushCount),
     formatStatus(overallStatus),
   ];
 }
@@ -254,6 +355,10 @@ export function writeDashboard(spreadsheetId: string, metrics: DevOpsMetrics[]):
 
   // リポジトリ別最新データを抽出
   const latestByRepo = extractLatestMetricsByRepository(metrics);
+
+  // 拡張指標を統合
+  enrichWithExtendedMetrics(spreadsheetId, latestByRepo);
+
   const repoDataList = Array.from(latestByRepo.values());
 
   // 行データを作成
@@ -280,13 +385,17 @@ function formatDashboardSheet(sheet: Sheet, rowCount: number, hasOverallRow: boo
 
   const lastCol = sheet.getLastColumn();
 
-  // 数値列のフォーマット（3-8列目）
+  // 数値列のフォーマット
   sheet.getRange(2, 3, rowCount, 1).setNumberFormat('#,##0.0'); // リードタイム
   sheet.getRange(2, 4, rowCount, 1).setNumberFormat('#,##0.0'); // 変更障害率
   sheet.getRange(2, 5, rowCount, 1).setNumberFormat('#,##0.0'); // MTTR
   sheet.getRange(2, 6, rowCount, 1).setNumberFormat('#,##0.0'); // サイクルタイム
-  sheet.getRange(2, 7, rowCount, 1).setNumberFormat('#,##0.0'); // レビュー待ち
-  sheet.getRange(2, 8, rowCount, 1).setNumberFormat('#,##0'); // PRサイズ
+  sheet.getRange(2, 7, rowCount, 1).setNumberFormat('#,##0.0'); // コーディング時間
+  sheet.getRange(2, 8, rowCount, 1).setNumberFormat('#,##0.0'); // レビュー待ち
+  sheet.getRange(2, 9, rowCount, 1).setNumberFormat('#,##0.0'); // レビュー時間
+  sheet.getRange(2, 10, rowCount, 1).setNumberFormat('#,##0'); // PRサイズ
+  sheet.getRange(2, 11, rowCount, 1).setNumberFormat('#,##0.0'); // 追加コミット数
+  sheet.getRange(2, 12, rowCount, 1).setNumberFormat('#,##0.0'); // Force Push回数
 
   // データ範囲にボーダーを適用
   applyDataBorders(sheet, rowCount, lastCol);

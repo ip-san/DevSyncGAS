@@ -497,7 +497,7 @@ export const PR_SIZE_DETAIL_SCHEMA: SheetSchema = {
 // =============================================================================
 
 export const DASHBOARD_SCHEMA: SheetSchema = {
-  version: '1.0.0',
+  version: '2.0.0',
   sheetName: 'Dashboard',
   columns: [
     { id: 'repository', header: 'リポジトリ', type: 'string' },
@@ -517,12 +517,36 @@ export const DASHBOARD_SCHEMA: SheetSchema = {
       numberFormat: '#,##0.0',
     },
     {
+      id: 'codingTimeHours',
+      header: 'コーディング時間 (時間)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+    },
+    {
       id: 'timeToFirstReviewHours',
       header: 'レビュー待ち (時間)',
       type: 'number',
       numberFormat: '#,##0.0',
     },
+    {
+      id: 'reviewDurationHours',
+      header: 'レビュー時間 (時間)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+    },
     { id: 'avgLinesOfCode', header: 'PRサイズ (行)', type: 'number', numberFormat: '#,##0' },
+    {
+      id: 'avgAdditionalCommits',
+      header: '追加コミット数 (平均)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+    },
+    {
+      id: 'avgForcePushCount',
+      header: 'Force Push回数 (平均)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+    },
     { id: 'status', header: 'ステータス', type: 'string' },
   ],
 };
