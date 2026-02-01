@@ -33,6 +33,7 @@ import type { IssueDateRange } from '../api';
 import { getPullRequestWithBranchesGraphQL } from './pullRequests.js';
 import { selectBestTrackResult } from '../cycleTimeHelpers.js';
 import { MS_TO_HOURS } from '../../../utils/timeConstants.js';
+import { isWithinDateRange } from './issueHelpers.js';
 
 // =============================================================================
 // Issue一覧取得
@@ -91,17 +92,8 @@ export function getIssuesGraphQL(
       const createdAt = new Date(issue.createdAt);
 
       // 日付範囲チェック
-      if (options?.dateRange?.start) {
-        const startDate = new Date(options.dateRange.start);
-        if (createdAt < startDate) {
-          continue;
-        }
-      }
-      if (options?.dateRange?.end) {
-        const endDate = new Date(options.dateRange.end);
-        if (createdAt > endDate) {
-          continue;
-        }
+      if (!isWithinDateRange(createdAt, options?.dateRange)) {
+        continue;
       }
 
       allIssues.push(convertToIssue(issue, repo.fullName));

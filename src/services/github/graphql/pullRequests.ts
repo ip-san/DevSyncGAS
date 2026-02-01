@@ -19,6 +19,7 @@ import type {
 import { getContainer } from '../../../container';
 import { executeGraphQLWithRetry, DEFAULT_PAGE_SIZE } from './client';
 import { PULL_REQUESTS_QUERY, PULL_REQUEST_DETAIL_QUERY, buildBatchPRDetailQuery } from './queries';
+import { isWithinPRDateRange } from './issueHelpers.js';
 import type {
   PullRequestsQueryResponse,
   PullRequestDetailQueryResponse,
@@ -92,10 +93,7 @@ export function getPullRequestsGraphQL(
     for (const pr of nodes) {
       // 期間フィルタリング（Early Return）
       const createdAt = new Date(pr.createdAt);
-      if (dateRange?.until && createdAt > dateRange.until) {
-        continue;
-      }
-      if (dateRange?.since && createdAt < dateRange.since) {
+      if (!isWithinPRDateRange(createdAt, dateRange)) {
         continue;
       }
 
