@@ -75,7 +75,7 @@ export function writeCycleTimeToSheet(spreadsheetId: string, metrics: CycleTimeM
   // リポジトリ別シートに書き込み
   writeCycleTimeToAllRepositorySheets(spreadsheetId, metrics);
 
-  logger.log(`📝 Wrote cycle time metrics to repository sheets`);
+  logger.info(`📝 Wrote cycle time metrics to repository sheets`);
 }
 
 /**
@@ -238,7 +238,7 @@ export function writeCycleTimeToRepositorySheet(
   sheet.getRange(lastRow + 1, 1, rows.length, REPOSITORY_DETAIL_HEADERS.length).setValues(rows);
 
   formatRepositoryCycleTimeSheet(sheet);
-  logger.log(`✅ [${repository}] Wrote ${detailsToWrite.length} cycle time records`);
+  logger.info(`✅ [${repository}] Wrote ${detailsToWrite.length} cycle time records`);
 
   return { written: detailsToWrite.length, skipped: skippedCount };
 }
@@ -278,7 +278,7 @@ export function writeCycleTimeToAllRepositorySheets(
   const grouped = groupCycleTimeDetailsByRepository(metrics.issueDetails);
   const results = new Map<string, { written: number; skipped: number }>();
 
-  logger.log(`📊 Writing cycle time to ${grouped.size} repository sheets...`);
+  logger.info(`📊 Writing cycle time to ${grouped.size} repository sheets...`);
 
   for (const [repository, repoDetails] of grouped) {
     const result = writeCycleTimeToRepositorySheet(spreadsheetId, repository, repoDetails, options);
@@ -293,7 +293,7 @@ export function writeCycleTimeToAllRepositorySheets(
     totalSkipped += result.skipped;
   }
 
-  logger.log(
+  logger.info(
     `✅ Total: ${totalWritten} written, ${totalSkipped} skipped across ${grouped.size} repositories`
   );
 

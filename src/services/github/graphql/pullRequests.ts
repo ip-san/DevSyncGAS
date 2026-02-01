@@ -112,7 +112,7 @@ function filterPRsByDateRange(
 
   if (excludedCount > 0) {
     const { logger } = getContainer();
-    logger.log(`  ℹ️ Excluded ${excludedCount} PRs by labels`);
+    logger.debug(`  ℹ️ Excluded ${excludedCount} PRs by labels`);
   }
 
   return filtered;
@@ -160,7 +160,7 @@ export function getPullRequestsGraphQL(
     page++;
   }
 
-  logger.log(`  📦 Fetched ${allPRs.length} PRs via GraphQL`);
+  logger.info(`  📦 Fetched ${allPRs.length} PRs via GraphQL`);
   return { success: true, data: allPRs };
 }
 
@@ -273,7 +273,7 @@ interface ProcessBatchReworkDataParams {
   owner: string;
   repo: string;
   token: string;
-  logger: { log: (msg: string) => void };
+  logger: { log: (msg: string) => void; warn: (msg: string) => void };
 }
 
 /**
@@ -290,7 +290,7 @@ function processBatchReworkData(params: ProcessBatchReworkDataParams): PRReworkD
   }>(query, { owner, name: repo }, token);
 
   if (!result.success || !result.data?.repository) {
-    logger.log(`  ⚠️ Failed to fetch batch PR details: ${result.error}`);
+    logger.warn(`  ⚠️ Failed to fetch batch PR details: ${result.error}`);
     // フォールバック: 空データを追加
     return batch.map((pr) => createDefaultReworkData(pr));
   }
@@ -358,7 +358,7 @@ interface ProcessBatchSizeDataParams {
   repo: string;
   repoFullName: string;
   token: string;
-  logger: { log: (msg: string) => void };
+  logger: { log: (msg: string) => void; warn: (msg: string) => void };
 }
 
 /**
@@ -413,7 +413,7 @@ function processBatchSizeData(params: ProcessBatchSizeDataParams): PRSizeData[] 
   }>(query, { owner, name: repo }, token);
 
   if (!result.success || !result.data?.repository) {
-    logger.log(`  ⚠️ Failed to fetch batch PR size: ${result.error}`);
+    logger.warn(`  ⚠️ Failed to fetch batch PR size: ${result.error}`);
     return [];
   }
 
@@ -484,7 +484,7 @@ interface ProcessBatchReviewDataParams {
   repo: string;
   repoFullName: string;
   token: string;
-  logger: { log: (msg: string) => void };
+  logger: { log: (msg: string) => void; warn: (msg: string) => void };
 }
 
 /**
@@ -501,7 +501,7 @@ function processBatchReviewData(params: ProcessBatchReviewDataParams): PRReviewD
   }>(query, { owner, name: repo }, token);
 
   if (!result.success || !result.data?.repository) {
-    logger.log(`  ⚠️ Failed to fetch batch PR reviews: ${result.error}`);
+    logger.warn(`  ⚠️ Failed to fetch batch PR reviews: ${result.error}`);
     return [];
   }
 

@@ -224,10 +224,10 @@ function createBackup(
     const firstRow = data[0];
     backupSheet.getRange(1, 1, data.length, firstRow.length).setValues(data);
 
-    logger.log(`📋 Backup created: ${backupName}`);
+    logger.info(`📋 Backup created: ${backupName}`);
     return { backupSheet, backupName };
   } catch (error) {
-    logger.log(
+    logger.warn(
       `⚠️ Failed to create backup: ${error instanceof Error ? error.message : String(error)}`
     );
     return null;
@@ -250,10 +250,10 @@ function restoreFromBackup(sheet: Sheet, backupSheet: Sheet): boolean {
     const firstRow = backupData[0];
     sheet.getRange(1, 1, backupData.length, firstRow.length).setValues(backupData);
 
-    logger.log(`🔄 Restored from backup`);
+    logger.info(`🔄 Restored from backup`);
     return true;
   } catch (error) {
-    logger.log(
+    logger.error(
       `❌ Failed to restore from backup: ${error instanceof Error ? error.message : String(error)}`
     );
     return false;
@@ -368,7 +368,7 @@ function performDataMigration(params: PerformDataMigrationParams): MigrationResu
   sheet.getRange(1, 1, newData.length, schema.columns.length).setValues(newData);
   applySheetFormat(sheet, schema);
 
-  logger.log(`✅ Migrated: ${schema.sheetName}`);
+  logger.info(`✅ Migrated: ${schema.sheetName}`);
 
   return {
     sheetName: schema.sheetName,
@@ -402,12 +402,12 @@ function handleMigrationError(params: HandleMigrationErrorParams): MigrationResu
   const { logger } = getContainer();
   const errorMessage = error instanceof Error ? error.message : String(error);
 
-  logger.log(`❌ Migration failed for ${schema.sheetName}: ${errorMessage}`);
+  logger.error(`❌ Migration failed for ${schema.sheetName}: ${errorMessage}`);
 
   if (backup) {
     const sheet = spreadsheet.getSheetByName(schema.sheetName);
     if (sheet && restoreFromBackup(sheet, backup.backupSheet)) {
-      logger.log(`🔄 Restored ${schema.sheetName} from backup`);
+      logger.info(`🔄 Restored ${schema.sheetName} from backup`);
     }
   }
 
@@ -465,7 +465,7 @@ export function migrateSheetSchema(spreadsheet: Spreadsheet, schema: SheetSchema
 
     backup = createBackup(spreadsheet, sheet, schema.sheetName);
     if (backup) {
-      logger.log(`   Backup available: ${backup.backupName}`);
+      logger.debug(`   Backup available: ${backup.backupName}`);
     }
 
     return performDataMigration({
@@ -609,7 +609,7 @@ export function updateSheetHeadersOnly(
     sheet.getRange(1, 1, 1, targetHeaders.length).setValues([targetHeaders]);
     sheet.getRange(1, 1, 1, targetHeaders.length).setFontWeight('bold');
 
-    logger.log(`✅ Headers updated: ${schema.sheetName}`);
+    logger.info(`✅ Headers updated: ${schema.sheetName}`);
 
     return createHeadersUpdatedResult(schema.sheetName, schema.version, Date.now() - startTime);
   } catch (error) {
@@ -679,31 +679,31 @@ function applySheetFormat(sheet: Sheet, schema: SheetSchema): void {
 export function logMigrationPreview(preview: MigrationPreview): void {
   const { logger } = getContainer();
 
-  logger.log(`\nSheet: ${preview.sheetName}`);
+  logger.info(`\nSheet: ${preview.sheetName}`);
 
   if (preview.status === 'new_sheet') {
-    logger.log('  Status: NEW SHEET (will be created)');
-    logger.log(`  Columns: ${preview.targetHeaders.length}`);
+    logger.info('  Status: NEW SHEET (will be created)');
+    logger.info(`  Columns: ${preview.targetHeaders.length}`);
     return;
   }
 
   if (preview.status === 'up_to_date') {
-    logger.log('  Status: UP TO DATE');
-    logger.log('  No changes needed');
+    logger.info('  Status: UP TO DATE');
+    logger.info('  No changes needed');
     return;
   }
 
-  logger.log('  Status: MIGRATION REQUIRED');
-  logger.log(`  Rows: ${preview.rowCount}`);
+  logger.info('  Status: MIGRATION REQUIRED');
+  logger.info(`  Rows: ${preview.rowCount}`);
 
   if (preview.changes.added.length > 0) {
-    logger.log(`  + Added columns: ${preview.changes.added.join(', ')}`);
+    logger.info(`  + Added columns: ${preview.changes.added.join(', ')}`);
   }
   if (preview.changes.removed.length > 0) {
-    logger.log(`  - Removed columns: ${preview.changes.removed.join(', ')}`);
+    logger.info(`  - Removed columns: ${preview.changes.removed.join(', ')}`);
   }
   if (preview.changes.reordered) {
-    logger.log('  ~ Column order will be changed');
+    logger.info('  ~ Column order will be changed');
   }
 }
 
@@ -722,20 +722,20 @@ export function logMigrationResult(result: MigrationResult): void {
       error: 'ERROR',
     }[result.status];
 
-    logger.log(`✅ ${result.sheetName}: ${statusText} (${result.duration}ms)`);
+    logger.info(`✅ ${result.sheetName}: ${statusText} (${result.duration}ms)`);
 
     if (result.rowsMigrated > 0) {
-      logger.log(`   Rows migrated: ${result.rowsMigrated}`);
+      logger.debug(`   Rows migrated: ${result.rowsMigrated}`);
     }
     if (result.columnsAdded.length > 0) {
-      logger.log(`   Columns added: ${result.columnsAdded.join(', ')}`);
+      logger.debug(`   Columns added: ${result.columnsAdded.join(', ')}`);
     }
     if (result.columnsRemoved.length > 0) {
-      logger.log(`   Columns removed: ${result.columnsRemoved.join(', ')}`);
+      logger.debug(`   Columns removed: ${result.columnsRemoved.join(', ')}`);
     }
   } else {
-    logger.log(`❌ ${result.sheetName}: FAILED`);
-    logger.log(`   Error: ${result.error}`);
+    logger.error(`❌ ${result.sheetName}: FAILED`);
+    logger.error(`   Error: ${result.error}`);
   }
 }
 
@@ -752,18 +752,18 @@ export function logMigrationSummary(results: MigrationResult[]): void {
   const upToDate = results.filter((r) => r.status === 'up_to_date').length;
   const totalDuration = results.reduce((sum, r) => sum + r.duration, 0);
 
-  logger.log('\n=== Migration Summary ===');
-  logger.log(`Total sheets: ${results.length}`);
-  logger.log(`  Succeeded: ${succeeded}`);
-  logger.log(`  Failed: ${failed}`);
-  logger.log(`  - Migrated: ${migrated}`);
-  logger.log(`  - Created: ${created}`);
-  logger.log(`  - Up to date: ${upToDate}`);
-  logger.log(`Total duration: ${totalDuration}ms`);
+  logger.info('\n=== Migration Summary ===');
+  logger.info(`Total sheets: ${results.length}`);
+  logger.info(`  Succeeded: ${succeeded}`);
+  logger.info(`  Failed: ${failed}`);
+  logger.info(`  - Migrated: ${migrated}`);
+  logger.info(`  - Created: ${created}`);
+  logger.info(`  - Up to date: ${upToDate}`);
+  logger.info(`Total duration: ${totalDuration}ms`);
 
   if (migrated > 0) {
-    logger.log('\n💡 Tip: Backup sheets (_backup_*) were created.');
-    logger.log('   Run showBackupCleanupHelp() for cleanup instructions.');
+    logger.info('\n💡 Tip: Backup sheets (_backup_*) were created.');
+    logger.info('   Run showBackupCleanupHelp() for cleanup instructions.');
   }
 }
 
@@ -791,9 +791,9 @@ export function listBackupSheets(_spreadsheet: Spreadsheet): string[] {
   // 代わりに、スプレッドシートの全シートを取得する方法が必要
   // 現在のインターフェースでは制限があるため、既知のパターンでチェック
 
-  logger.log('=== Backup Sheets ===');
-  logger.log("Note: Check your spreadsheet for sheets starting with '_backup_'");
-  logger.log('These are created during migration and can be safely deleted after verification.');
+  logger.info('=== Backup Sheets ===');
+  logger.info("Note: Check your spreadsheet for sheets starting with '_backup_'");
+  logger.info('These are created during migration and can be safely deleted after verification.');
 
   return backupSheets;
 }
@@ -806,11 +806,11 @@ export function listBackupSheets(_spreadsheet: Spreadsheet): string[] {
 export function logBackupCleanupInstructions(): void {
   const { logger } = getContainer();
 
-  logger.log('\n=== Backup Cleanup Instructions ===');
-  logger.log('To remove backup sheets:');
-  logger.log('1. Open your spreadsheet in Google Sheets');
-  logger.log("2. Right-click on sheets starting with '_backup_'");
-  logger.log("3. Select 'Delete' to remove them");
-  logger.log('');
-  logger.log('⚠️ Only delete backups after verifying the migration was successful!');
+  logger.info('\n=== Backup Cleanup Instructions ===');
+  logger.info('To remove backup sheets:');
+  logger.info('1. Open your spreadsheet in Google Sheets');
+  logger.info("2. Right-click on sheets starting with '_backup_'");
+  logger.info("3. Select 'Delete' to remove them");
+  logger.info('');
+  logger.warn('⚠️ Only delete backups after verifying the migration was successful!');
 }

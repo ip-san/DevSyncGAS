@@ -84,7 +84,7 @@ export function writePRSizeToSheet(spreadsheetId: string, metrics: PRSizeMetrics
     // リポジトリ別シートに書き込み
     writePRSizeToAllRepositorySheets(spreadsheetId, metrics);
 
-    logger.log(`📝 Wrote PR size metrics to repository sheets`);
+    logger.info(`📝 Wrote PR size metrics to repository sheets`);
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -256,7 +256,7 @@ export function writePRSizeToRepositorySheet(
     sheet.getRange(lastRow + 1, 1, rows.length, REPOSITORY_DETAIL_HEADERS.length).setValues(rows);
 
     formatRepositoryPRSizeSheet(sheet);
-    logger.log(`✅ [${repository}] Wrote ${detailsToWrite.length} PR size records`);
+    logger.info(`✅ [${repository}] Wrote ${detailsToWrite.length} PR size records`);
 
     return { written: detailsToWrite.length, skipped: skippedCount };
   } catch (error) {
@@ -299,7 +299,7 @@ export function writePRSizeToAllRepositorySheets(
   const grouped = groupPRSizeDetailsByRepository(metrics.prDetails);
   const results = new Map<string, { written: number; skipped: number }>();
 
-  logger.log(`📊 Writing PR size to ${grouped.size} repository sheets...`);
+  logger.info(`📊 Writing PR size to ${grouped.size} repository sheets...`);
 
   for (const [repository, repoDetails] of grouped) {
     const result = writePRSizeToRepositorySheet(spreadsheetId, repository, repoDetails, options);
@@ -313,7 +313,7 @@ export function writePRSizeToAllRepositorySheets(
     totalSkipped += result.skipped;
   }
 
-  logger.log(
+  logger.info(
     `✅ Total: ${totalWritten} written, ${totalSkipped} skipped across ${grouped.size} repositories`
   );
 

@@ -73,7 +73,7 @@ export function writeReworkRateToSheet(spreadsheetId: string, metrics: ReworkRat
     // リポジトリ別シートに書き込み
     writeReworkRateToAllRepositorySheets(spreadsheetId, metrics);
 
-    logger.log(`📝 Wrote rework rate metrics to repository sheets`);
+    logger.info(`📝 Wrote rework rate metrics to repository sheets`);
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -240,7 +240,7 @@ export function writeReworkRateToRepositorySheet(
     sheet.getRange(lastRow + 1, 1, rows.length, REPOSITORY_DETAIL_HEADERS.length).setValues(rows);
 
     formatRepositoryReworkRateSheet(sheet);
-    logger.log(`✅ [${repository}] Wrote ${detailsToWrite.length} rework rate records`);
+    logger.info(`✅ [${repository}] Wrote ${detailsToWrite.length} rework rate records`);
 
     return { written: detailsToWrite.length, skipped: skippedCount };
   } catch (error) {
@@ -281,7 +281,7 @@ export function writeReworkRateToAllRepositorySheets(
   const grouped = groupReworkRateDetailsByRepository(metrics.prDetails);
   const results = new Map<string, { written: number; skipped: number }>();
 
-  logger.log(`📊 Writing rework rate to ${grouped.size} repository sheets...`);
+  logger.info(`📊 Writing rework rate to ${grouped.size} repository sheets...`);
 
   for (const [repository, repoDetails] of grouped) {
     const result = writeReworkRateToRepositorySheet(
@@ -300,7 +300,7 @@ export function writeReworkRateToAllRepositorySheets(
     totalSkipped += result.skipped;
   }
 
-  logger.log(
+  logger.info(
     `✅ Total: ${totalWritten} written, ${totalSkipped} skipped across ${grouped.size} repositories`
   );
 

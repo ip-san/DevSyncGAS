@@ -88,7 +88,7 @@ export function auditLog(
 
   // 構造化ログとして出力
   const logMessage = `[AUDIT] ${JSON.stringify(entry)}`;
-  logger.log(logMessage);
+  logger.debug(logMessage);
 
   // 将来的な拡張: Stackdriver Logging、外部SIEMへの送信など
   // if (shouldSendToExternalLog()) {
@@ -192,7 +192,7 @@ export function exportAuditLogsToSheet(spreadsheetId: string, sheetName = 'Audit
 
   const logs = getAuditLogs(1000); // 直近1000件
   if (logs.length === 0) {
-    logger.log('No audit logs to export');
+    logger.warn('No audit logs to export');
     return;
   }
 
@@ -223,5 +223,5 @@ export function exportAuditLogsToSheet(spreadsheetId: string, sheetName = 'Audit
     sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
   }
 
-  logger.log(`✅ Exported ${logs.length} audit log entries to "${sheetName}"`);
+  logger.info(`✅ Exported ${logs.length} audit log entries to "${sheetName}"`);
 }

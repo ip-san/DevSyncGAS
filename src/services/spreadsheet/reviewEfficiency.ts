@@ -99,7 +99,7 @@ export function writeReviewEfficiencyToSheet(
     // リポジトリ別シートに書き込み
     writeReviewEfficiencyToAllRepositorySheets(spreadsheetId, metrics);
 
-    logger.log(`📝 Wrote review efficiency metrics to repository sheets`);
+    logger.info(`📝 Wrote review efficiency metrics to repository sheets`);
   } catch (error) {
     if (error instanceof AppError) {
       throw error; // Re-throw custom errors
@@ -295,7 +295,7 @@ export function writeReviewEfficiencyToRepositorySheet(
     sheet.getRange(lastRow + 1, 1, rows.length, REPOSITORY_DETAIL_HEADERS.length).setValues(rows);
 
     formatRepositoryReviewEfficiencySheet(sheet);
-    logger.log(`✅ [${repository}] Wrote ${detailsToWrite.length} review efficiency records`);
+    logger.info(`✅ [${repository}] Wrote ${detailsToWrite.length} review efficiency records`);
 
     return { written: detailsToWrite.length, skipped: skippedCount };
   } catch (error) {
@@ -338,7 +338,7 @@ export function writeReviewEfficiencyToAllRepositorySheets(
   const grouped = groupReviewEfficiencyDetailsByRepository(metrics.prDetails);
   const results = new Map<string, { written: number; skipped: number }>();
 
-  logger.log(`📊 Writing review efficiency to ${grouped.size} repository sheets...`);
+  logger.info(`📊 Writing review efficiency to ${grouped.size} repository sheets...`);
 
   for (const [repository, repoDetails] of grouped) {
     const result = writeReviewEfficiencyToRepositorySheet(
@@ -357,7 +357,7 @@ export function writeReviewEfficiencyToAllRepositorySheets(
     totalSkipped += result.skipped;
   }
 
-  logger.log(
+  logger.info(
     `✅ Total: ${totalWritten} written, ${totalSkipped} skipped across ${grouped.size} repositories`
   );
 

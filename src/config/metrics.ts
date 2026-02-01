@@ -61,9 +61,9 @@ function getPropertyAsStringArray(key: string): string[] {
     if (Array.isArray(parsed) && parsed.every((item) => typeof item === 'string')) {
       return parsed;
     }
-    logger.log(`⚠️ Property ${key} is not a valid string array`);
+    logger.warn(`⚠️ Property ${key} is not a valid string array`);
   } catch (error) {
-    logger.log(
+    logger.warn(
       `⚠️ Failed to parse ${key}: ${error instanceof Error ? error.message : String(error)}`
     );
   }
