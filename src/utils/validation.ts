@@ -43,18 +43,28 @@ export function validateRepositoryOwner(owner: string): void {
  */
 export function validateRepositoryName(name: string): void {
   if (!name || typeof name !== 'string') {
-    throw new Error('Repository name is required and must be a string');
+    throw new ValidationError('Repository name is required and must be a string', {
+      code: ErrorCode.INVALID_REPOSITORY,
+      context: { name },
+    });
   }
 
   if (name.length < 1 || name.length > 100) {
-    throw new Error('Repository name must be between 1 and 100 characters');
+    throw new ValidationError('Repository name must be between 1 and 100 characters', {
+      code: ErrorCode.INVALID_REPOSITORY,
+      context: { name, length: name.length },
+    });
   }
 
   // GitHub repository name rules
   if (!/^[a-zA-Z0-9._-]+$/.test(name)) {
-    throw new Error(
+    throw new ValidationError(
       'Repository name must contain only alphanumeric characters, ' +
-        'hyphens, underscores, or periods'
+        'hyphens, underscores, or periods',
+      {
+        code: ErrorCode.INVALID_REPOSITORY,
+        context: { name },
+      }
     );
   }
 
@@ -62,7 +72,10 @@ export function validateRepositoryName(name: string): void {
   const dangerousPatterns = ['../', '.\\', '<', '>', '"', "'", '`'];
   for (const pattern of dangerousPatterns) {
     if (name.includes(pattern)) {
-      throw new Error(`Repository name contains invalid characters: ${pattern}`);
+      throw new ValidationError(`Repository name contains invalid characters: ${pattern}`, {
+        code: ErrorCode.INVALID_REPOSITORY,
+        context: { name, invalidPattern: pattern },
+      });
     }
   }
 }
@@ -73,39 +86,67 @@ export function validateRepositoryName(name: string): void {
  */
 export function validateProjectName(name: string): void {
   if (!name || typeof name !== 'string') {
-    throw new Error('Project name is required and must be a string');
+    throw new ValidationError('Project name is required and must be a string', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { name },
+    });
   }
 
   if (name.length < 1 || name.length > 100) {
-    throw new Error('Project name must be between 1 and 100 characters');
+    throw new ValidationError('Project name must be between 1 and 100 characters', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { name, length: name.length },
+    });
   }
 
   // プロジェクト名: 英数字、スペース、ハイフン、アンダースコアのみ
   if (!/^[a-zA-Z0-9 _-]+$/.test(name)) {
-    throw new Error(
-      'Project name must contain only alphanumeric characters, spaces, hyphens, or underscores'
+    throw new ValidationError(
+      'Project name must contain only alphanumeric characters, spaces, hyphens, or underscores',
+      {
+        code: ErrorCode.VALIDATION_FAILED,
+        context: { name },
+      }
     );
   }
 }
 
 /**
  * スプレッドシートIDの検証
- * Google Spreadsheet ID format: 44文字の英数字、ハイフン、アンダースコア
+ * Google Spreadsheet ID format: 通常44文字の英数字、ハイフン、アンダースコア
  */
 export function validateSpreadsheetId(id: string): void {
   if (!id || typeof id !== 'string') {
-    throw new Error('Spreadsheet ID is required and must be a string');
+    throw new ValidationError('Spreadsheet ID is required and must be a string', {
+      code: ErrorCode.INVALID_SPREADSHEET_ID,
+      context: { id },
+    });
   }
 
-  // Google Spreadsheet IDは通常44文字
+  // Google Spreadsheet IDは通常44文字（範囲: 20-100文字）
   if (id.length < 20 || id.length > 100) {
-    throw new Error('Spreadsheet ID format is invalid (expected 20-100 characters)');
+    throw new ValidationError('Spreadsheet ID format is invalid (expected 20-100 characters)', {
+      code: ErrorCode.INVALID_SPREADSHEET_ID,
+      context: { id, length: id.length },
+    });
   }
 
   // 英数字、ハイフン、アンダースコアのみ
   if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
-    throw new Error(
-      'Spreadsheet ID must contain only alphanumeric characters, hyphens, or underscores'
+    throw new ValidationError(
+      'Spreadsheet ID must contain only alphanumeric characters, hyphens, or underscores',
+      {
+        code: ErrorCode.INVALID_SPREADSHEET_ID,
+        context: { id },
+      }
+    );
+  }
+
+  // 推奨: 44文字の標準フォーマットを警告
+  if (id.length !== 44 && typeof Logger !== 'undefined') {
+    Logger.log(
+      `⚠️ Warning: Spreadsheet ID length is ${id.length} (expected 44). ` +
+        'This may indicate a malformed ID.'
     );
   }
 }
@@ -115,11 +156,17 @@ export function validateSpreadsheetId(id: string): void {
  */
 export function validateGitHubToken(token: string): void {
   if (!token || typeof token !== 'string') {
-    throw new Error('GitHub token is required and must be a string');
+    throw new ValidationError('GitHub token is required and must be a string', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { tokenLength: token?.length },
+    });
   }
 
   if (token.length < 10) {
-    throw new Error('GitHub token is too short');
+    throw new ValidationError('GitHub token is too short', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { tokenLength: token.length },
+    });
   }
 
   // トークン形式の簡易チェック（Classic PAT or Fine-grained PAT）
@@ -128,10 +175,9 @@ export function validateGitHubToken(token: string): void {
 
   if (!isClassicPAT && !isFineGrainedPAT) {
     // 警告のみ（古い形式のトークンも許可）
-    // Logger.log は GAS環境でのみ利用可能
     if (typeof Logger !== 'undefined') {
       Logger.log(
-        'Warning: GitHub token does not match expected format. ' +
+        '⚠️ Warning: GitHub token does not match expected format. ' +
           "Classic PATs start with 'ghp_', Fine-grained PATs start with 'github_pat_'"
       );
     }
@@ -143,16 +189,25 @@ export function validateGitHubToken(token: string): void {
  */
 export function validateGitHubAppId(appId: string): void {
   if (!appId || typeof appId !== 'string') {
-    throw new Error('GitHub App ID is required and must be a string');
+    throw new ValidationError('GitHub App ID is required and must be a string', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { appId },
+    });
   }
 
   // App IDは数字のみ
   if (!/^\d+$/.test(appId)) {
-    throw new Error('GitHub App ID must be numeric');
+    throw new ValidationError('GitHub App ID must be numeric', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { appId },
+    });
   }
 
   if (appId.length < 1 || appId.length > 10) {
-    throw new Error('GitHub App ID length is invalid');
+    throw new ValidationError('GitHub App ID length is invalid', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { appId, length: appId.length },
+    });
   }
 }
 
@@ -161,16 +216,25 @@ export function validateGitHubAppId(appId: string): void {
  */
 export function validateGitHubInstallationId(installationId: string): void {
   if (!installationId || typeof installationId !== 'string') {
-    throw new Error('GitHub Installation ID is required and must be a string');
+    throw new ValidationError('GitHub Installation ID is required and must be a string', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { installationId },
+    });
   }
 
   // Installation IDは数字のみ
   if (!/^\d+$/.test(installationId)) {
-    throw new Error('GitHub Installation ID must be numeric');
+    throw new ValidationError('GitHub Installation ID must be numeric', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { installationId },
+    });
   }
 
   if (installationId.length < 1 || installationId.length > 12) {
-    throw new Error('GitHub Installation ID length is invalid');
+    throw new ValidationError('GitHub Installation ID length is invalid', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { installationId, length: installationId.length },
+    });
   }
 }
 
@@ -179,7 +243,10 @@ export function validateGitHubInstallationId(installationId: string): void {
  */
 export function validatePrivateKey(privateKey: string): void {
   if (!privateKey || typeof privateKey !== 'string') {
-    throw new Error('Private Key is required and must be a string');
+    throw new ValidationError('Private Key is required and must be a string', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { keyLength: privateKey?.length },
+    });
   }
 
   // PEM形式のヘッダー/フッターチェック
@@ -191,14 +258,21 @@ export function validatePrivateKey(privateKey: string): void {
     privateKey.includes('-----END PRIVATE KEY-----');
 
   if (!hasValidHeader || !hasValidFooter) {
-    throw new Error(
+    throw new ValidationError(
       'Private Key must be in PEM format with BEGIN/END markers. ' +
-        'Make sure to replace newlines with \\n when setting the key.'
+        'Make sure to replace newlines with \\n when setting the key.',
+      {
+        code: ErrorCode.VALIDATION_FAILED,
+        context: { hasValidHeader, hasValidFooter },
+      }
     );
   }
 
   // 最小長チェック（実際のキーは数千文字）
   if (privateKey.length < 100) {
-    throw new Error('Private Key is too short to be valid');
+    throw new ValidationError('Private Key is too short to be valid', {
+      code: ErrorCode.VALIDATION_FAILED,
+      context: { keyLength: privateKey.length },
+    });
   }
 }
