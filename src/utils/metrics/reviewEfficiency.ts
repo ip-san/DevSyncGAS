@@ -8,72 +8,78 @@ import type { ReviewEfficiencyMetrics, PRReviewData } from '../../types';
 import { calculateStats } from './statsHelpers.js';
 
 /**
- * レビュー効率（Review Efficiency）を計算
- *
- * 定義: PRの各フェーズでの滞留時間を測定
+ * 空のレビュー効率メトリクスを作成
  */
-export function calculateReviewEfficiency(
-  reviewData: PRReviewData[],
-  period: string
+function createEmptyReviewEfficiencyMetrics(period: string): ReviewEfficiencyMetrics {
+  return {
+    period,
+    prCount: 0,
+    timeToFirstReview: {
+      avgHours: null,
+      medianHours: null,
+      minHours: null,
+      maxHours: null,
+    },
+    reviewDuration: {
+      avgHours: null,
+      medianHours: null,
+      minHours: null,
+      maxHours: null,
+    },
+    timeToMerge: {
+      avgHours: null,
+      medianHours: null,
+      minHours: null,
+      maxHours: null,
+    },
+    totalTime: {
+      avgHours: null,
+      medianHours: null,
+      minHours: null,
+      maxHours: null,
+    },
+    prDetails: [],
+  };
+}
+
+/**
+ * レビューデータから時間値を抽出
+ */
+function extractReviewTimeValues(reviewData: PRReviewData[]): {
+  timeToFirstReview: number[];
+  reviewDuration: number[];
+  timeToMerge: number[];
+  totalTime: number[];
+} {
+  return {
+    timeToFirstReview: reviewData
+      .map((pr) => pr.timeToFirstReviewHours)
+      .filter((v): v is number => v !== null),
+    reviewDuration: reviewData
+      .map((pr) => pr.reviewDurationHours)
+      .filter((v): v is number => v !== null),
+    timeToMerge: reviewData.map((pr) => pr.timeToMergeHours).filter((v): v is number => v !== null),
+    totalTime: reviewData.map((pr) => pr.totalTimeHours).filter((v): v is number => v !== null),
+  };
+}
+
+/**
+ * 統計値からレビュー効率メトリクスを構築
+ */
+function buildReviewEfficiencyMetrics(
+  period: string,
+  prCount: number,
+  timeValues: ReturnType<typeof extractReviewTimeValues>,
+  prDetails: PRReviewData[]
 ): ReviewEfficiencyMetrics {
-  if (reviewData.length === 0) {
-    return {
-      period,
-      prCount: 0,
-      timeToFirstReview: {
-        avgHours: null,
-        medianHours: null,
-        minHours: null,
-        maxHours: null,
-      },
-      reviewDuration: {
-        avgHours: null,
-        medianHours: null,
-        minHours: null,
-        maxHours: null,
-      },
-      timeToMerge: {
-        avgHours: null,
-        medianHours: null,
-        minHours: null,
-        maxHours: null,
-      },
-      totalTime: {
-        avgHours: null,
-        medianHours: null,
-        minHours: null,
-        maxHours: null,
-      },
-      prDetails: [],
-    };
-  }
-
-  // 各時間を抽出（nullを除外）
-  const timeToFirstReviewValues = reviewData
-    .map((pr) => pr.timeToFirstReviewHours)
-    .filter((v): v is number => v !== null);
-
-  const reviewDurationValues = reviewData
-    .map((pr) => pr.reviewDurationHours)
-    .filter((v): v is number => v !== null);
-
-  const timeToMergeValues = reviewData
-    .map((pr) => pr.timeToMergeHours)
-    .filter((v): v is number => v !== null);
-
-  const totalTimeValues = reviewData
-    .map((pr) => pr.totalTimeHours)
-    .filter((v): v is number => v !== null);
-
-  // 統計値を計算
-  const timeToFirstReviewStats = calculateStats(timeToFirstReviewValues);
-  const reviewDurationStats = calculateStats(reviewDurationValues);
-  const timeToMergeStats = calculateStats(timeToMergeValues);
-  const totalTimeStats = calculateStats(totalTimeValues);
+  const timeToFirstReviewStats = calculateStats(timeValues.timeToFirstReview);
+  const reviewDurationStats = calculateStats(timeValues.reviewDuration);
+  const timeToMergeStats = calculateStats(timeValues.timeToMerge);
+  const totalTimeStats = calculateStats(timeValues.totalTime);
 
   return {
     period,
-    prCount: reviewData.length,
+    prCount,
     timeToFirstReview: {
       avgHours: timeToFirstReviewStats.avg,
       medianHours: timeToFirstReviewStats.median,
@@ -98,6 +104,23 @@ export function calculateReviewEfficiency(
       minHours: totalTimeStats.min,
       maxHours: totalTimeStats.max,
     },
-    prDetails: reviewData,
+    prDetails,
   };
+}
+
+/**
+ * レビュー効率（Review Efficiency）を計算
+ *
+ * 定義: PRの各フェーズでの滞留時間を測定
+ */
+export function calculateReviewEfficiency(
+  reviewData: PRReviewData[],
+  period: string
+): ReviewEfficiencyMetrics {
+  if (reviewData.length === 0) {
+    return createEmptyReviewEfficiencyMetrics(period);
+  }
+
+  const timeValues = extractReviewTimeValues(reviewData);
+  return buildReviewEfficiencyMetrics(period, reviewData.length, timeValues, reviewData);
 }
