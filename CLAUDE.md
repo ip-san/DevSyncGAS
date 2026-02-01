@@ -79,9 +79,9 @@ bun run check:all      # 全チェックを一括実行
 - [x] 統一エラーハンドリング（カスタムエラークラス・エラーコード体系）
 - [x] 拡張指標のリポジトリ別シート対応（Cycle Time、Coding Time、Rework Rate、Review Efficiency、PR Size）
 - [x] Dashboard拡張（拡張指標をリポジトリ別シートから自動集計）
+- [x] Slack通知連携（日次サマリー）
 
 ## TODO / 拡張案
-- [ ] Slack通知連携
 - [x] ダッシュボード用のチャート生成
 
 ## APIトークン設定（GASエディタで実行）
@@ -205,6 +205,43 @@ resetIncidentLabelsConfig();
 - 設定したラベルが**1つでも**付いているIssueをインシデントとして扱う
 - MTTR計算に使用される
 - デフォルト値: `['incident']`
+
+## Slack通知設定
+
+DevOps指標の日次サマリーをSlackに自動通知できます。
+
+### 設定方法
+```javascript
+// Slack Incoming Webhook URLを設定
+configureSlackWebhook('https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXX');
+
+// 現在の設定を確認
+showSlackConfig();
+
+// Webhook URLを削除（通知を無効化）
+removeSlackWebhook();
+```
+
+### 動作
+- `syncDevOpsMetrics()` 実行時に自動的に日次サマリーを送信
+- Webhook URLが未設定の場合は通知をスキップ（警告ログのみ）
+- 通知失敗時もメイン処理は継続（エラーログのみ）
+
+### 日次サマリーの内容
+- 総合ステータス（健全性評価: 🟢良好 / 🟡要注意 / 🔴要対応）
+- DORA指標の平均値
+  - デプロイ頻度（回/日）
+  - リードタイム（時間）
+  - 変更障害率（%）
+  - MTTR（時間）
+- 対象リポジトリ数
+- スプレッドシートへのリンクボタン
+
+### Incoming Webhook URLの取得方法
+1. Slackワークスペースで [Incoming Webhooks](https://api.slack.com/messaging/webhooks) を有効化
+2. 通知先チャンネルを選択
+3. 発行されたWebhook URLをコピー
+4. `configureSlackWebhook()` で設定
 
 ## ログレベル設定
 

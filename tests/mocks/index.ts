@@ -18,6 +18,8 @@ import type {
   TimeTriggerBuilder,
   ServiceContainer,
   EmbeddedChart,
+  SlackClient,
+  SlackMessage,
 } from '../../src/interfaces';
 
 // Mock HTTP Client
@@ -540,6 +542,24 @@ export class MockTriggerClient implements TriggerClient {
   }
 }
 
+// Mock Slack Client
+export class MockSlackClient implements SlackClient {
+  public sentMessages: SlackMessage[] = [];
+
+  sendMessage(message: SlackMessage): void {
+    this.sentMessages.push(message);
+  }
+
+  // Test helper
+  getLastMessage(): SlackMessage | undefined {
+    return this.sentMessages[this.sentMessages.length - 1];
+  }
+
+  clear(): void {
+    this.sentMessages = [];
+  }
+}
+
 // Factory function to create all mocks
 export function createMockContainer(): ServiceContainer & {
   httpClient: MockHttpClient;
@@ -547,12 +567,17 @@ export function createMockContainer(): ServiceContainer & {
   storageClient: MockStorageClient;
   logger: MockLoggerClient;
   triggerClient: MockTriggerClient;
+  slackClient: MockSlackClient;
+  spreadsheetId: string;
 } {
+  const spreadsheetId = 'mock-spreadsheet-id';
   return {
     httpClient: new MockHttpClient(),
     spreadsheetClient: new MockSpreadsheetClient(),
     storageClient: new MockStorageClient(),
     logger: new MockLoggerClient(),
     triggerClient: new MockTriggerClient(),
+    slackClient: new MockSlackClient(),
+    spreadsheetId,
   };
 }

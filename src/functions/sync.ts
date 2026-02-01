@@ -18,6 +18,9 @@ import {
 } from '../services/spreadsheet';
 import { calculateMetricsForRepository, calculateDailyMetrics } from '../utils/metrics';
 import { ensureContainerInitialized } from './helpers';
+import { isSlackNotificationEnabled } from '../services/slack/client';
+import { createDailySummaryMessage } from '../services/slack/dailySummary';
+import { getContainer } from '../container';
 import type {
   DevOpsMetrics,
   GitHubRepository,
@@ -104,6 +107,19 @@ export async function syncDevOpsMetrics(dateRange?: DateRange): Promise<void> {
   createDevOpsSummaryFromMetrics(config.spreadsheet.id, metrics, 'DevOps Summary');
 
   Logger.log(`✅ Synced metrics to ${config.github.repositories.length} repository sheets`);
+
+  // Slack通知（日次サマリー）
+  if (isSlackNotificationEnabled()) {
+    try {
+      const { slackClient, logger } = getContainer();
+      const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheet.id}`;
+      const message = createDailySummaryMessage(metrics, spreadsheetUrl);
+      slackClient.sendMessage(message);
+      logger.info('📢 Slack daily summary notification sent');
+    } catch (error) {
+      Logger.log(`⚠️ Failed to send Slack notification: ${String(error)}`);
+    }
+  }
 }
 
 /**
