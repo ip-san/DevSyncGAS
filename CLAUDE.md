@@ -155,7 +155,9 @@ bun run check:all      # 全品質チェック実行（推奨）
 - 必要に応じてドキュメントを更新したか
 - 複雑度警告が出た場合はリファクタリングを検討
 
-詳細は [docs/CODE_QUALITY.md](docs/CODE_QUALITY.md) を参照。
+詳細は以下を参照：
+- [docs/CODE_QUALITY.md](docs/CODE_QUALITY.md) - コード品質管理
+- [docs/REFACTORING_GUIDE.md](docs/REFACTORING_GUIDE.md) - リファクタリングの実践的ガイド
 
 ## 設計判断の記録
 
