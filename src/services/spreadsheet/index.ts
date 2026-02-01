@@ -44,17 +44,47 @@ export {
 export { migrateToRepositorySheets, previewMigration, removeLegacySheet } from './sheetMigration';
 export type { SheetMigrationResult } from './sheetMigration';
 
+// 拡張指標 - 共通ヘルパー
+export {
+  groupCycleTimeDetailsByRepository,
+  groupCodingTimeDetailsByRepository,
+  groupReworkRateDetailsByRepository,
+  groupReviewEfficiencyDetailsByRepository,
+  groupPRSizeDetailsByRepository,
+  getExtendedMetricSheetName,
+} from './extendedMetricsRepositorySheet';
+
 // サイクルタイム指標
-export { writeCycleTimeToSheet } from './cycleTime';
+export {
+  writeCycleTimeToSheet,
+  writeCycleTimeToRepositorySheet,
+  writeCycleTimeToAllRepositorySheets,
+} from './cycleTime';
 
 // コーディング時間指標
-export { writeCodingTimeToSheet } from './codingTime';
+export {
+  writeCodingTimeToSheet,
+  writeCodingTimeToRepositorySheet,
+  writeCodingTimeToAllRepositorySheets,
+} from './codingTime';
 
 // 手戻り率指標
-export { writeReworkRateToSheet } from './reworkRate';
+export {
+  writeReworkRateToSheet,
+  writeReworkRateToRepositorySheet,
+  writeReworkRateToAllRepositorySheets,
+} from './reworkRate';
 
 // レビュー効率指標
-export { writeReviewEfficiencyToSheet } from './reviewEfficiency';
+export {
+  writeReviewEfficiencyToSheet,
+  writeReviewEfficiencyToRepositorySheet,
+  writeReviewEfficiencyToAllRepositorySheets,
+} from './reviewEfficiency';
 
 // PRサイズ指標
-export { writePRSizeToSheet } from './prSize';
+export {
+  writePRSizeToSheet,
+  writePRSizeToRepositorySheet,
+  writePRSizeToAllRepositorySheets,
+} from './prSize';

@@ -77,9 +77,11 @@ bun run check:all      # 全チェックを一括実行
 - [x] インシデントラベル機能（MTTR計算用のインシデント判定ラベル設定）
 - [x] ログレベル制御（DEBUG/INFO/WARN/ERROR）
 - [x] 統一エラーハンドリング（カスタムエラークラス・エラーコード体系）
+- [x] 拡張指標のリポジトリ別シート対応（Cycle Time、Coding Time、Rework Rate、Review Efficiency、PR Size）
 
 ## TODO / 拡張案
-- [ ] 拡張指標（サイクルタイム等）のリポジトリ別シート対応
+- [x] 拡張指標（サイクルタイム等）のリポジトリ別シート対応
+- [ ] Dashboard拡張（拡張指標カラム追加）
 - [ ] Slack通知連携
 - [ ] ダッシュボード用のチャート生成
 
@@ -107,13 +109,29 @@ showApiMode();              // 現在のモードを確認
 ### シート構造
 ```
 プロジェクトA (スプレッドシート)
-├── Dashboard                    # 全リポ×全指標の俯瞰 + ステータス
-├── Dashboard - Trend            # 週次トレンド
-├── DevOps Summary               # リポジトリ比較サマリー
-├── owner/repo-a                 # リポジトリ別データ
-├── owner/repo-b
-└── owner/repo-c
+├── Dashboard                         # 全リポ×全指標の俯瞰 + ステータス
+├── Dashboard - Trend                 # 週次トレンド
+├── DevOps Summary                    # リポジトリ比較サマリー
+│
+├── owner/repo-a                      # DORA指標（リポジトリ別）
+├── owner/repo-a/サイクルタイム        # サイクルタイム詳細
+├── owner/repo-a/コーディング時間      # コーディング時間詳細
+├── owner/repo-a/手戻り率             # 手戻り率詳細
+├── owner/repo-a/レビュー効率          # レビュー効率詳細
+├── owner/repo-a/PRサイズ             # PRサイズ詳細
+│
+├── owner/repo-b                      # DORA指標
+├── owner/repo-b/サイクルタイム
+├── owner/repo-b/コーディング時間
+├── owner/repo-b/手戻り率
+├── owner/repo-b/レビュー効率
+└── owner/repo-b/PRサイズ
 ```
+
+**拡張指標のシート命名規則**: `{owner/repo}/{指標名}`
+- 例: `google/chrome/サイクルタイム`
+- 各リポジトリ内で指標ごとにシートが分かれる
+- リポジトリ列は不要（シート名で識別）
 
 ### 同期
 ```javascript
