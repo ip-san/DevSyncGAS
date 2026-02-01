@@ -78,6 +78,13 @@ import {
   showSlackConfig,
 } from './functions/slackConfig';
 import {
+  // Slack週次レポート
+  sendWeeklyReport,
+  setupWeeklyReportTrigger,
+  removeWeeklyReportTrigger,
+  showWeeklyReportTrigger,
+} from './functions/slackWeekly';
+import {
   // Slackアラート通知
   checkAndSendAlerts,
   setupAlertTrigger,
@@ -168,6 +175,12 @@ global.resetLogLevelConfig = resetLogLevelConfig;
 global.configureSlackWebhook = configureSlackWebhook;
 global.removeSlackWebhook = removeSlackWebhook;
 global.showSlackConfig = showSlackConfig;
+
+// Slack週次レポート
+global.sendWeeklyReport = sendWeeklyReport;
+global.setupWeeklyReportTrigger = setupWeeklyReportTrigger;
+global.removeWeeklyReportTrigger = removeWeeklyReportTrigger;
+global.showWeeklyReportTrigger = showWeeklyReportTrigger;
 
 // Slackアラート通知
 global.checkAndSendAlerts = checkAndSendAlerts;
