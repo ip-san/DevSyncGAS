@@ -44,6 +44,7 @@ export type AuditAction =
   | 'project.delete'
   | 'project.repository.add'
   | 'project.repository.remove'
+  | 'project.add_repository' // Legacy compatibility
   | 'config.github_app.clear'
   | 'config.api_mode.set'
   | 'config.production_branch.set'
