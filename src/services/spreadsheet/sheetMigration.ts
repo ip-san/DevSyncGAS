@@ -13,6 +13,13 @@ import { writeDashboard, writeDashboardTrends } from './dashboard';
 import { createDevOpsSummaryFromMetrics } from './metricsSummary';
 
 /**
+ * 文字列が有効なデプロイメント頻度かをチェックする型ガード
+ */
+function isValidDeploymentFrequency(value: unknown): value is DevOpsMetrics['deploymentFrequency'] {
+  return value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'yearly';
+}
+
+/**
  * マイグレーション結果
  */
 export interface SheetMigrationResult {
@@ -58,11 +65,13 @@ function parseDevOpsMetricsFromLegacySheet(
       continue;
     }
 
+    const frequency = isValidDeploymentFrequency(row[3]) ? row[3] : 'daily';
+
     metrics.push({
       date: String(row[0]),
       repository: String(row[1]),
       deploymentCount: Number(row[2]) || 0,
-      deploymentFrequency: row[3] as DevOpsMetrics['deploymentFrequency'],
+      deploymentFrequency: frequency,
       leadTimeForChangesHours: Number(row[4]) || 0,
       totalDeployments: Number(row[5]) || 0,
       failedDeployments: Number(row[6]) || 0,

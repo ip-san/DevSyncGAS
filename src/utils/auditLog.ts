@@ -3,7 +3,20 @@
  * ITGC要件: 設定変更の追跡と監査証跡の記録
  */
 
+import { z } from 'zod';
 import { getContainer } from '../container';
+
+/**
+ * 監査ログエントリのzodスキーマ
+ */
+const AuditLogEntrySchema = z.object({
+  timestamp: z.string(),
+  user: z.string(),
+  action: z.string(),
+  details: z.record(z.string(), z.unknown()),
+  status: z.enum(['success', 'failure']),
+  errorMessage: z.string().optional(),
+});
 
 /**
  * 監査ログエントリ
@@ -137,7 +150,8 @@ export function getAuditLogs(limit = 100): AuditLogEntry[] {
 
       try {
         const jsonStr = line.substring(line.indexOf('{'));
-        const entry = JSON.parse(jsonStr) as AuditLogEntry;
+        const parsed: unknown = JSON.parse(jsonStr);
+        const entry = AuditLogEntrySchema.parse(parsed);
         auditEntries.push(entry);
 
         if (auditEntries.length >= limit) {

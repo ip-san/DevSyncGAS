@@ -12,6 +12,13 @@ import { getOrCreateSheet, autoResizeColumns, openSpreadsheet, applyDataBorders 
 import { REPOSITORY_DEVOPS_SCHEMA, getHeadersFromSchema } from '../../schemas';
 
 /**
+ * 文字列が有効なデプロイメント頻度かをチェックする型ガード
+ */
+function isValidDeploymentFrequency(value: unknown): value is DevOpsMetrics['deploymentFrequency'] {
+  return value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'yearly';
+}
+
+/**
  * リポジトリ別シートのヘッダー
  * リポジトリ列は不要（シート名で識別）
  */
@@ -223,11 +230,13 @@ export function readMetricsFromRepositorySheet(
   const metrics: DevOpsMetrics[] = [];
 
   for (const row of data) {
+    const frequency = isValidDeploymentFrequency(row[2]) ? row[2] : 'daily';
+
     metrics.push({
       date: String(row[0]),
       repository: repository,
       deploymentCount: Number(row[1]) || 0,
-      deploymentFrequency: row[2] as DevOpsMetrics['deploymentFrequency'],
+      deploymentFrequency: frequency,
       leadTimeForChangesHours: Number(row[3]) || 0,
       totalDeployments: Number(row[4]) || 0,
       failedDeployments: Number(row[5]) || 0,

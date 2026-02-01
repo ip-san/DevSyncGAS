@@ -18,7 +18,6 @@ import {
   getGitHubApiMode,
   setGitHubApiMode,
   resetGitHubApiMode,
-  type GitHubApiMode,
 } from '../config/settings';
 import { ensureContainerInitialized } from './helpers';
 
@@ -167,7 +166,7 @@ export function showCodingTimeConfig(): void {
  */
 export function configureApiMode(mode: 'graphql' | 'rest'): void {
   ensureContainerInitialized();
-  setGitHubApiMode(mode as GitHubApiMode);
+  setGitHubApiMode(mode);
   if (mode === 'graphql') {
     Logger.log('✅ API mode set to: GraphQL (efficient mode)');
     Logger.log('   Benefits: Reduced API calls, batch operations, better rate limit usage');
