@@ -4,6 +4,7 @@
  */
 
 import type { ServiceContainer } from './interfaces';
+import { ConfigurationError, ErrorCode } from './utils/errors';
 
 let container: ServiceContainer | null = null;
 
@@ -21,7 +22,12 @@ export function initializeContainer(services: ServiceContainer): void {
  */
 export function getContainer(): ServiceContainer {
   if (!container) {
-    throw new Error('Service container not initialized. Call initializeContainer() first.');
+    throw new ConfigurationError(
+      'Service container not initialized. Call initializeContainer() first.',
+      {
+        code: ErrorCode.CONTAINER_NOT_INITIALIZED,
+      }
+    );
   }
   return container;
 }
