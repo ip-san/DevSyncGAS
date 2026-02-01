@@ -419,15 +419,22 @@ function createEmptyCycleTimeEntry(issue: GitHubIssue, repository: string): Issu
 }
 
 /**
+ * Issueサイクルタイム処理のパラメータ
+ */
+interface ProcessIssueCycleTimeParams {
+  issue: GitHubIssue;
+  repo: GitHubRepository;
+  token: string;
+  productionPattern: string;
+  logger: { log: (msg: string) => void };
+}
+
+/**
  * 1つのIssueをサイクルタイム処理
  */
-function processIssueForCycleTime(
-  issue: GitHubIssue,
-  repo: GitHubRepository,
-  token: string,
-  productionPattern: string,
-  logger: { log: (msg: string) => void }
-): IssueCycleTime {
+function processIssueForCycleTime(params: ProcessIssueCycleTimeParams): IssueCycleTime {
+  const { issue, repo, token, productionPattern, logger } = params;
+
   logger.log(`  📌 Processing Issue #${issue.number}: ${issue.title}`);
 
   const linkedPRsResult = getLinkedPRsForIssueGraphQL(repo.owner, repo.name, issue.number, token);
@@ -501,13 +508,13 @@ export function getCycleTimeDataGraphQL(
     logger.log(`  📋 Found ${issuesResult.data.length} issues to process`);
 
     for (const issue of issuesResult.data) {
-      const cycleTimeEntry = processIssueForCycleTime(
+      const cycleTimeEntry = processIssueForCycleTime({
         issue,
         repo,
         token,
         productionPattern,
-        logger
-      );
+        logger,
+      });
       allCycleTimeData.push(cycleTimeEntry);
     }
   }

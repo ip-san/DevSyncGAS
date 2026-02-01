@@ -147,16 +147,23 @@ function fetchWorkflowRunsForRepo(
 }
 
 /**
+ * デプロイメント取得のパラメータ
+ */
+interface FetchDeploymentsParams {
+  repo: GitHubRepository;
+  token: string;
+  environment: string;
+  environmentMatchMode: EnvironmentMatchMode;
+  dateRange: DateRange | undefined;
+  logger: { log: (msg: string) => void };
+}
+
+/**
  * 1リポジトリのデプロイメントを取得してログ出力
  */
-function fetchDeploymentsForRepo(
-  repo: GitHubRepository,
-  token: string,
-  environment: string,
-  environmentMatchMode: EnvironmentMatchMode,
-  dateRange: DateRange | undefined,
-  logger: { log: (msg: string) => void }
-): GitHubDeployment[] {
+function fetchDeploymentsForRepo(params: FetchDeploymentsParams): GitHubDeployment[] {
+  const { repo, token, environment, environmentMatchMode, dateRange, logger } = params;
+
   const deploymentsResult = getDeploymentsGraphQL(repo, token, {
     environment,
     environmentMatchMode,
@@ -210,14 +217,14 @@ export function getAllRepositoriesDataGraphQL(
     const runs = fetchWorkflowRunsForRepo(repo, token, dateRange, logger);
     allRuns.push(...runs);
 
-    const deployments = fetchDeploymentsForRepo(
+    const deployments = fetchDeploymentsForRepo({
       repo,
       token,
-      deploymentEnvironment,
-      deploymentEnvironmentMatchMode,
+      environment: deploymentEnvironment,
+      environmentMatchMode: deploymentEnvironmentMatchMode,
       dateRange,
-      logger
-    );
+      logger,
+    });
     allDeployments.push(...deployments);
   }
 
