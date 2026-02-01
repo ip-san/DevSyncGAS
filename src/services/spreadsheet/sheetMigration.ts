@@ -122,6 +122,90 @@ function renameLegacySheet(
 }
 
 /**
+ * 空のマイグレーション結果を作成
+ */
+function createEmptyMigrationResult(
+  sourceSheetName: string,
+  error: string,
+  duration: number
+): SheetMigrationResult {
+  return {
+    success: false,
+    sourceSheetName,
+    repositoryCount: 0,
+    recordCount: 0,
+    createdSheets: [],
+    error,
+    duration,
+  };
+}
+
+/**
+ * リポジトリ別シート移行を実行
+ */
+function performRepositoryMigration(
+  spreadsheetId: string,
+  metrics: DevOpsMetrics[],
+  options: {
+    createDashboard: boolean;
+    createSummary: boolean;
+  },
+  logger: { log: (msg: string) => void }
+): string[] {
+  const grouped = groupMetricsByRepository(metrics);
+  logger.log(`📁 Migrating to ${grouped.size} repository sheets`);
+
+  writeMetricsToAllRepositorySheets(spreadsheetId, metrics, {
+    skipDuplicates: false,
+  });
+
+  const createdSheets: string[] = [];
+  for (const repository of grouped.keys()) {
+    createdSheets.push(repository);
+  }
+
+  if (options.createDashboard) {
+    writeDashboard(spreadsheetId, metrics);
+    writeDashboardTrends(spreadsheetId, metrics);
+    createdSheets.push('Dashboard', 'Dashboard - Trend');
+  }
+
+  if (options.createSummary) {
+    createDevOpsSummaryFromMetrics(spreadsheetId, metrics, 'DevOps Summary');
+    createdSheets.push('DevOps Summary');
+  }
+
+  return createdSheets;
+}
+
+/**
+ * 成功時のマイグレーション結果を作成
+ */
+function createSuccessMigrationResult(params: {
+  sourceSheetName: string;
+  metrics: DevOpsMetrics[];
+  createdSheets: string[];
+  duration: number;
+  logger: { log: (msg: string) => void };
+}): SheetMigrationResult {
+  const { sourceSheetName, metrics, createdSheets, duration, logger } = params;
+  const grouped = groupMetricsByRepository(metrics);
+
+  logger.log(`✅ Migration completed in ${duration}ms`);
+  logger.log(`   - ${grouped.size} repository sheets created`);
+  logger.log(`   - ${metrics.length} records migrated`);
+
+  return {
+    success: true,
+    sourceSheetName,
+    repositoryCount: grouped.size,
+    recordCount: metrics.length,
+    createdSheets,
+    duration,
+  };
+}
+
+/**
  * 従来型シートからリポジトリ別シートへマイグレーション
  *
  * 既存の「DevOps Metrics」シートから各リポジトリ別シートにデータを移行し、
@@ -153,82 +237,41 @@ export function migrateToRepositorySheets(
   logger.log(`🔄 Starting migration from "${sourceSheetName}"...`);
 
   try {
-    // 1. 従来シートからデータを読み取り
     const metrics = parseDevOpsMetricsFromLegacySheet(spreadsheetId, sourceSheetName);
 
     if (metrics.length === 0) {
-      return {
-        success: false,
+      return createEmptyMigrationResult(
         sourceSheetName,
-        repositoryCount: 0,
-        recordCount: 0,
-        createdSheets: [],
-        error: 'No data found in source sheet',
-        duration: Date.now() - startTime,
-      };
+        'No data found in source sheet',
+        Date.now() - startTime
+      );
     }
 
     logger.log(`📊 Found ${metrics.length} records to migrate`);
 
-    // 2. リポジトリ別にグループ化
-    const grouped = groupMetricsByRepository(metrics);
-    logger.log(`📁 Migrating to ${grouped.size} repository sheets`);
+    const createdSheets = performRepositoryMigration(
+      spreadsheetId,
+      metrics,
+      { createDashboard, createSummary },
+      logger
+    );
 
-    // 3. リポジトリ別シートに書き込み
-    writeMetricsToAllRepositorySheets(spreadsheetId, metrics, {
-      skipDuplicates: false, // マイグレーション時は重複チェックしない
-    });
-
-    const createdSheets: string[] = [];
-    for (const repository of grouped.keys()) {
-      createdSheets.push(repository);
-    }
-
-    // 4. Dashboard作成
-    if (createDashboard) {
-      writeDashboard(spreadsheetId, metrics);
-      writeDashboardTrends(spreadsheetId, metrics);
-      createdSheets.push('Dashboard', 'Dashboard - Trend');
-    }
-
-    // 5. Summary作成
-    if (createSummary) {
-      createDevOpsSummaryFromMetrics(spreadsheetId, metrics, 'DevOps Summary');
-      createdSheets.push('DevOps Summary');
-    }
-
-    // 6. 従来シートのリネーム（保持する場合）
     if (keepLegacySheet) {
       renameLegacySheet(spreadsheetId, sourceSheetName, logger);
     }
 
-    const duration = Date.now() - startTime;
-
-    logger.log(`✅ Migration completed in ${duration}ms`);
-    logger.log(`   - ${grouped.size} repository sheets created`);
-    logger.log(`   - ${metrics.length} records migrated`);
-
-    return {
-      success: true,
+    return createSuccessMigrationResult({
       sourceSheetName,
-      repositoryCount: grouped.size,
-      recordCount: metrics.length,
+      metrics,
       createdSheets,
-      duration,
-    };
+      duration: Date.now() - startTime,
+      logger,
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.log(`❌ Migration failed: ${errorMessage}`);
 
-    return {
-      success: false,
-      sourceSheetName,
-      repositoryCount: 0,
-      recordCount: 0,
-      createdSheets: [],
-      error: errorMessage,
-      duration: Date.now() - startTime,
-    };
+    return createEmptyMigrationResult(sourceSheetName, errorMessage, Date.now() - startTime);
   }
 }
 
