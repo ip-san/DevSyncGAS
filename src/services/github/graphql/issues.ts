@@ -32,6 +32,7 @@ import type {
 import type { IssueDateRange } from '../api';
 import { getPullRequestWithBranchesGraphQL } from './pullRequests.js';
 import { selectBestTrackResult } from '../cycleTimeHelpers.js';
+import { MS_TO_HOURS } from '../../../utils/timeConstants.js';
 
 // =============================================================================
 // Issue一覧取得
@@ -500,7 +501,7 @@ export function getCycleTimeDataGraphQL(
       if (productionMergedAt) {
         const startTime = new Date(issue.createdAt).getTime();
         const endTime = new Date(productionMergedAt).getTime();
-        cycleTimeHours = Math.round(((endTime - startTime) / (1000 * 60 * 60)) * 10) / 10;
+        cycleTimeHours = Math.round(((endTime - startTime) / MS_TO_HOURS) * 10) / 10;
       }
 
       allCycleTimeData.push({
@@ -587,7 +588,7 @@ export function getCodingTimeDataGraphQL(
       const issueCreatedTime = new Date(issue.createdAt).getTime();
       const prCreatedTime = new Date(earliestPR.createdAt).getTime();
       const codingTimeHours =
-        Math.round(((prCreatedTime - issueCreatedTime) / (1000 * 60 * 60)) * 10) / 10;
+        Math.round(((prCreatedTime - issueCreatedTime) / MS_TO_HOURS) * 10) / 10;
 
       logger.log(`    ✅ Coding time: ${codingTimeHours}h (Issue → PR #${earliestPR.number})`);
 
