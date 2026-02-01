@@ -81,8 +81,8 @@ DevSyncGASプロジェクトで実施している自動品質チェックの仕�
 **効果**: 複雑で保守困難なコードを早期に警告
 
 **現状**（2026-02-01時点）:
-- `max-lines-per-function`: 警告0件（完全解消済み）
-- `max-params`: 警告2件（オブジェクト引数パターンへの移行推奨）
+- `max-lines-per-function`: 警告0件（完全解消済み、PR #107-#115）
+- `max-params`: 警告0件（完全解消済み、PR #117）
 
 #### 3. Pre-commit/Pre-push フック
 
