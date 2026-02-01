@@ -27,6 +27,12 @@ import {
 } from './api';
 import { paginateAPI, paginateAndReduce } from '../../utils/pagination';
 import { parseRepositorySafe } from '../../utils/repositoryParser';
+import {
+  fetchReadyForReviewTime,
+  fetchAndSortReviews,
+  calculateReviewMetrics,
+  buildReviewData,
+} from './reviewEfficiencyHelpers.js';
 
 // =============================================================================
 // PR一覧取得
@@ -334,7 +340,7 @@ type ReviewState = 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | 'PENDING' | 
 /**
  * PRのレビュー一覧を取得
  */
-function getPRReviews(
+export function getPRReviews(
   owner: string,
   repo: string,
   prNumber: number,
@@ -379,7 +385,7 @@ function getPRReviews(
 /**
  * PRのready_for_review時刻を取得（Timeline APIから）
  */
-function getPRReadyForReviewAt(
+export function getPRReadyForReviewAt(
   owner: string,
   repo: string,
   prNumber: number,
@@ -424,7 +430,6 @@ export function getReviewEfficiencyDataForPRs(
 ): PRReviewData[] {
   const { logger } = getContainer();
   const reviewData: PRReviewData[] = [];
-  const msToHours = 1000 * 60 * 60;
 
   for (const pr of pullRequests) {
     const parseResult = parseRepositorySafe(pr.repository);
@@ -435,86 +440,29 @@ export function getReviewEfficiencyDataForPRs(
     const { owner, repo } = parseResult.data;
 
     // Ready for Review時刻を取得
-    const readyResult = getPRReadyForReviewAt(owner, repo, pr.number, token);
-    let readyForReviewAt = pr.createdAt;
+    const readyForReviewAt = fetchReadyForReviewTime(
+      owner,
+      repo,
+      pr.number,
+      pr.createdAt,
+      token,
+      logger
+    );
 
-    if (readyResult.success && readyResult.data) {
-      readyForReviewAt = readyResult.data;
-    } else if (!readyResult.success) {
-      logger.log(`  ⚠️ Failed to fetch timeline for PR #${pr.number}: ${readyResult.error}`);
-    }
+    // レビュー情報を取得
+    const reviewInfo = fetchAndSortReviews(owner, repo, pr.number, token, logger);
 
-    // レビュー一覧を取得
-    const reviewsResult = getPRReviews(owner, repo, pr.number, token);
-    let firstReviewAt: string | null = null;
-    let approvedAt: string | null = null;
-
-    if (reviewsResult.success && reviewsResult.data) {
-      const sortedReviews = [...reviewsResult.data].sort(
-        (a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
-      );
-
-      if (sortedReviews.length > 0) {
-        firstReviewAt = sortedReviews[0].submittedAt;
-      }
-
-      const approvalReview = sortedReviews.find((r) => r.state === 'APPROVED');
-      if (approvalReview) {
-        approvedAt = approvalReview.submittedAt;
-      }
-    } else {
-      logger.log(`  ⚠️ Failed to fetch reviews for PR #${pr.number}: ${reviewsResult.error}`);
-    }
-
-    // 各時間を計算
-    const readyAt = new Date(readyForReviewAt).getTime();
-
-    let timeToFirstReviewHours: number | null = null;
-    let reviewDurationHours: number | null = null;
-    let timeToMergeHours: number | null = null;
-    let totalTimeHours: number | null = null;
-
-    if (firstReviewAt) {
-      const hours =
-        Math.round(((new Date(firstReviewAt).getTime() - readyAt) / msToHours) * 10) / 10;
-      timeToFirstReviewHours = hours;
-    }
-
-    if (firstReviewAt && approvedAt) {
-      const hours =
-        Math.round(
-          ((new Date(approvedAt).getTime() - new Date(firstReviewAt).getTime()) / msToHours) * 10
-        ) / 10;
-      reviewDurationHours = hours;
-    }
-
-    if (approvedAt && pr.mergedAt) {
-      const hours =
-        Math.round(
-          ((new Date(pr.mergedAt).getTime() - new Date(approvedAt).getTime()) / msToHours) * 10
-        ) / 10;
-      timeToMergeHours = hours;
-    }
-
-    if (pr.mergedAt) {
-      const hours = Math.round(((new Date(pr.mergedAt).getTime() - readyAt) / msToHours) * 10) / 10;
-      totalTimeHours = hours;
-    }
-
-    reviewData.push({
-      prNumber: pr.number,
-      title: pr.title,
-      repository: pr.repository,
-      createdAt: pr.createdAt,
+    // レビュー効率指標を計算
+    const metrics = calculateReviewMetrics(
       readyForReviewAt,
-      firstReviewAt,
-      approvedAt,
-      mergedAt: pr.mergedAt,
-      timeToFirstReviewHours,
-      reviewDurationHours,
-      timeToMergeHours,
-      totalTimeHours,
-    });
+      reviewInfo.firstReviewAt,
+      reviewInfo.approvedAt,
+      pr.mergedAt
+    );
+
+    // レビューデータを構築
+    const data = buildReviewData(pr, readyForReviewAt, reviewInfo, metrics);
+    reviewData.push(data);
   }
 
   return reviewData;
