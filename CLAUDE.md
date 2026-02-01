@@ -75,6 +75,8 @@ bun run check:all      # 全チェックを一括実行
 - [x] 週次トレンドシート
 - [x] 除外ラベル機能（計測から除外するIssue/PRのラベル設定）
 - [x] インシデントラベル機能（MTTR計算用のインシデント判定ラベル設定）
+- [x] ログレベル制御（DEBUG/INFO/WARN/ERROR）
+- [x] 統一エラーハンドリング（カスタムエラークラス・エラーコード体系）
 
 ## TODO / 拡張案
 - [ ] 拡張指標（サイクルタイム等）のリポジトリ別シート対応
@@ -194,6 +196,79 @@ resetLogLevelConfig();
 - `DEBUG` < `INFO` < `WARN` < `ERROR`
 - 設定したレベル以上のログのみが出力される
 - デフォルト: `INFO`（本番環境想定）
+
+## エラーハンドリング
+
+アプリケーション全体で統一されたエラーハンドリングを提供しています。
+
+### カスタムエラークラス
+
+```typescript
+import {
+  AppError,
+  GitHubAPIError,
+  ValidationError,
+  ConfigurationError,
+  SecretManagerError,
+  SpreadsheetError,
+  ErrorCode,
+  isRetryableError,
+  formatErrorMessage,
+} from './utils/errors';
+```
+
+### エラークラス階層
+
+- **AppError**: すべてのカスタムエラーの基底クラス
+  - **GitHubAPIError**: GitHub API関連のエラー
+  - **ValidationError**: 入力検証エラー
+  - **ConfigurationError**: 設定エラー
+  - **SecretManagerError**: Secret Manager関連のエラー
+  - **SpreadsheetError**: スプレッドシート関連のエラー
+
+### エラーコード
+
+30以上のエラーコードが定義されており、ドメインごとに分類されています：
+
+- **1000番台**: GitHub API関連（`GITHUB_AUTH_FAILED`、`GITHUB_RATE_LIMIT`等）
+- **2000番台**: 検証エラー（`VALIDATION_FAILED`、`INVALID_REPOSITORY`等）
+- **3000番台**: 設定エラー（`CONFIG_NOT_INITIALIZED`、`CONFIG_MISSING_TOKEN`等）
+- **4000番台**: Secret Manager関連（`SECRET_MANAGER_ACCESS_FAILED`等）
+- **5000番台**: スプレッドシート関連（`SPREADSHEET_ACCESS_DENIED`等）
+- **9000番台**: その他（`UNKNOWN_ERROR`、`CONTAINER_NOT_INITIALIZED`等）
+
+### 使用例
+
+```typescript
+// エラーの生成
+throw new ValidationError('Invalid repository format', {
+  code: ErrorCode.INVALID_REPOSITORY,
+  context: { owner: 'invalid-owner', repo: 'test' },
+});
+
+// HTTPステータスコードからエラーを生成
+const error = GitHubAPIError.fromStatusCode(429, 'Rate limit exceeded');
+
+// リトライ可能かチェック
+if (isRetryableError(error)) {
+  // リトライ処理
+}
+
+// エラーメッセージのフォーマット
+const message = formatErrorMessage(error);
+// 出力例: "[GITHUB_RATE_LIMIT] Rate limit exceeded (HTTP 429)"
+```
+
+### エラープロパティ
+
+すべてのカスタムエラーは以下のプロパティを持ちます：
+
+- `code`: エラーコード（ErrorCodeType）
+- `message`: エラーメッセージ
+- `isRetryable`: リトライ可能かどうか
+- `statusCode`: HTTPステータスコード（該当する場合）
+- `context`: エラーに関する追加情報
+- `cause`: 原因となった元のエラー（ES2022互換）
 
 ## コードの理解に困ったら
 

@@ -3,24 +3,36 @@
  * セキュリティ: XSS、インジェクション攻撃を防ぐための検証機能
  */
 
+import { ValidationError, ErrorCode } from './errors';
+
 /**
  * GitHubリポジトリオーナー名の検証
  * 許可: 英数字、ハイフン、アンダースコア（1-39文字）
  */
 export function validateRepositoryOwner(owner: string): void {
   if (!owner || typeof owner !== 'string') {
-    throw new Error('Repository owner is required and must be a string');
+    throw new ValidationError('Repository owner is required and must be a string', {
+      code: ErrorCode.INVALID_REPOSITORY,
+      context: { owner },
+    });
   }
 
   if (owner.length < 1 || owner.length > 39) {
-    throw new Error('Repository owner must be between 1 and 39 characters');
+    throw new ValidationError('Repository owner must be between 1 and 39 characters', {
+      code: ErrorCode.INVALID_REPOSITORY,
+      context: { owner, length: owner.length },
+    });
   }
 
   // GitHub username/organization name rules
   if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(owner)) {
-    throw new Error(
+    throw new ValidationError(
       'Repository owner must contain only alphanumeric characters or hyphens, ' +
-        'cannot start or end with a hyphen, and must be 1-39 characters'
+        'cannot start or end with a hyphen, and must be 1-39 characters',
+      {
+        code: ErrorCode.INVALID_REPOSITORY,
+        context: { owner },
+      }
     );
   }
 }
