@@ -97,6 +97,12 @@ https://github.com/settings/installations/12345678
 
 **最も簡単な方法です。** Private Keyを複数行のまま貼り付けられます。
 
+#### 0. テンプレートをコピー（初回のみ）
+
+```bash
+cp src/init.example.ts src/init.ts
+```
+
 #### 1. `src/init.ts` を編集
 
 ```typescript
