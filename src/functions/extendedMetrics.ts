@@ -7,7 +7,13 @@
  * GASエディタから直接実行可能な関数を提供。
  */
 
-import { getConfig, getGitHubToken } from '../config/settings';
+import {
+  getConfig,
+  getGitHubToken,
+  getExcludeReworkRateBaseBranches,
+  getExcludePRSizeBaseBranches,
+  getExcludeReviewEfficiencyBaseBranches,
+} from '../config/settings';
 import {
   getCycleTimeDataGraphQL,
   getCodingTimeDataGraphQL,
@@ -33,6 +39,33 @@ import {
 } from '../utils/metrics';
 import { ensureContainerInitialized } from './helpers';
 import type { GitHubPullRequest } from '../types';
+
+// =============================================================================
+// ヘルパー関数
+// =============================================================================
+
+/**
+ * 除外ブランチパターンに基づいてPRをフィルタリング
+ *
+ * @param prs - フィルタリング対象のPRリスト
+ * @param excludeBranches - 除外するブランチパターン（部分一致）
+ * @returns フィルタリング後のPRリスト
+ */
+function filterPRsByExcludeBranches(
+  prs: GitHubPullRequest[],
+  excludeBranches: string[]
+): GitHubPullRequest[] {
+  if (excludeBranches.length === 0) {
+    return prs;
+  }
+
+  return prs.filter((pr) => {
+    const baseBranch = pr.baseBranch ?? '';
+    // 除外ブランチパターンに部分一致する場合は除外
+    const shouldExclude = excludeBranches.some((pattern) => baseBranch.includes(pattern));
+    return !shouldExclude;
+  });
+}
 
 // =============================================================================
 // サイクルタイム同期
@@ -165,8 +198,17 @@ export function syncReworkRate(days = 30): void {
   }
   Logger.log(`📥 Fetched ${allPRs.length} PRs`);
 
+  // 除外ブランチでフィルタリング
+  const excludeBranches = getExcludeReworkRateBaseBranches();
+  const filteredPRs = filterPRsByExcludeBranches(allPRs, excludeBranches);
+  if (excludeBranches.length > 0) {
+    Logger.log(
+      `🔍 Filtered by exclude branches (${excludeBranches.join(', ')}): ${filteredPRs.length} PRs remaining`
+    );
+  }
+
   // 手戻り率データを取得
-  const reworkData = getReworkDataForPRsGraphQL(allPRs, token);
+  const reworkData = getReworkDataForPRsGraphQL(filteredPRs, token);
   Logger.log(`📥 Fetched rework data for ${reworkData.length} PRs`);
 
   // メトリクス計算
@@ -218,8 +260,17 @@ export function syncReviewEfficiency(days = 30): void {
   }
   Logger.log(`📥 Fetched ${allPRs.length} PRs`);
 
+  // 除外ブランチでフィルタリング
+  const excludeBranches = getExcludeReviewEfficiencyBaseBranches();
+  const filteredPRs = filterPRsByExcludeBranches(allPRs, excludeBranches);
+  if (excludeBranches.length > 0) {
+    Logger.log(
+      `🔍 Filtered by exclude branches (${excludeBranches.join(', ')}): ${filteredPRs.length} PRs remaining`
+    );
+  }
+
   // レビュー効率データを取得
-  const reviewData = getReviewEfficiencyDataForPRsGraphQL(allPRs, token);
+  const reviewData = getReviewEfficiencyDataForPRsGraphQL(filteredPRs, token);
   Logger.log(`📥 Fetched review data for ${reviewData.length} PRs`);
 
   // メトリクス計算
@@ -271,8 +322,17 @@ export function syncPRSize(days = 30): void {
   }
   Logger.log(`📥 Fetched ${allPRs.length} PRs`);
 
+  // 除外ブランチでフィルタリング
+  const excludeBranches = getExcludePRSizeBaseBranches();
+  const filteredPRs = filterPRsByExcludeBranches(allPRs, excludeBranches);
+  if (excludeBranches.length > 0) {
+    Logger.log(
+      `🔍 Filtered by exclude branches (${excludeBranches.join(', ')}): ${filteredPRs.length} PRs remaining`
+    );
+  }
+
   // PRサイズデータを取得
-  const sizeData = getPRSizeDataForPRsGraphQL(allPRs, token);
+  const sizeData = getPRSizeDataForPRsGraphQL(filteredPRs, token);
   Logger.log(`📥 Fetched size data for ${sizeData.length} PRs`);
 
   // メトリクス計算
