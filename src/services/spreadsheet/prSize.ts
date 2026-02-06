@@ -21,7 +21,7 @@ import {
   getExtendedMetricSheetName,
 } from './extendedMetricsRepositorySheet';
 import { SpreadsheetError, ErrorCode, AppError } from '../../utils/errors';
-import { formatDateForDisplay } from '../../utils/dateFormat';
+import { formatDateTimeForDisplay, formatDateForDisplay } from '../../utils/dateFormat';
 
 const SHEET_NAME = 'PRサイズ';
 
@@ -161,8 +161,8 @@ export function writeDetailSheet(
     pr.prNumber,
     pr.title,
     pr.repository,
-    pr.createdAt,
-    pr.mergedAt ?? 'Not merged',
+    formatDateTimeForDisplay(pr.createdAt),
+    pr.mergedAt ? formatDateTimeForDisplay(pr.mergedAt) : 'Not merged',
     pr.additions,
     pr.deletions,
     pr.linesOfCode,
@@ -254,8 +254,8 @@ export function writePRSizeToRepositorySheet(
     const rows = filtered.map((pr) => [
       pr.prNumber,
       pr.title,
-      pr.createdAt,
-      pr.mergedAt ?? 'Not merged',
+      formatDateTimeForDisplay(pr.createdAt),
+      pr.mergedAt ? formatDateTimeForDisplay(pr.mergedAt) : 'Not merged',
       pr.additions,
       pr.deletions,
       pr.linesOfCode,

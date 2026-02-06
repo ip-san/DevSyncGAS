@@ -14,7 +14,7 @@ import {
   getExtendedMetricSheetName,
 } from './extendedMetricsRepositorySheet';
 import { SpreadsheetError, ErrorCode, AppError } from '../../utils/errors';
-import { formatDateForDisplay } from '../../utils/dateFormat';
+import { formatDateTimeForDisplay, formatDateForDisplay } from '../../utils/dateFormat';
 
 const SHEET_NAME = '手戻り率';
 
@@ -150,8 +150,8 @@ export function writeDetailSheet(
     pr.prNumber,
     pr.title,
     pr.repository,
-    pr.createdAt,
-    pr.mergedAt ?? 'Not merged',
+    formatDateTimeForDisplay(pr.createdAt),
+    pr.mergedAt ? formatDateTimeForDisplay(pr.mergedAt) : 'Not merged',
     pr.totalCommits,
     pr.additionalCommits,
     pr.forcePushCount,
@@ -239,8 +239,8 @@ export function writeReworkRateToRepositorySheet(
     const rows = filtered.map((pr) => [
       pr.prNumber,
       pr.title,
-      pr.createdAt,
-      pr.mergedAt ?? 'Not merged',
+      formatDateTimeForDisplay(pr.createdAt),
+      pr.mergedAt ? formatDateTimeForDisplay(pr.mergedAt) : 'Not merged',
       pr.totalCommits,
       pr.additionalCommits,
       pr.forcePushCount,
