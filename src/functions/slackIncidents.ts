@@ -15,6 +15,98 @@ import {
 } from '../services/slack/incidents';
 import { getIssuesGraphQL } from '../services/github/graphql/issues';
 import { getContainer } from '../container';
+import type { GitHubRepository } from '../types/github';
+
+/**
+ * 今日の日付範囲を取得
+ */
+function getTodayDateRange(): { today: Date; todayStr: string; tomorrowStr: string } {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  return {
+    today,
+    todayStr: today.toISOString(),
+    tomorrowStr: tomorrow.toISOString(),
+  };
+}
+
+/**
+ * インシデントイベントを抽出
+ */
+function extractIncidentEvents(
+  incidentIssue: ReturnType<typeof toIncidentIssue>,
+  repository: string,
+  todayStr: string,
+  tomorrowStr: string
+): IncidentEvent[] {
+  const events: IncidentEvent[] = [];
+
+  // 今日作成されたインシデント
+  if (
+    incidentIssue.createdAt &&
+    incidentIssue.createdAt >= todayStr &&
+    incidentIssue.createdAt < tomorrowStr
+  ) {
+    events.push({
+      issue: incidentIssue,
+      eventType: 'opened',
+      repository,
+      detectionTime: new Date(incidentIssue.createdAt),
+    });
+  }
+
+  // 今日クローズされたインシデント
+  if (
+    incidentIssue.state === 'closed' &&
+    incidentIssue.closedAt &&
+    incidentIssue.closedAt >= todayStr &&
+    incidentIssue.closedAt < tomorrowStr
+  ) {
+    events.push({
+      issue: incidentIssue,
+      eventType: 'closed',
+      repository,
+      detectionTime: new Date(incidentIssue.closedAt),
+    });
+  }
+
+  return events;
+}
+
+/**
+ * リポジトリからインシデントを収集
+ */
+function collectRepositoryIncidents(
+  repo: GitHubRepository,
+  token: string,
+  todayStr: string,
+  tomorrowStr: string
+): IncidentEvent[] {
+  const { logger } = getContainer();
+  const repository = `${repo.owner}/${repo.name}`;
+  const incidents: IncidentEvent[] = [];
+
+  const response = getIssuesGraphQL(repo, token);
+  if (!response.success || !response.data) {
+    logger.warn(`Failed to fetch issues for ${repository}`);
+    return incidents;
+  }
+
+  for (const githubIssue of response.data) {
+    const incidentIssue = toIncidentIssue(githubIssue, repo.owner, repo.name);
+
+    if (!isIncident(incidentIssue.labels)) {
+      continue;
+    }
+
+    incidents.push(...extractIncidentEvents(incidentIssue, repository, todayStr, tomorrowStr));
+  }
+
+  return incidents;
+}
 
 /**
  * 今日のインシデント一覧をチェックして日次サマリーを送信
@@ -29,67 +121,14 @@ export function sendIncidentDailySummary(): void {
 
   try {
     const config = getConfig();
-    const spreadsheet = config.spreadsheet;
-
-    // 今日の日付範囲
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const todayStr = today.toISOString();
-    const tomorrowStr = tomorrow.toISOString();
+    const { today, todayStr, tomorrowStr } = getTodayDateRange();
 
     // 全リポジトリのインシデントを収集
     const incidents: IncidentEvent[] = [];
-
     for (const repo of config.github.repositories) {
-      const repository = `${repo.owner}/${repo.name}`;
-
-      // Issueを取得
-      const response = getIssuesGraphQL(repo, config.github.token ?? '');
-      if (!response.success || !response.data) {
-        logger.warn(`Failed to fetch issues for ${repository}`);
-        continue;
-      }
-
-      for (const githubIssue of response.data) {
-        const incidentIssue = toIncidentIssue(githubIssue, repo.owner, repo.name);
-
-        // インシデントラベルがないものはスキップ
-        if (!isIncident(incidentIssue.labels)) {
-          continue;
-        }
-
-        // 今日作成されたインシデント
-        if (
-          incidentIssue.createdAt &&
-          incidentIssue.createdAt >= todayStr &&
-          incidentIssue.createdAt < tomorrowStr
-        ) {
-          incidents.push({
-            issue: incidentIssue,
-            eventType: 'opened',
-            repository,
-            detectionTime: new Date(incidentIssue.createdAt),
-          });
-        }
-
-        // 今日クローズされたインシデント
-        if (
-          incidentIssue.state === 'closed' &&
-          incidentIssue.closedAt &&
-          incidentIssue.closedAt >= todayStr &&
-          incidentIssue.closedAt < tomorrowStr
-        ) {
-          incidents.push({
-            issue: incidentIssue,
-            eventType: 'closed',
-            repository,
-            detectionTime: new Date(incidentIssue.closedAt),
-          });
-        }
-      }
+      incidents.push(
+        ...collectRepositoryIncidents(repo, config.github.token ?? '', todayStr, tomorrowStr)
+      );
     }
 
     if (incidents.length === 0) {
@@ -97,11 +136,10 @@ export function sendIncidentDailySummary(): void {
       return;
     }
 
-    // 日次サマリーメッセージを生成
-    const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheet.id}`;
+    // 日次サマリーメッセージを生成して送信
+    const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheet.id}`;
     const message = createIncidentDailySummaryMessage(incidents, today, spreadsheetUrl);
 
-    // Slackに送信
     slackClient.sendMessage(message);
     logger.info(`📢 Slack incident daily summary sent: ${incidents.length} incidents`);
   } catch (error) {

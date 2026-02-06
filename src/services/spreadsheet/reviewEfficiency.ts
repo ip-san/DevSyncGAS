@@ -243,6 +243,23 @@ function getExistingPRKeys(sheet: Sheet): Set<number> {
 }
 
 /**
+ * 重複を除外してカウント
+ */
+function filterDuplicates(
+  details: ReviewEfficiencyMetrics['prDetails'],
+  sheet: Sheet,
+  skipDuplicates: boolean
+): { filtered: ReviewEfficiencyMetrics['prDetails']; skippedCount: number } {
+  if (!skipDuplicates) {
+    return { filtered: details, skippedCount: 0 };
+  }
+
+  const existingKeys = getExistingPRKeys(sheet);
+  const filtered = details.filter((d) => !existingKeys.has(d.prNumber));
+  return { filtered, skippedCount: details.length - filtered.length };
+}
+
+/**
  * リポジトリ別シートにレビュー効率詳細を書き込む
  */
 export function writeReviewEfficiencyToRepositorySheet(
@@ -263,21 +280,13 @@ export function writeReviewEfficiencyToRepositorySheet(
     }
 
     const skipDuplicates = options.skipDuplicates !== false;
-    let detailsToWrite = details;
-    let skippedCount = 0;
+    const { filtered, skippedCount } = filterDuplicates(details, sheet, skipDuplicates);
 
-    if (skipDuplicates) {
-      const existingKeys = getExistingPRKeys(sheet);
-      const originalCount = details.length;
-      detailsToWrite = details.filter((d) => !existingKeys.has(d.prNumber));
-      skippedCount = originalCount - detailsToWrite.length;
-    }
-
-    if (detailsToWrite.length === 0) {
+    if (filtered.length === 0) {
       return { written: 0, skipped: skippedCount };
     }
 
-    const rows = detailsToWrite.map((pr) => [
+    const rows = filtered.map((pr) => [
       pr.prNumber,
       pr.title,
       pr.createdAt,
@@ -295,9 +304,9 @@ export function writeReviewEfficiencyToRepositorySheet(
     sheet.getRange(lastRow + 1, 1, rows.length, REPOSITORY_DETAIL_HEADERS.length).setValues(rows);
 
     formatRepositoryReviewEfficiencySheet(sheet);
-    logger.info(`✅ [${repository}] Wrote ${detailsToWrite.length} review efficiency records`);
+    logger.info(`✅ [${repository}] Wrote ${filtered.length} review efficiency records`);
 
-    return { written: detailsToWrite.length, skipped: skippedCount };
+    return { written: filtered.length, skipped: skippedCount };
   } catch (error) {
     if (error instanceof AppError) {
       throw error;

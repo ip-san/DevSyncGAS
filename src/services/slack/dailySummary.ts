@@ -48,6 +48,140 @@ function formatNumber(value: number | null): string {
 }
 
 /**
+ * 最新日付のメトリクスを取得
+ */
+function getLatestMetrics(metrics: DevOpsMetrics[]): {
+  latestDate: string;
+  latestMetrics: DevOpsMetrics[];
+} {
+  const sortedMetrics = [...metrics].sort((a, b) => b.date.localeCompare(a.date));
+  const latestDate = sortedMetrics[0].date;
+  const latestMetrics = sortedMetrics.filter((m) => m.date === latestDate);
+  return { latestDate, latestMetrics };
+}
+
+/**
+ * メトリクスの平均値
+ */
+interface AverageMetrics {
+  avgDeploymentFrequency: number;
+  avgLeadTime: number | null;
+  avgCFR: number | null;
+  avgMTTR: number | null;
+}
+
+/**
+ * 平均値を計算
+ */
+function calculateAverageMetrics(metrics: DevOpsMetrics[]): AverageMetrics {
+  const avgDeploymentFrequency =
+    metrics.reduce((sum, m) => sum + parseFloat(m.deploymentFrequency), 0) / metrics.length;
+
+  const validLeadTimes = metrics
+    .map((m) => m.leadTimeForChangesHours)
+    .filter((v): v is number => v !== null);
+  const avgLeadTime =
+    validLeadTimes.length > 0
+      ? validLeadTimes.reduce((sum, v) => sum + v, 0) / validLeadTimes.length
+      : null;
+
+  const validCFRs = metrics.map((m) => m.changeFailureRate).filter((v): v is number => v !== null);
+  const avgCFR =
+    validCFRs.length > 0 ? validCFRs.reduce((sum, v) => sum + v, 0) / validCFRs.length : null;
+
+  const validMTTRs = metrics
+    .map((m) => m.meanTimeToRecoveryHours)
+    .filter((v): v is number => v !== null);
+  const avgMTTR =
+    validMTTRs.length > 0 ? validMTTRs.reduce((sum, v) => sum + v, 0) / validMTTRs.length : null;
+
+  return { avgDeploymentFrequency, avgLeadTime, avgCFR, avgMTTR };
+}
+
+/**
+ * ヘッダーブロックを生成
+ */
+function createHeaderBlocks(latestDate: string, healthStatus: HealthStatus): SlackBlock[] {
+  const statusEmoji = statusToEmoji(healthStatus);
+  const statusText = statusToText(healthStatus);
+
+  return [
+    {
+      type: 'header',
+      text: {
+        type: 'plain_text',
+        text: `📊 DevOps Metrics 日次レポート (${latestDate})`,
+      },
+    },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*総合ステータス:* ${statusEmoji} ${statusText}`,
+      },
+    },
+  ];
+}
+
+/**
+ * メトリクスブロックを生成
+ */
+function createMetricsBlocks(avg: AverageMetrics): SlackBlock {
+  return {
+    type: 'section',
+    fields: [
+      {
+        type: 'mrkdwn',
+        text: `*:rocket: デプロイ頻度*\n${formatNumber(avg.avgDeploymentFrequency)}回/日`,
+      },
+      {
+        type: 'mrkdwn',
+        text: `*:hourglass_flowing_sand: リードタイム*\n${formatNumber(avg.avgLeadTime)}時間`,
+      },
+      {
+        type: 'mrkdwn',
+        text: `*:fire: 変更障害率*\n${formatNumber(avg.avgCFR)}%`,
+      },
+      {
+        type: 'mrkdwn',
+        text: `*:wrench: MTTR*\n${formatNumber(avg.avgMTTR)}時間`,
+      },
+    ],
+  };
+}
+
+/**
+ * フッターブロックを生成
+ */
+function createFooterBlocks(repoCount: number, spreadsheetUrl: string): SlackBlock[] {
+  return [
+    {
+      type: 'context',
+      elements: [
+        {
+          type: 'mrkdwn',
+          text: `対象リポジトリ: ${repoCount}個`,
+        },
+      ],
+    },
+    {
+      type: 'actions',
+      elements: [
+        {
+          type: 'button',
+          text: {
+            type: 'plain_text',
+            text: '📄 詳細レポートを開く',
+          },
+          url: spreadsheetUrl,
+          action_id: 'open_spreadsheet',
+        },
+      ],
+    },
+  ];
+}
+
+/**
  * 日次サマリーメッセージを生成
  */
 export function createDailySummaryMessage(
@@ -72,103 +206,14 @@ export function createDailySummaryMessage(
     };
   }
 
-  // 最新のメトリクスを取得（日付でソート）
-  const sortedMetrics = [...metrics].sort((a, b) => b.date.localeCompare(a.date));
-  const latestDate = sortedMetrics[0].date;
+  const { latestDate, latestMetrics } = getLatestMetrics(metrics);
+  const avg = calculateAverageMetrics(latestMetrics);
+  const healthStatus = determineHealthStatus(avg.avgLeadTime, avg.avgCFR, null, null);
 
-  // 最新日付のメトリクスのみを抽出
-  const latestMetrics = sortedMetrics.filter((m) => m.date === latestDate);
-
-  // 全リポジトリの平均を計算
-  const avgDeploymentFrequency =
-    latestMetrics.reduce((sum, m) => sum + parseFloat(m.deploymentFrequency), 0) /
-    latestMetrics.length;
-
-  const validLeadTimes = latestMetrics
-    .map((m) => m.leadTimeForChangesHours)
-    .filter((v): v is number => v !== null);
-  const avgLeadTime =
-    validLeadTimes.length > 0
-      ? validLeadTimes.reduce((sum, v) => sum + v, 0) / validLeadTimes.length
-      : null;
-
-  const validCFRs = latestMetrics
-    .map((m) => m.changeFailureRate)
-    .filter((v): v is number => v !== null);
-  const avgCFR =
-    validCFRs.length > 0 ? validCFRs.reduce((sum, v) => sum + v, 0) / validCFRs.length : null;
-
-  const validMTTRs = latestMetrics
-    .map((m) => m.meanTimeToRecoveryHours)
-    .filter((v): v is number => v !== null);
-  const avgMTTR =
-    validMTTRs.length > 0 ? validMTTRs.reduce((sum, v) => sum + v, 0) / validMTTRs.length : null;
-
-  // 健全性ステータスを判定
-  const healthStatus = determineHealthStatus(avgLeadTime, avgCFR, null, null);
-  const statusEmoji = statusToEmoji(healthStatus);
-  const statusText = statusToText(healthStatus);
-
-  // Slack Block Kit メッセージを構築
   const blocks: SlackBlock[] = [
-    {
-      type: 'header',
-      text: {
-        type: 'plain_text',
-        text: `📊 DevOps Metrics 日次レポート (${latestDate})`,
-      },
-    },
-    {
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `*総合ステータス:* ${statusEmoji} ${statusText}`,
-      },
-    },
-    {
-      type: 'section',
-      fields: [
-        {
-          type: 'mrkdwn',
-          text: `*:rocket: デプロイ頻度*\n${formatNumber(avgDeploymentFrequency)}回/日`,
-        },
-        {
-          type: 'mrkdwn',
-          text: `*:hourglass_flowing_sand: リードタイム*\n${formatNumber(avgLeadTime)}時間`,
-        },
-        {
-          type: 'mrkdwn',
-          text: `*:fire: 変更障害率*\n${formatNumber(avgCFR)}%`,
-        },
-        {
-          type: 'mrkdwn',
-          text: `*:wrench: MTTR*\n${formatNumber(avgMTTR)}時間`,
-        },
-      ],
-    },
-    {
-      type: 'context',
-      elements: [
-        {
-          type: 'mrkdwn',
-          text: `対象リポジトリ: ${latestMetrics.length}個`,
-        },
-      ],
-    },
-    {
-      type: 'actions',
-      elements: [
-        {
-          type: 'button',
-          text: {
-            type: 'plain_text',
-            text: '📄 詳細レポートを開く',
-          },
-          url: spreadsheetUrl,
-          action_id: 'open_spreadsheet',
-        },
-      ],
-    },
+    ...createHeaderBlocks(latestDate, healthStatus),
+    createMetricsBlocks(avg),
+    ...createFooterBlocks(latestMetrics.length, spreadsheetUrl),
   ];
 
   return {
