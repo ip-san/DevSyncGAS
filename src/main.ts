@@ -18,6 +18,13 @@ import {
   // 日別バックフィル
   syncDailyBackfill,
   backfillAllProjectsDaily,
+  // 拡張指標同期
+  syncCycleTime,
+  syncCodingTime,
+  syncReworkRate,
+  syncReviewEfficiency,
+  syncPRSize,
+  syncAllMetrics,
   // セットアップ・設定
   showAuthMode,
   addRepo,
@@ -106,6 +113,14 @@ global.syncAllProjectsHistorical = syncAllProjectsHistorical;
 // 日別バックフィル
 global.syncDailyBackfill = syncDailyBackfill;
 global.backfillAllProjectsDaily = backfillAllProjectsDaily;
+
+// 拡張指標同期
+global.syncCycleTime = syncCycleTime;
+global.syncCodingTime = syncCodingTime;
+global.syncReworkRate = syncReworkRate;
+global.syncReviewEfficiency = syncReviewEfficiency;
+global.syncPRSize = syncPRSize;
+global.syncAllMetrics = syncAllMetrics;
 
 // セットアップ・設定
 global.showAuthMode = showAuthMode;

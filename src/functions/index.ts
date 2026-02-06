@@ -27,6 +27,16 @@ export {
   backfillAllProjectsDaily,
 } from './sync';
 
+// 拡張指標同期
+export {
+  syncCycleTime,
+  syncCodingTime,
+  syncReworkRate,
+  syncReviewEfficiency,
+  syncPRSize,
+  syncAllMetrics,
+} from './extendedMetrics';
+
 // セットアップ・設定
 export {
   showAuthMode,
