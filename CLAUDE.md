@@ -45,13 +45,12 @@ syncDevOpsMetrics()       // メイン同期（Dashboard/チャート自動生�
 
 ## 📚 詳細情報
 
-**必要な時に [CLAUDE_REF.md](CLAUDE_REF.md) を Read tool で参照してください:**
-- キーワード検索（GitHub API、DORA計算、エラーハンドリング等）
-- タスク別フロー（新機能実装、バグ修正、指標追加、トラブルシューティング等）
-- 全コマンドリファレンス（GAS関数、設定変更コマンド等）
-- ドキュメント索引（20個のドキュメントへのマッピング）
-- ファイルパス逆引き（src/services/github/ → 関連ドキュメント）
-- アーキテクチャ概要とディレクトリ構造
+**必要な時に以下のガイドをRead toolで参照してください:**
+- **[CLAUDE_COMMANDS.md](CLAUDE_COMMANDS.md)** - コマンドリファレンス、GAS関数、よくあるパターン
+- **[CLAUDE_TASKS.md](CLAUDE_TASKS.md)** - タスク別フロー（新機能実装、バグ修正、指標追加、PR作成前等）
+- **[CLAUDE_NAV.md](CLAUDE_NAV.md)** - キーワード検索、ファイルパス逆引き、ドキュメント索引
+- **[CLAUDE_ARCH.md](CLAUDE_ARCH.md)** - アーキテクチャ概要、ディレクトリ構造、設計思想
+- **[docs/](docs/)** - 各機能の詳細仕様（20個のドキュメント）
 
 ## 🎯 重要事項
 
