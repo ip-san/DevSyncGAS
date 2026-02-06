@@ -18,7 +18,11 @@ import type {
 } from '../../../types';
 import { getContainer } from '../../../container';
 import { executeGraphQLWithRetry, DEFAULT_PAGE_SIZE } from './client';
-import { PULL_REQUESTS_QUERY, PULL_REQUEST_DETAIL_QUERY, buildBatchPRDetailQuery } from './queries';
+import {
+  PULL_REQUESTS_QUERY,
+  PULL_REQUEST_DETAIL_QUERY,
+  buildBatchPRDetailQuery,
+} from './queries/pullRequests.js';
 import { isWithinPRDateRange } from './issueHelpers.js';
 import { validatePaginatedResponse, validateSingleResponse } from './errorHelpers.js';
 import type {
