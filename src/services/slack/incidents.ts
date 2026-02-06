@@ -92,18 +92,25 @@ function severityToEmoji(severity: 'critical' | 'high' | 'medium'): string {
 }
 
 /**
- * 複数のインシデントをまとめた日次サマリーメッセージを生成
+ * MTTRを計算
  */
-export function createIncidentDailySummaryMessage(
-  incidents: IncidentEvent[],
-  date: Date,
-  spreadsheetUrl: string
-): SlackMessage {
-  const dateStr = date.toISOString().split('T')[0];
-  const openedIncidents = incidents.filter((e) => e.eventType === 'opened');
-  const closedIncidents = incidents.filter((e) => e.eventType === 'closed');
+function calculateMTTR(createdAt: string, closedAt: string | null): string {
+  if (!createdAt || !closedAt) {
+    return 'N/A';
+  }
+  const hours = (new Date(closedAt).getTime() - new Date(createdAt).getTime()) / (1000 * 60 * 60);
+  return hours.toFixed(1);
+}
 
-  const blocks: SlackBlock[] = [
+/**
+ * ヘッダーブロックを生成
+ */
+function createIncidentHeaderBlocks(
+  dateStr: string,
+  openedCount: number,
+  closedCount: number
+): SlackBlock[] {
+  return [
     {
       type: 'header',
       text: {
@@ -116,79 +123,95 @@ export function createIncidentDailySummaryMessage(
       fields: [
         {
           type: 'mrkdwn',
-          text: `*🔥 発生件数*\n${openedIncidents.length}件`,
+          text: `*🔥 発生件数*\n${openedCount}件`,
         },
         {
           type: 'mrkdwn',
-          text: `*✅ 解決件数*\n${closedIncidents.length}件`,
+          text: `*✅ 解決件数*\n${closedCount}件`,
         },
       ],
     },
   ];
+}
 
-  if (openedIncidents.length > 0) {
-    blocks.push(
-      {
-        type: 'divider',
-      },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: '*🔥 本日発生したインシデント*',
-        },
-      }
-    );
-
-    openedIncidents.forEach((event) => {
-      const severity = determineIncidentSeverity(event.issue.labels);
-      const severityEmoji = severityToEmoji(severity);
-
-      blocks.push({
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `${severityEmoji} <${event.issue.url}|#${event.issue.number} ${event.issue.title}>\n_${event.repository}_`,
-        },
-      });
-    });
+/**
+ * 発生したインシデントのブロックを生成
+ */
+function createOpenedIncidentsBlocks(openedIncidents: IncidentEvent[]): SlackBlock[] {
+  if (openedIncidents.length === 0) {
+    return [];
   }
 
-  if (closedIncidents.length > 0) {
-    blocks.push(
-      {
-        type: 'divider',
+  const blocks: SlackBlock[] = [
+    {
+      type: 'divider',
+    },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: '*🔥 本日発生したインシデント*',
       },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: '*✅ 本日解決したインシデント*',
-        },
-      }
-    );
+    },
+  ];
 
-    closedIncidents.forEach((event) => {
-      const mttr =
-        event.issue.createdAt && event.issue.closedAt
-          ? (
-              (new Date(event.issue.closedAt).getTime() -
-                new Date(event.issue.createdAt).getTime()) /
-              (1000 * 60 * 60)
-            ).toFixed(1)
-          : 'N/A';
+  openedIncidents.forEach((event) => {
+    const severity = determineIncidentSeverity(event.issue.labels);
+    const severityEmoji = severityToEmoji(severity);
 
-      blocks.push({
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `<${event.issue.url}|#${event.issue.number} ${event.issue.title}> (MTTR: ${mttr}h)\n_${event.repository}_`,
-        },
-      });
+    blocks.push({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `${severityEmoji} <${event.issue.url}|#${event.issue.number} ${event.issue.title}>\n_${event.repository}_`,
+      },
     });
+  });
+
+  return blocks;
+}
+
+/**
+ * 解決したインシデントのブロックを生成
+ */
+function createClosedIncidentsBlocks(closedIncidents: IncidentEvent[]): SlackBlock[] {
+  if (closedIncidents.length === 0) {
+    return [];
   }
 
-  blocks.push(
+  const blocks: SlackBlock[] = [
+    {
+      type: 'divider',
+    },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: '*✅ 本日解決したインシデント*',
+      },
+    },
+  ];
+
+  closedIncidents.forEach((event) => {
+    const mttr = calculateMTTR(event.issue.createdAt, event.issue.closedAt);
+
+    blocks.push({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `<${event.issue.url}|#${event.issue.number} ${event.issue.title}> (MTTR: ${mttr}h)\n_${event.repository}_`,
+      },
+    });
+  });
+
+  return blocks;
+}
+
+/**
+ * フッターブロックを生成
+ */
+function createIncidentFooterBlocks(spreadsheetUrl: string): SlackBlock[] {
+  return [
     {
       type: 'divider',
     },
@@ -205,8 +228,28 @@ export function createIncidentDailySummaryMessage(
           action_id: 'open_spreadsheet',
         },
       ],
-    }
-  );
+    },
+  ];
+}
+
+/**
+ * 複数のインシデントをまとめた日次サマリーメッセージを生成
+ */
+export function createIncidentDailySummaryMessage(
+  incidents: IncidentEvent[],
+  date: Date,
+  spreadsheetUrl: string
+): SlackMessage {
+  const dateStr = date.toISOString().split('T')[0];
+  const openedIncidents = incidents.filter((e) => e.eventType === 'opened');
+  const closedIncidents = incidents.filter((e) => e.eventType === 'closed');
+
+  const blocks: SlackBlock[] = [
+    ...createIncidentHeaderBlocks(dateStr, openedIncidents.length, closedIncidents.length),
+    ...createOpenedIncidentsBlocks(openedIncidents),
+    ...createClosedIncidentsBlocks(closedIncidents),
+    ...createIncidentFooterBlocks(spreadsheetUrl),
+  ];
 
   return {
     text: `📊 インシデント日次サマリー (${dateStr}): 発生 ${openedIncidents.length}件、解決 ${closedIncidents.length}件`,
