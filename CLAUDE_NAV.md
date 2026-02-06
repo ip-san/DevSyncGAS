@@ -22,11 +22,11 @@
 - **エラーハンドリング**: src/utils/errors.ts - ErrorCode 1000-9000番台
 
 ### セットアップ・設定
-- **初期設定**: [SETUP_AND_TROUBLESHOOTING.md](docs/SETUP_AND_TROUBLESHOOTING.md) - 認証設定、clasp、初回デプロイ
+- **初期設定**: [SETUP.md](docs/SETUP.md) - 認証設定、clasp、初回デプロイ
 - **クイックスタート**: [QUICK_START.md](docs/QUICK_START.md) - 5分で動かす
 - **GitHub Apps認証**: [GITHUB_APPS_AUTH.md](docs/GITHUB_APPS_AUTH.md) - App作成、Private Key、Installation ID
 - **Slack通知**: src/functions/slack.ts - 週次レポート、インシデント日次サマリー
-- **トラブルシューティング**: [SETUP_AND_TROUBLESHOOTING.md](docs/SETUP_AND_TROUBLESHOOTING.md) - checkConfig()、エラー解決
+- **トラブルシューティング**: [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - checkConfig()、エラー解決
 
 ### 品質・保守
 - **コード品質**: [CODE_QUALITY.md](docs/CODE_QUALITY.md) - check:all、循環依存、未使用コード、型カバレッジ
@@ -49,7 +49,7 @@
 | `src/core/config.ts` | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 設定管理、Secret Manager |
 | `src/utils/errors.ts` | src/utils/errors.ts | カスタムエラークラス、ErrorCode |
 | `src/utils/logger.ts` | [LOGGING_GUIDELINES.md](docs/LOGGING_GUIDELINES.md) | ログ管理、ログレベル制御 |
-| `src/init.ts` | [SETUP_AND_TROUBLESHOOTING.md](docs/SETUP_AND_TROUBLESHOOTING.md) | 初期設定ファイル |
+| `src/init.ts` | [SETUP.md](docs/SETUP.md) | 初期設定ファイル |
 
 ---
 
@@ -67,7 +67,9 @@
 ### セットアップ・設定
 | ドキュメント | 内容 | 読むタイミング |
 |-------------|------|--------------|
-| [SETUP_AND_TROUBLESHOOTING.md](docs/SETUP_AND_TROUBLESHOOTING.md) | 初期設定、認証設定、clasp、初回デプロイ、診断ツール、トラブルシューティング | 初回セットアップ時、エラー発生時 |
+| [SETUP.md](docs/SETUP.md) | 初期設定、認証設定、clasp、初回デプロイ | 初回セットアップ時 |
+| [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | 診断ツール、トラブルシューティング、エラー解決 | エラー発生時 |
+| [FAQ.md](docs/FAQ.md) | よくある質問 | 疑問点がある時 |
 | [QUICK_START.md](docs/QUICK_START.md) | 5分で動かす手順 | 初回セットアップ時 |
 | [GITHUB_APPS_AUTH.md](docs/GITHUB_APPS_AUTH.md) | GitHub App作成、Private Key、Installation ID | GitHub Apps認証を選択する場合 |
 
@@ -105,7 +107,7 @@
 ### 「初めてプロジェクトに参加」
 1. [CLAUDE.md](CLAUDE.md) - プロジェクト概要
 2. [QUICK_START.md](docs/QUICK_START.md) - 5分で動かす
-3. [SETUP_AND_TROUBLESHOOTING.md](docs/SETUP_AND_TROUBLESHOOTING.md) - セットアップ
+3. [SETUP.md](docs/SETUP.md) - セットアップ
 4. [ARCHITECTURE.md](docs/ARCHITECTURE.md) - 全体像の理解
 
 ### 「機能を追加したい」
@@ -117,7 +119,7 @@
 ### 「バグを修正したい」
 1. [CLAUDE_TASKS.md](CLAUDE_TASKS.md) - バグ修正フロー
 2. [CLAUDE_COMMANDS.md](CLAUDE_COMMANDS.md) - エラー調査パターン
-3. [SETUP_AND_TROUBLESHOOTING.md](docs/SETUP_AND_TROUBLESHOOTING.md) - トラブルシューティング
+3. [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - トラブルシューティング
 
 ### 「新しい指標を追加したい」
 1. [CLAUDE_TASKS.md](CLAUDE_TASKS.md) - 新指標追加フロー

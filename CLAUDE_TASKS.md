@@ -104,7 +104,7 @@
    → 設定状況、エラー原因を確認
 
 2. ドキュメント参照
-   → [SETUP_AND_TROUBLESHOOTING.md](docs/SETUP_AND_TROUBLESHOOTING.md)
+   → [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
    → エラーコード別の解決方法を確認
 
 3. エラーコード確認
@@ -119,7 +119,8 @@
 **トラブルシューティング:**
 - 設定診断: `checkConfig()`
 - 詳細ログ: `configureLogLevel('DEBUG')`
-- セットアップガイド: [docs/SETUP_AND_TROUBLESHOOTING.md](docs/SETUP_AND_TROUBLESHOOTING.md)
+- セットアップガイド: [docs/SETUP.md](docs/SETUP.md)
+- トラブルシューティング: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 
 ---
 

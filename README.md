@@ -147,7 +147,8 @@ bun run push
 
 ### セットアップ
 - [クイックスタート](docs/QUICK_START.md) - 5分で始める
-- [組織導入ガイド](docs/SETUP_AND_TROUBLESHOOTING.md) - チーム運用・トラブルシューティング
+- [セットアップガイド](docs/SETUP.md) - チーム運用・初期設定
+- [トラブルシューティング](docs/TROUBLESHOOTING.md) - エラー解決方法
 
 ### 計測する指標
 - [DORA指標の詳細](docs/DORA_METRICS.md) - 4つの指標の定義とGitHubデータでの計算方法

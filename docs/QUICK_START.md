@@ -198,14 +198,15 @@ createDailyTrigger();
 ## 次のステップ
 
 - [計測思想を理解する](MEASUREMENT_PHILOSOPHY.md) - なぜこの指標を、この方法で測るのか
-- [組織導入ガイド](SETUP_AND_TROUBLESHOOTING.md) - チームでの導入、トラブルシューティング
+- [セットアップガイド](SETUP.md) - チームでの導入、詳細な設定方法
+- [トラブルシューティング](TROUBLESHOOTING.md) - エラー解決方法
 - [GitHub Apps認証](GITHUB_APPS_AUTH.md) - 組織向けのセキュアな認証方式
 
 ## よくある質問
 
 ### 「認証が必要です」が繰り返し表示される
 
-一部の権限のみ許可している可能性があります。[トラブルシューティング](SETUP_AND_TROUBLESHOOTING.md#認証が必要ですが繰り返し表示される) を参照してください。
+一部の権限のみ許可している可能性があります。[トラブルシューティング](TROUBLESHOOTING.md) を参照してください。
 
 ### スプレッドシートにデータが出力されない
 

@@ -11,7 +11,7 @@
 | 「とりあえず動かしたい」 | [クイックスタート](QUICK_START.md) | 5分 |
 | 「DORA指標って何？」 | [DORA指標の詳細](DORA_METRICS.md) | 10分 |
 | 「なぜこの計測方法？」 | [計測思想](MEASUREMENT_PHILOSOPHY.md) | 7分 |
-| 「チームに提案したい」 | [組織導入ガイド](SETUP_AND_TROUBLESHOOTING.md) | 15分 |
+| 「チームに提案したい」 | [セットアップガイド](SETUP.md) | 15分 |
 
 ---
 
@@ -21,7 +21,8 @@
 |-------------|------|
 | **[クイックスタート](QUICK_START.md)** | 5分でセットアップして動かす |
 | [GitHub Apps認証](GITHUB_APPS_AUTH.md) | 組織向けのセキュアな認証方式 |
-| [組織導入ガイド](SETUP_AND_TROUBLESHOOTING.md) | チームでの導入、トラブルシューティング |
+| [セットアップガイド](SETUP.md) | チームでの導入、初期設定 |
+| [トラブルシューティング](TROUBLESHOOTING.md) | エラー解決方法 |
 
 ---
 
@@ -103,4 +104,4 @@ DORA指標に加えて、**AI時代の開発を評価する追加指標**を提�
 **A: 拡張指標がそのために設計されています。** [拡張指標の詳細](EXTENDED_METRICS.md)で、コーディング時間・手戻り率などを計測できます。
 
 ### Q5: チームに提案したいが、資料は？
-**A: このドキュメント自体が提案資料です。** 特に[計測思想](MEASUREMENT_PHILOSOPHY.md)と[組織導入ガイド](SETUP_AND_TROUBLESHOOTING.md)が役立ちます。
+**A: このドキュメント自体が提案資料です。** 特に[計測思想](MEASUREMENT_PHILOSOPHY.md)と[セットアップガイド](SETUP.md)が役立ちます。
