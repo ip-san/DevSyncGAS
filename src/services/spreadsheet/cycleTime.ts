@@ -19,7 +19,7 @@ import {
   groupCycleTimeDetailsByRepository,
   getExtendedMetricSheetName,
 } from './extendedMetricsRepositorySheet';
-import { formatDateForDisplay } from '../../utils/dateFormat';
+import { formatDateTimeForDisplay, formatDateForDisplay } from '../../utils/dateFormat';
 
 const SHEET_NAME = 'サイクルタイム';
 
@@ -139,8 +139,8 @@ export function writeDetailSheet(
     `#${issue.issueNumber}`,
     issue.title,
     issue.repository,
-    issue.issueCreatedAt,
-    issue.productionMergedAt,
+    formatDateTimeForDisplay(issue.issueCreatedAt),
+    formatDateTimeForDisplay(issue.productionMergedAt),
     issue.cycleTimeHours,
     Math.round((issue.cycleTimeHours / 24) * 10) / 10,
     issue.prChainSummary,
@@ -228,8 +228,8 @@ export function writeCycleTimeToRepositorySheet(
   const rows = detailsToWrite.map((issue) => [
     `#${issue.issueNumber}`,
     issue.title,
-    issue.issueCreatedAt,
-    issue.productionMergedAt,
+    formatDateTimeForDisplay(issue.issueCreatedAt),
+    formatDateTimeForDisplay(issue.productionMergedAt),
     issue.cycleTimeHours,
     Math.round((issue.cycleTimeHours / 24) * 10) / 10,
     issue.prChainSummary,

@@ -20,7 +20,7 @@ import {
   getExtendedMetricSheetName,
 } from './extendedMetricsRepositorySheet';
 import { SpreadsheetError, ErrorCode, AppError } from '../../utils/errors';
-import { formatDateForDisplay } from '../../utils/dateFormat';
+import { formatDateTimeForDisplay, formatDateForDisplay } from '../../utils/dateFormat';
 
 const SHEET_NAME = 'レビュー効率';
 
@@ -194,11 +194,11 @@ export function writeDetailSheet(
     pr.prNumber,
     pr.title,
     pr.repository,
-    pr.createdAt,
-    pr.readyForReviewAt,
-    pr.firstReviewAt ?? 'N/A',
-    pr.approvedAt ?? 'N/A',
-    pr.mergedAt ?? 'Not merged',
+    formatDateTimeForDisplay(pr.createdAt),
+    formatDateTimeForDisplay(pr.readyForReviewAt),
+    pr.firstReviewAt ? formatDateTimeForDisplay(pr.firstReviewAt) : 'N/A',
+    pr.approvedAt ? formatDateTimeForDisplay(pr.approvedAt) : 'N/A',
+    pr.mergedAt ? formatDateTimeForDisplay(pr.mergedAt) : 'Not merged',
     pr.timeToFirstReviewHours ?? 'N/A',
     pr.reviewDurationHours ?? 'N/A',
     pr.timeToMergeHours ?? 'N/A',
@@ -290,11 +290,11 @@ export function writeReviewEfficiencyToRepositorySheet(
     const rows = filtered.map((pr) => [
       pr.prNumber,
       pr.title,
-      pr.createdAt,
-      pr.readyForReviewAt,
-      pr.firstReviewAt ?? 'N/A',
-      pr.approvedAt ?? 'N/A',
-      pr.mergedAt ?? 'Not merged',
+      formatDateTimeForDisplay(pr.createdAt),
+      formatDateTimeForDisplay(pr.readyForReviewAt),
+      pr.firstReviewAt ? formatDateTimeForDisplay(pr.firstReviewAt) : 'N/A',
+      pr.approvedAt ? formatDateTimeForDisplay(pr.approvedAt) : 'N/A',
+      pr.mergedAt ? formatDateTimeForDisplay(pr.mergedAt) : 'Not merged',
       pr.timeToFirstReviewHours ?? 'N/A',
       pr.reviewDurationHours ?? 'N/A',
       pr.timeToMergeHours ?? 'N/A',

@@ -19,7 +19,7 @@ import {
   groupCodingTimeDetailsByRepository,
   getExtendedMetricSheetName,
 } from './extendedMetricsRepositorySheet';
-import { formatDateForDisplay } from '../../utils/dateFormat';
+import { formatDateTimeForDisplay, formatDateForDisplay } from '../../utils/dateFormat';
 
 const SHEET_NAME = 'コーディング時間';
 
@@ -137,8 +137,8 @@ export function writeDetailSheet(
     `#${issue.issueNumber}`,
     issue.title,
     issue.repository,
-    issue.issueCreatedAt,
-    issue.prCreatedAt,
+    formatDateTimeForDisplay(issue.issueCreatedAt),
+    formatDateTimeForDisplay(issue.prCreatedAt),
     `#${issue.prNumber}`,
     issue.codingTimeHours,
     Math.round((issue.codingTimeHours / 24) * 10) / 10,
@@ -218,8 +218,8 @@ export function writeCodingTimeToRepositorySheet(
   const rows = detailsToWrite.map((issue) => [
     `#${issue.issueNumber}`,
     issue.title,
-    issue.issueCreatedAt,
-    issue.prCreatedAt,
+    formatDateTimeForDisplay(issue.issueCreatedAt),
+    formatDateTimeForDisplay(issue.prCreatedAt),
     `#${issue.prNumber}`,
     issue.codingTimeHours,
     Math.round((issue.codingTimeHours / 24) * 10) / 10,
