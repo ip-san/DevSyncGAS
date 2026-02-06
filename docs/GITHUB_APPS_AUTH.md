@@ -314,5 +314,6 @@ GitHub Appsは詳細な監査ログを提供します。
 
 ## 関連ドキュメント
 
-- [組織導入ガイド＆トラブルシューティング](SETUP_AND_TROUBLESHOOTING.md) - 認証方式の選択、詳細なトラブル対応
+- [セットアップガイド](SETUP.md) - 認証方式の選択、初期設定
+- [トラブルシューティング](TROUBLESHOOTING.md) - 詳細なトラブル対応
 - [README](../README.md) - プロジェクト概要
