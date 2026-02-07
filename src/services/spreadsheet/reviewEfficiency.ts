@@ -14,6 +14,7 @@ import {
   openSpreadsheet,
   formatDecimalColumns,
   applyDataBorders,
+  getExistingDates,
 } from './helpers';
 import {
   groupPRDetailsByRepository,
@@ -137,29 +138,6 @@ function aggregateReviewByDate(
   }
 
   return aggregates.sort((a, b) => a.date.localeCompare(b.date));
-}
-
-/**
- * 既存の日付を収集（集計シート用）
- */
-function getExistingDates(sheet: Sheet): Set<string> {
-  const dates = new Set<string>();
-  const lastRow = sheet.getLastRow();
-
-  if (lastRow <= 1) {
-    return dates;
-  }
-
-  const data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-
-  for (const row of data) {
-    const date = String(row[0]);
-    if (date) {
-      dates.add(date);
-    }
-  }
-
-  return dates;
 }
 
 /**
