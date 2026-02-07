@@ -34,7 +34,7 @@ checkConfig();
 ❌ GitHub認証: GitHub Apps設定が不完全です（Private Key が未設定）
    → src/init.ts で全ての値を設定して initConfig() を実行してください
 ⚠️ リポジトリ: リポジトリが登録されていません
-   → src/init.ts の repositories 配列にリポジトリを追加するか、addRepo('owner', 'repo-name') を実行してください
+   → src/init.ts の projects[].repositories 配列にリポジトリを追加して、bun run push → initConfig() を実行してください
 
 ❌ エラーがあります。上記のヒントを参考に設定を修正してください。
 ```
@@ -204,24 +204,29 @@ auth: {
 
 **症状:**
 ```
-⚠️ No repositories configured. Add repositories with addRepo()
+⚠️ No repositories configured
 ```
 
 **原因:**
 - 監視対象のリポジトリが追加されていない
 
 **解決方法:**
-```javascript
-// リポジトリを追加
-addRepo('owner', 'repo-name');
-
-// 複数追加する場合
-addRepo('owner', 'repo1');
-addRepo('owner', 'repo2');
-
-// 登録状況を確認
-listRepos();
+```typescript
+// src/init.ts でリポジトリを設定
+projects: [
+  {
+    name: 'My Project',
+    spreadsheet: { id: 'xxx' },
+    repositories: [
+      { owner: 'owner', name: 'repo-name' },
+      { owner: 'owner', name: 'repo1' },
+      { owner: 'owner', name: 'repo2' },
+    ],
+  },
+],
 ```
+
+変更後は `bun run push` → `initConfig()` で反映し、`listRepos()` で確認してください。
 
 ---
 
@@ -374,13 +379,18 @@ GitHub API error: 404 - Not Found
 - リポジトリ名のtypo
 
 **解決方法:**
-```javascript
-// 登録済みリポジトリを確認
+```typescript
+// 1. 登録済みリポジトリを確認
 listRepos();
 
-// 正しいリポジトリ名で再登録
-removeRepo('wrong/repo');
-addRepo('correct-owner', 'correct-repo');
+// 2. src/init.ts で正しいリポジトリ名に修正
+repositories: [
+  { owner: 'correct-owner', name: 'correct-repo' },
+],
+
+// 3. 反映
+bun run push
+initConfig()
 ```
 
 ---

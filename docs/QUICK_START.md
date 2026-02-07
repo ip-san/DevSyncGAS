@@ -228,12 +228,7 @@ repositories: [
 ],
 ```
 
-または、GASエディタで `addRepo()` を実行して追加することもできます:
-
-```javascript
-addRepo('your-org', 'frontend');
-addRepo('your-org', 'backend');
-```
+> **Note:** リポジトリ管理は `src/init.ts` で行うことを推奨します。変更後は `bun run push` → `initConfig()` で反映してください。
 
 ### トークンの有効期限が切れた
 

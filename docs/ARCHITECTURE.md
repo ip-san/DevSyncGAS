@@ -212,11 +212,22 @@ configureApiMode('rest');     // トラブル時のフォールバック
 1つのGAS環境で複数プロジェクト（それぞれ異なるスプレッドシート）を管理できる。
 
 ```typescript
-createProject('ProjectA', 'spreadsheet-id-A');
-createProject('ProjectB', 'spreadsheet-id-B');
-addRepoToProject('ProjectA', 'org', 'repo1');
-syncAllMetrics();  // DORA + 拡張指標を全て同期
+// src/init.ts でプロジェクトを設定
+projects: [
+  {
+    name: 'ProjectA',
+    spreadsheet: { id: 'spreadsheet-id-A' },
+    repositories: [{ owner: 'org', name: 'repo1' }],
+  },
+  {
+    name: 'ProjectB',
+    spreadsheet: { id: 'spreadsheet-id-B' },
+    repositories: [{ owner: 'org', name: 'repo2' }],
+  },
+],
 ```
+
+変更後は `bun run push` → `initConfig()` → `syncAllMetrics()` で同期。
 
 ### 4. スキーママイグレーション
 
