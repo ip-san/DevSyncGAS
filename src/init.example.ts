@@ -11,6 +11,10 @@
  * 認証方式:
  * - Personal Access Token: auth.type = 'token' を使用
  * - GitHub Apps: auth.type = 'github-app' を使用
+ *
+ * 設定構造:
+ * - プロジェクトごとに設定をグループ化
+ * - 各プロジェクトは独自のスプレッドシート、リポジトリ、除外設定を持つ
  */
 
 import type { InitConfig } from './config/initializer';
@@ -20,9 +24,9 @@ import { initializeFromConfig } from './config/initializer';
 
 // ===== ここを編集 =====
 export const config: InitConfig = {
-  // 認証設定（どちらか一方を選択）
+  // 認証設定（全プロジェクト共通）
   auth: {
-    // --- GitHub Apps認証の場合 ---
+    // --- GitHub Apps認証の場合（推奨） ---
     type: 'github-app',
     appId: 'YOUR_APP_ID_HERE', // 例: '123456'
     installationId: 'YOUR_INSTALLATION_ID_HERE', // 例: '12345678'
@@ -38,44 +42,60 @@ export const config: InitConfig = {
     // token: 'ghp_xxxxx', // GitHubのPersonal Access Token
   },
 
-  // スプレッドシート設定
-  spreadsheet: {
-    id: 'YOUR_SPREADSHEET_ID_HERE',
-    sheetName: 'DevOps Metrics', // 省略可（デフォルト: 'DevOps Metrics'）
-  },
+  // プロジェクト設定（プロジェクトごとに設定がまとまる）
+  projects: [
+    {
+      // プロジェクト名（識別用）
+      name: 'My Project',
 
-  // 監視対象リポジトリ
-  repositories: [
-    { owner: 'your-org', name: 'your-repo' },
-    // 追加するリポジトリをここに列挙
-    // { owner: 'owner2', name: 'repo2' },
+      // このプロジェクトの出力先スプレッドシート
+      spreadsheet: {
+        id: 'YOUR_SPREADSHEET_ID_HERE',
+        sheetName: 'DevOps Metrics', // 省略可（デフォルト: 'DevOps Metrics'）
+      },
+
+      // このプロジェクトに含まれるリポジトリ
+      repositories: [
+        { owner: 'your-org', name: 'your-repo' },
+        // 追加するリポジトリをここに列挙
+        // { owner: 'your-org', name: 'another-repo' },
+      ],
+
+      // このプロジェクト固有の除外設定（部分一致）
+      // デプロイ用PRを除外する場合に設定
+      excludeBranches: {
+        prSize: ['production', 'staging'],
+        reviewEfficiency: ['production', 'staging'],
+        cycleTime: ['production', 'staging'],
+        codingTime: ['production', 'staging'],
+        reworkRate: ['production', 'staging'],
+      },
+
+      // デプロイワークフローパターン（部分一致）
+      deployWorkflowPatterns: ['deploy'],
+
+      // 例:
+      // - "production" → 除外
+      // - "production-hotfix" → 除外（部分一致）
+      // - "staging-test" → 除外（部分一致）
+      // - "main" → 含める
+    },
+
+    // 複数プロジェクトを管理する場合は追加
+    // {
+    //   name: 'Another Project',
+    //   spreadsheet: {
+    //     id: 'ANOTHER_SPREADSHEET_ID',
+    //     sheetName: 'DevOps Metrics',
+    //   },
+    //   repositories: [
+    //     { owner: 'org-name', name: 'repo-name' },
+    //   ],
+    //   excludeBranches: {
+    //     prSize: ['main'],
+    //   },
+    // },
   ],
-
-  // PRサイズ計算から除外するbaseブランチ（部分一致）
-  // デプロイ用PRを除外する場合に設定
-  prSizeExcludeBranches: ['production', 'staging'],
-
-  // レビュー効率計算から除外するbaseブランチ（部分一致）
-  // デプロイ用PRを除外する場合に設定
-  reviewEfficiencyExcludeBranches: ['production', 'staging'],
-
-  // サイクルタイム計算から除外するbaseブランチ（部分一致）
-  // デプロイ用PRを除外する場合に設定
-  cycleTimeExcludeBranches: ['production', 'staging'],
-
-  // コーディング時間計算から除外するbaseブランチ（部分一致）
-  // デプロイ用PRを除外する場合に設定
-  codingTimeExcludeBranches: ['production', 'staging'],
-
-  // 手戻り率計算から除外するbaseブランチ（部分一致）
-  // デプロイ用PRを除外する場合に設定
-  reworkRateExcludeBranches: ['production', 'staging'],
-
-  // 例:
-  // - "production" → 除外
-  // - "production-hotfix" → 除外（部分一致）
-  // - "staging-test" → 除外（部分一致）
-  // - "main" → 含める
 };
 // ======================
 
