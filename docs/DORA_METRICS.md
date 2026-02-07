@@ -353,8 +353,9 @@ syncDevOpsMetrics();
 // 過去90日間
 syncDevOpsMetrics(90);
 
-// 全プロジェクトを同期
-syncAllProjects();
+// DORA + 拡張指標を全て同期（推奨）
+syncAllMetrics();       // デフォルト: 過去30日
+syncAllMetrics(90);     // 過去90日
 ```
 
 ### API モード切替

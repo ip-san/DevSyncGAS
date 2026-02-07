@@ -355,8 +355,9 @@ syncCycleTime();
 // コーディング時間
 syncCodingTime();
 
-// 全プロジェクトを同期（DORA + 拡張指標）
-syncAllProjects();
+// DORA + 拡張指標を全て同期（推奨）
+syncAllMetrics();       // デフォルト: 過去30日
+syncAllMetrics(90);     // 過去90日
 ```
 
 ### 日次バックフィル

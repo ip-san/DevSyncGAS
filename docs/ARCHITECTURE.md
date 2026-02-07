@@ -215,7 +215,7 @@ configureApiMode('rest');     // トラブル時のフォールバック
 createProject('ProjectA', 'spreadsheet-id-A');
 createProject('ProjectB', 'spreadsheet-id-B');
 addRepoToProject('ProjectA', 'org', 'repo1');
-syncAllProjects();  // 全プロジェクト一括同期
+syncAllMetrics();  // DORA + 拡張指標を全て同期
 ```
 
 ### 4. スキーママイグレーション
@@ -264,7 +264,9 @@ owner/repo-b | 2024-01-02 | 3  | weekly | ...
 // DORA指標同期（Dashboard自動生成）
 syncDevOpsMetrics();
 syncDailyBackfill(30);  // 過去30日分をバックフィル
-syncAllProjects();      // 全プロジェクト一括同期
+
+// DORA + 拡張指標を全て同期（推奨）
+syncAllMetrics();       // デフォルト: 過去30日
 ```
 
 ---

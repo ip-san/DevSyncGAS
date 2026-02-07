@@ -51,26 +51,19 @@ removeRepo('owner/repo-name')    // リポジトリ削除
 ## 📊 GAS関数（データ同期）
 
 ```javascript
-// 🚀 一括同期（推奨）
-syncAllMetrics()                 // 全指標を一括同期（DORA + 拡張指標全部、過去30日）
-syncAllMetrics(90)               // 過去90日分を一括同期
+// 🚀 一括同期（推奨）※引数で日数指定可能（デフォルト: 30日）
+syncAllMetrics()                 // 全指標を一括同期（DORA + 拡張指標全部）
 
 // DORA指標同期
 syncDevOpsMetrics()              // DORA指標を同期（Dashboard/チャート自動生成）
 syncDailyBackfill(30)            // 過去30日分をバックフィル
-syncAllProjects()                // 全プロジェクトを同期
 
-// 拡張指標同期（個別）
-syncCycleTime()                  // サイクルタイム（過去30日、デフォルト）
-syncCycleTime(90)                // サイクルタイム（過去90日）
-syncCodingTime()                 // コーディング時間（過去30日、デフォルト）
-syncCodingTime(90)               // コーディング時間（過去90日）
-syncReworkRate()                 // 手戻り率（過去30日、デフォルト）
-syncReworkRate(90)               // 手戻り率（過去90日）
-syncReviewEfficiency()           // レビュー効率（過去30日、デフォルト）
-syncReviewEfficiency(90)         // レビュー効率（過去90日）
-syncPRSize()                     // PRサイズ（過去30日、デフォルト）
-syncPRSize(90)                   // PRサイズ（過去90日）
+// 拡張指標同期（個別）※引数で日数指定可能（デフォルト: 30日）
+syncCycleTime()                  // サイクルタイム
+syncCodingTime()                 // コーディング時間
+syncReworkRate()                 // 手戻り率
+syncReviewEfficiency()           // レビュー効率
+syncPRSize()                     // PRサイズ
 ```
 
 ---
@@ -84,8 +77,7 @@ initConfig()                     // src/init.ts の設定を PropertiesService �
 
 ### API設定
 ```javascript
-configureApiMode('graphql')      // GraphQL API使用（デフォルト）
-configureApiMode('rest')         // REST API使用
+configureApiMode('graphql')      // GraphQL（デフォルト）/REST切替
 ```
 
 ### ラベル設定
