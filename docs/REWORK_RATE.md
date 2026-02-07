@@ -34,10 +34,10 @@ Force Push: 頻繁       →   減少
 
 ```javascript
 // 過去30日間の手戻り率を計測（デフォルト）
-syncReworkRate();
+syncAllMetrics();       // デフォルト: 過去30日
 
 // 過去90日間
-syncReworkRate(90);
+syncAllMetrics(90);     // 過去90日
 ```
 
 ---
