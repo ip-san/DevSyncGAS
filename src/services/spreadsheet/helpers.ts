@@ -196,3 +196,32 @@ export function styleSummaryRow(sheet: Sheet, rowNumber: number, columnCount: nu
   summaryRange.setFontWeight('bold');
   summaryRange.setBackground(COLORS.summaryBackground);
 }
+
+/**
+ * 既存の日付を収集（集計シート用）
+ *
+ * シートの1列目から既存の日付データを読み取り、Set として返す。
+ * ヘッダー行（1行目）は除外される。
+ *
+ * @param sheet - 対象シート
+ * @returns 既存の日付のSet
+ */
+export function getExistingDates(sheet: Sheet): Set<string> {
+  const dates = new Set<string>();
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow <= 1) {
+    return dates;
+  }
+
+  const data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+
+  for (const row of data) {
+    const date = String(row[0]);
+    if (date) {
+      dates.add(date);
+    }
+  }
+
+  return dates;
+}

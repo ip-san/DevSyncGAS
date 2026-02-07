@@ -66,6 +66,17 @@ import {
   // ログレベル設定
   showLogLevel,
   configureLogLevel,
+  // 監査ログ
+  exportAuditLogs,
+  showAuditLogs,
+  // Secret Manager
+  enableSecretManager,
+  disableSecretManager,
+  showSecretManagerStatus,
+  storeSecret,
+  getSecret,
+  deleteSecret,
+  migratePrivateKey,
 } from './functions';
 import {
   // Slack通知設定
@@ -204,3 +215,16 @@ global.removeMonthlyReportTrigger = removeMonthlyReportTrigger;
 global.sendIncidentDailySummary = sendIncidentDailySummary;
 global.setupIncidentDailySummaryTrigger = setupIncidentDailySummaryTrigger;
 global.removeIncidentDailySummaryTrigger = removeIncidentDailySummaryTrigger;
+
+// 監査ログ
+global.exportAuditLogs = exportAuditLogs;
+global.showAuditLogs = showAuditLogs;
+
+// Secret Manager
+global.enableSecretManager = enableSecretManager;
+global.disableSecretManager = disableSecretManager;
+global.showSecretManagerStatus = showSecretManagerStatus;
+global.storeSecret = storeSecret;
+global.getSecret = getSecret;
+global.deleteSecret = deleteSecret;
+global.migratePrivateKey = migratePrivateKey;
