@@ -7,7 +7,7 @@
  * GraphQL APIを使用してAPI呼び出し回数を削減。
  */
 
-import { getConfig, getGitHubToken, getProjects } from '../config/settings';
+import { getConfig, getGitHubToken } from '../config/settings';
 import { getAllRepositoriesDataGraphQL, type DateRange } from '../services/github';
 import {
   // リポジトリ別シート構造
@@ -123,74 +123,6 @@ export async function syncDevOpsMetrics(dateRange?: DateRange): Promise<void> {
  *
  * 各プロジェクトでリポジトリ別シート、Dashboard、Summaryを生成。
  */
-/**
- * 指定したプロジェクトのDevOps指標を収集
- *
- * リポジトリ別シート、Dashboard、Summaryを生成。
- */
-export async function syncProject(projectName: string, dateRange?: DateRange): Promise<void> {
-  ensureContainerInitialized();
-  const projects = getProjects();
-  const project = projects.find((p) => p.name === projectName);
-
-  if (!project) {
-    Logger.log(`❌ Project "${projectName}" not found`);
-    return;
-  }
-
-  Logger.log(`📊 Syncing project: ${project.name}`);
-  Logger.log(`   Spreadsheet: ${project.spreadsheetId}`);
-  Logger.log(`   Repositories: ${project.repositories.length}`);
-
-  if (project.repositories.length === 0) {
-    Logger.log(`   ⚠️ No repositories in this project`);
-    return;
-  }
-
-  const token = getGitHubToken();
-  const { pullRequests, workflowRuns, deployments } = fetchRepositoriesData(
-    project.repositories,
-    token,
-    { dateRange }
-  );
-
-  const metrics: DevOpsMetrics[] = project.repositories.map((repo) =>
-    calculateMetricsForRepository({
-      repository: repo.fullName,
-      prs: pullRequests,
-      runs: workflowRuns,
-      deployments,
-    })
-  );
-
-  // リポジトリ別シートに書き込み
-  writeMetricsToAllRepositorySheets(project.spreadsheetId, metrics, { skipDuplicates: true });
-
-  // Dashboard更新
-  await writeDashboard(project.spreadsheetId, metrics);
-  await writeDashboardTrends(project.spreadsheetId, metrics);
-
-  Logger.log(`✅ Synced metrics to ${metrics.length} repository sheets`);
-}
-
-// =============================================================================
-// 履歴データ同期
-// =============================================================================
-
-/**
- * 過去N日分のメトリクスを取得
- */
-export async function syncHistoricalMetrics(days: number): Promise<void> {
-  const until = new Date();
-  const since = new Date();
-  since.setDate(since.getDate() - days);
-
-  Logger.log(`📅 Fetching metrics for the last ${days} days`);
-  Logger.log(`   From: ${since.toISOString()}`);
-  Logger.log(`   To: ${until.toISOString()}`);
-
-  await syncDevOpsMetrics({ since, until });
-}
 
 // =============================================================================
 // 日別バックフィル

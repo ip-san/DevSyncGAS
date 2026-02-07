@@ -16,11 +16,9 @@ Issue作成 ──────────────────→ Production
 ## 使い方
 
 ```javascript
-// 過去30日間のサイクルタイムを計測（デフォルト）
-syncCycleTime();
-
-// 過去90日間
-syncCycleTime(90);
+// サイクルタイムを含む全指標を同期
+syncAllMetrics();       // デフォルト: 過去30日
+syncAllMetrics(90);     // 過去90日
 ```
 
 ### 前提条件
@@ -101,7 +99,7 @@ export const config: InitConfig = {
 設定後の適用手順：
 1. `bun run push` でデプロイ
 2. GASエディタで `initConfig()` を実行（設定を保存）
-3. `syncCycleTime(90)` を実行（サイクルタイムを再計算）
+3. `syncAllMetrics(90)` を実行（全指標を再計算）
 
 #### GASエディタで直接設定
 

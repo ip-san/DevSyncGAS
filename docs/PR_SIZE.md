@@ -26,10 +26,10 @@ PR Size = Lines of Code + Files Changed
 
 ```javascript
 // 過去30日間のPRサイズを計測（デフォルト）
-syncPRSize();
+syncAllMetrics();       // デフォルト: 過去30日
 
 // 過去90日間
-syncPRSize(90);
+syncAllMetrics(90);     // 過去90日
 ```
 
 ---
@@ -159,7 +159,7 @@ resetPRSizeExcludeBranchesConfig();
 setExcludePRSizeBaseBranches(['production', 'staging']);
 
 // 2. PRサイズを計算
-syncPRSize(90);
+syncAllMetrics(90);     // 過去90日
 // → "Excluded 15 PRs with base branches containing: production, staging"
 
 // 3. スプレッドシートに反映される統計は、通常の開発PRのみ
@@ -187,7 +187,7 @@ checkConfig();
 initConfig();  // init.tsから設定を読み込む
 
 // 3. PRサイズを再計算
-syncPRSize(90);
+syncAllMetrics(90);     // 過去90日
 // Excluded 15 PRs with base branches containing: production, staging
 // ↑ 除外されたPRの数が表示される
 ```

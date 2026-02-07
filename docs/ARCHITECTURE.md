@@ -129,7 +129,7 @@ src/
    services/spreadsheet/dashboard.ts → Dashboard, Trend シート
 ```
 
-### サイクルタイム計測（syncCycleTime）
+### サイクルタイム計測
 
 ```
 1. Issue一覧取得

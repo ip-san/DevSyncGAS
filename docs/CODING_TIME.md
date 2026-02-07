@@ -15,10 +15,10 @@ Issue作成 ──────────────────→ PR作成
 
 ```javascript
 // 過去30日間のコーディング時間を計測（デフォルト）
-syncCodingTime();
+syncAllMetrics();       // デフォルト: 過去30日
 
 // 過去90日間
-syncCodingTime(90);
+syncAllMetrics(90);     // 過去90日
 ```
 
 ### 前提条件

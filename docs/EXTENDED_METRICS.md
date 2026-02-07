@@ -96,12 +96,6 @@ PR3 (staging→production) ← このマージ日 = 完了日
 ### 設定
 
 ```javascript
-// 過去30日間のサイクルタイムを計測（デフォルト）
-syncCycleTime();
-
-// 過去90日間
-syncCycleTime(90);
-
 // Productionブランチパターンを設定
 configureProductionBranch("production");  // デフォルト
 configureProductionBranch("release");
@@ -151,12 +145,6 @@ codingTime = (prCreatedAt - issueCreatedAt) / (1000 * 60 * 60); // 時間
 ### 設定
 
 ```javascript
-// 過去30日間のコーディング時間を計測（デフォルト）
-syncCodingTime();
-
-// 過去90日間
-syncCodingTime(90);
-
 // ラベルフィルタ
 configureCodingTimeLabels(["feature", "enhancement"]);
 
@@ -349,13 +337,7 @@ GET /repos/{owner}/{repo}/pulls/{number}
 ### 基本
 
 ```javascript
-// サイクルタイム
-syncCycleTime();
-
-// コーディング時間
-syncCodingTime();
-
-// DORA + 拡張指標を全て同期（推奨）
+// DORA + 拡張指標を全て同期
 syncAllMetrics();       // デフォルト: 過去30日
 syncAllMetrics(90);     // 過去90日
 ```

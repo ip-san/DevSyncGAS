@@ -24,10 +24,10 @@ Ready for Review ───→ First Review ───→ Approved ───→ Me
 
 ```javascript
 // 過去30日間のレビュー効率を計測（デフォルト）
-syncReviewEfficiency();
+syncAllMetrics();       // デフォルト: 過去30日
 
 // 過去90日間
-syncReviewEfficiency(90);
+syncAllMetrics(90);     // 過去90日
 ```
 
 ---
@@ -154,7 +154,7 @@ checkConfig();
 initConfig();  // init.tsから設定を読み込む
 
 // 3. レビュー効率を再計算
-syncReviewEfficiency(90);
+syncAllMetrics(90);     // 過去90日
 // Excluded 15 PRs with base branches containing: production, staging
 // ↑ 除外されたPRの数が表示される
 ```
