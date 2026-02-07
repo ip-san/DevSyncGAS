@@ -66,7 +66,7 @@ export const config: InitConfig = {
       excludeBranches: {
         prSize: ['production', 'staging'],
         reviewEfficiency: ['production', 'staging'],
-        cycleTime: ['production', 'staging'],
+        cycleTime: ['staging'], // productionは除外しない（サイクルタイム計測に必要）
         codingTime: ['production', 'staging'],
         reworkRate: ['production', 'staging'],
       },
