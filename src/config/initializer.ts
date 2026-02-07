@@ -54,17 +54,10 @@ export interface InitConfig {
 }
 
 /**
- * 設定オブジェクトから初期化を実行
+ * 認証設定を保存
  */
-export function initializeFromConfig(config: InitConfig): void {
-  // コンテナ初期化
-  if (!isContainerInitialized()) {
-    initializeContainer(createGasAdapters());
-  }
-
-  // 認証方式に応じて設定を保存
+function saveAuthConfig(config: InitConfig): void {
   if (config.auth.type === 'token') {
-    // Personal Access Token認証
     setConfig({
       github: { token: config.auth.token, repositories: [] },
       spreadsheet: {
@@ -74,7 +67,6 @@ export function initializeFromConfig(config: InitConfig): void {
     });
     Logger.log('✅ Configuration saved (Personal Access Token auth)');
   } else {
-    // GitHub Apps認証
     setConfig({
       github: {
         appConfig: {
@@ -91,60 +83,76 @@ export function initializeFromConfig(config: InitConfig): void {
     });
     Logger.log('✅ Configuration saved (GitHub App auth)');
   }
+}
 
-  // リポジトリを追加
-  for (const repo of config.repositories) {
+/**
+ * リポジトリを追加
+ */
+function addRepositories(repositories: Array<{ owner: string; name: string }>): void {
+  for (const repo of repositories) {
     addRepository(repo.owner, repo.name);
     Logger.log(`✅ Added repository: ${repo.owner}/${repo.name}`);
   }
+}
 
-  // PRサイズ除外ブランチ設定
-  if (config.prSizeExcludeBranches && config.prSizeExcludeBranches.length > 0) {
+/**
+ * 除外ブランチ設定を適用
+ */
+function applyExcludeBranchSettings(config: InitConfig): void {
+  if (config.prSizeExcludeBranches?.length) {
     setExcludePRSizeBaseBranches(config.prSizeExcludeBranches);
     Logger.log(
       `✅ PR size exclude branches: ${config.prSizeExcludeBranches.join(', ')} (partial match)`
     );
   }
 
-  // レビュー効率除外ブランチ設定
-  if (config.reviewEfficiencyExcludeBranches && config.reviewEfficiencyExcludeBranches.length > 0) {
+  if (config.reviewEfficiencyExcludeBranches?.length) {
     setExcludeReviewEfficiencyBaseBranches(config.reviewEfficiencyExcludeBranches);
     Logger.log(
       `✅ Review efficiency exclude branches: ${config.reviewEfficiencyExcludeBranches.join(', ')} (partial match)`
     );
   }
 
-  // サイクルタイム除外ブランチ設定
-  if (config.cycleTimeExcludeBranches && config.cycleTimeExcludeBranches.length > 0) {
+  if (config.cycleTimeExcludeBranches?.length) {
     setExcludeCycleTimeBaseBranches(config.cycleTimeExcludeBranches);
     Logger.log(
       `✅ Cycle time exclude branches: ${config.cycleTimeExcludeBranches.join(', ')} (partial match)`
     );
   }
 
-  // コーディング時間除外ブランチ設定
-  if (config.codingTimeExcludeBranches && config.codingTimeExcludeBranches.length > 0) {
+  if (config.codingTimeExcludeBranches?.length) {
     setExcludeCodingTimeBaseBranches(config.codingTimeExcludeBranches);
     Logger.log(
       `✅ Coding time exclude branches: ${config.codingTimeExcludeBranches.join(', ')} (partial match)`
     );
   }
 
-  // 手戻り率除外ブランチ設定
-  if (config.reworkRateExcludeBranches && config.reworkRateExcludeBranches.length > 0) {
+  if (config.reworkRateExcludeBranches?.length) {
     setExcludeReworkRateBaseBranches(config.reworkRateExcludeBranches);
     Logger.log(
       `✅ Rework rate exclude branches: ${config.reworkRateExcludeBranches.join(', ')} (partial match)`
     );
   }
 
-  // デプロイワークフローパターン設定
-  if (config.deployWorkflowPatterns && config.deployWorkflowPatterns.length > 0) {
+  if (config.deployWorkflowPatterns?.length) {
     setDeployWorkflowPatterns(config.deployWorkflowPatterns);
     Logger.log(
       `✅ Deploy workflow patterns: ${config.deployWorkflowPatterns.join(', ')} (partial match)`
     );
   }
+}
+
+/**
+ * 設定オブジェクトから初期化を実行
+ */
+export function initializeFromConfig(config: InitConfig): void {
+  if (!isContainerInitialized()) {
+    initializeContainer(createGasAdapters());
+  }
+
+  saveAuthConfig(config);
+  addRepositories(config.repositories);
+  applyExcludeBranchSettings(config);
 
   Logger.log('✅ 初期設定完了');
   Logger.log(
