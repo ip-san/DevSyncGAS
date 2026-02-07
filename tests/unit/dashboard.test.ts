@@ -325,22 +325,22 @@ describe('Dashboard Aggregation', () => {
         avgForcePushCount: null,
       });
 
-      // モックスプレッドシートに拡張指標シートを作成
+      // モックスプレッドシートに拡張指標シートを作成（集計シート形式）
       const spreadsheet = mockContainer.spreadsheetClient.openById(
         mockContainer.spreadsheetId
       ) as import('../mocks').MockSpreadsheet;
-      spreadsheet.addSheet('owner/repo/コーディング時間', [
+      spreadsheet.addSheet('owner/repo - コーディング時間', [
         [
-          'Issue番号',
-          'タイトル',
-          'Issue作成日時',
-          'PR作成日時',
-          'PR番号',
-          'コーディング時間 (時間)',
-          'コーディング時間 (日)',
+          '日付',
+          '完了Issue数',
+          '平均コーディング時間 (時間)',
+          '平均コーディング時間 (日)',
+          '中央値 (時間)',
+          '最小 (時間)',
+          '最大 (時間)',
         ],
-        [123, 'Test Issue', '2024-01-01', '2024-01-02', 1, 10.5, 0.4],
-        [124, 'Test Issue 2', '2024-01-02', '2024-01-03', 2, 15.0, 0.6],
+        ['2024-01-01', 1, 10.5, 0.4, 10.5, 10.5, 10.5],
+        ['2024-01-02', 1, 15.0, 0.6, 15.0, 15.0, 15.0],
       ]);
 
       // 拡張指標を統合

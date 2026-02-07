@@ -92,27 +92,27 @@ export function enrichWithExtendedMetrics(
     const spreadsheet = openSpreadsheet(spreadsheetId);
 
     for (const [repository, data] of latestByRepo) {
-      // サイクルタイム (5列目: サイクルタイム (時間))
+      // サイクルタイム (3列目: 平均サイクルタイム (時間))
       const cycleTimeSheetName = getExtendedMetricSheetName(repository, 'サイクルタイム');
-      data.cycleTimeHours = calculateAverageFromSheet(spreadsheet, cycleTimeSheetName, 5);
+      data.cycleTimeHours = calculateAverageFromSheet(spreadsheet, cycleTimeSheetName, 3);
 
-      // コーディング時間 (6列目: コーディング時間 (時間))
+      // コーディング時間 (3列目: 平均コーディング時間 (時間))
       const codingTimeSheetName = getExtendedMetricSheetName(repository, 'コーディング時間');
-      data.codingTimeHours = calculateAverageFromSheet(spreadsheet, codingTimeSheetName, 6);
+      data.codingTimeHours = calculateAverageFromSheet(spreadsheet, codingTimeSheetName, 3);
 
-      // レビュー効率 (8列目: レビュー待ち時間、9列目: レビュー時間)
+      // レビュー効率 (3列目: 平均レビュー待ち時間、5列目: 平均レビュー時間)
       const reviewEffSheetName = getExtendedMetricSheetName(repository, 'レビュー効率');
-      data.timeToFirstReviewHours = calculateAverageFromSheet(spreadsheet, reviewEffSheetName, 8);
-      data.reviewDurationHours = calculateAverageFromSheet(spreadsheet, reviewEffSheetName, 9);
+      data.timeToFirstReviewHours = calculateAverageFromSheet(spreadsheet, reviewEffSheetName, 3);
+      data.reviewDurationHours = calculateAverageFromSheet(spreadsheet, reviewEffSheetName, 5);
 
-      // PRサイズ (7列目: 変更行数)
+      // PRサイズ (3列目: 平均変更行数)
       const prSizeSheetName = getExtendedMetricSheetName(repository, 'PRサイズ');
-      data.avgLinesOfCode = calculateAverageFromSheet(spreadsheet, prSizeSheetName, 7);
+      data.avgLinesOfCode = calculateAverageFromSheet(spreadsheet, prSizeSheetName, 3);
 
-      // 手戻り率 (6列目: 追加コミット数、7列目: Force Push回数)
+      // 手戻り率 (3列目: 平均追加コミット数、5列目: 平均Force Push回数)
       const reworkRateSheetName = getExtendedMetricSheetName(repository, '手戻り率');
-      data.avgAdditionalCommits = calculateAverageFromSheet(spreadsheet, reworkRateSheetName, 6);
-      data.avgForcePushCount = calculateAverageFromSheet(spreadsheet, reworkRateSheetName, 7);
+      data.avgAdditionalCommits = calculateAverageFromSheet(spreadsheet, reworkRateSheetName, 3);
+      data.avgForcePushCount = calculateAverageFromSheet(spreadsheet, reworkRateSheetName, 5);
     }
   } catch (error) {
     if (error instanceof AppError) {
