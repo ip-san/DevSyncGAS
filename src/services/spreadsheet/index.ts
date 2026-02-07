@@ -42,6 +42,7 @@ export {
   groupIssueDetailsByRepository,
   groupPRDetailsByRepository,
   getExtendedMetricSheetName,
+  getExtendedMetricDetailSheetName,
 } from './extendedMetricsRepositorySheet';
 
 // サイクルタイム指標

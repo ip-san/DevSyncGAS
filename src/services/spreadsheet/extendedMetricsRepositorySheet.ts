@@ -48,22 +48,44 @@ export function groupPRDetailsByRepository<T extends { repository: string }>(
 }
 
 /**
- * 拡張指標のリポジトリ別シート名を生成
+ * 拡張指標のリポジトリ別シート名を生成（集計シート）
  *
  * @param repository - リポジトリ名（owner/repo形式）
  * @param metricName - 指標名（例: "サイクルタイム"）
- * @returns シート名（例: "owner/repo/サイクルタイム"）
+ * @returns シート名（例: "owner/repo - サイクルタイム"）
  */
 export function getExtendedMetricSheetName(repository: string, metricName: string): string {
   // Google Sheetsのシート名制限: 100文字以内
-  const fullName = `${repository}/${metricName}`;
+  const fullName = `${repository} - ${metricName}`;
 
   if (fullName.length > REPOSITORY_NAME_MAX_LENGTH) {
     // リポジトリ名を切り詰めて指標名を保持
     const metricLength = metricName.length;
-    const availableLength = REPOSITORY_NAME_MAX_LENGTH - metricLength - 1; // -1 for '/'
+    const availableLength = REPOSITORY_NAME_MAX_LENGTH - metricLength - 3; // -3 for ' - '
     const truncatedRepo = repository.substring(0, availableLength);
-    return `${truncatedRepo}/${metricName}`;
+    return `${truncatedRepo} - ${metricName}`;
+  }
+
+  return fullName;
+}
+
+/**
+ * 拡張指標の詳細シート名を生成
+ *
+ * @param repository - リポジトリ名（owner/repo形式）
+ * @param metricName - 指標名（例: "サイクルタイム"）
+ * @returns シート名（例: "owner/repo - サイクルタイム - Details"）
+ */
+export function getExtendedMetricDetailSheetName(repository: string, metricName: string): string {
+  const baseName = getExtendedMetricSheetName(repository, metricName);
+  const fullName = `${baseName} - Details`;
+
+  if (fullName.length > REPOSITORY_NAME_MAX_LENGTH) {
+    // 詳細シート名が長すぎる場合はリポジトリ名をさらに切り詰める
+    const suffix = ` - ${metricName} - Details`;
+    const availableLength = REPOSITORY_NAME_MAX_LENGTH - suffix.length;
+    const truncatedRepo = repository.substring(0, availableLength);
+    return `${truncatedRepo}${suffix}`;
   }
 
   return fullName;

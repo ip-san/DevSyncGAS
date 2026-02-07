@@ -66,10 +66,10 @@ describe('CodingTime / CycleTime Write', () => {
       const spreadsheet = mockContainer.spreadsheetClient.openById(
         mockContainer.spreadsheetId
       ) as MockSpreadsheet;
-      const sheet = spreadsheet.getSheetByName('owner/repo1/コーディング時間');
+      const sheet = spreadsheet.getSheetByName('owner/repo1 - コーディング時間');
 
       expect(sheet).not.toBeNull();
-      expect(sheet?.getLastRow()).toBeGreaterThanOrEqual(3); // ヘッダー + 2行
+      expect(sheet?.getLastRow()).toBeGreaterThanOrEqual(3); // ヘッダー + 2行（集計シート）
     });
 
     it('should group details by repository', () => {
@@ -117,14 +117,14 @@ describe('CodingTime / CycleTime Write', () => {
         mockContainer.spreadsheetId
       ) as MockSpreadsheet;
 
-      // repo1 に 2つ、repo2 に 1つ
-      const sheet1 = spreadsheet.getSheetByName('owner/repo1/コーディング時間');
-      const sheet2 = spreadsheet.getSheetByName('owner/repo2/コーディング時間');
+      // repo1 に 2つ、repo2 に 1つ（集計シート）
+      const sheet1 = spreadsheet.getSheetByName('owner/repo1 - コーディング時間');
+      const sheet2 = spreadsheet.getSheetByName('owner/repo2 - コーディング時間');
 
       expect(sheet1).not.toBeNull();
       expect(sheet2).not.toBeNull();
-      expect(sheet1?.getLastRow()).toBe(3); // ヘッダー + 2行
-      expect(sheet2?.getLastRow()).toBe(2); // ヘッダー + 1行
+      expect(sheet1?.getLastRow()).toBe(3); // ヘッダー + 2行（2つのIssueが異なる日付）
+      expect(sheet2?.getLastRow()).toBe(2); // ヘッダー + 1行（1つのIssue）
     });
 
     it('should handle empty details', () => {
@@ -145,7 +145,7 @@ describe('CodingTime / CycleTime Write', () => {
       ) as MockSpreadsheet;
 
       // シートは作成されない
-      expect(spreadsheet.getSheetByName('owner/repo1/コーディング時間')).toBeNull();
+      expect(spreadsheet.getSheetByName('owner/repo1 - コーディング時間')).toBeNull();
     });
   });
 
@@ -185,10 +185,10 @@ describe('CodingTime / CycleTime Write', () => {
       const spreadsheet = mockContainer.spreadsheetClient.openById(
         mockContainer.spreadsheetId
       ) as MockSpreadsheet;
-      const sheet = spreadsheet.getSheetByName('owner/repo1/サイクルタイム');
+      const sheet = spreadsheet.getSheetByName('owner/repo1 - サイクルタイム');
 
       expect(sheet).not.toBeNull();
-      expect(sheet?.getLastRow()).toBeGreaterThanOrEqual(3); // ヘッダー + 2行
+      expect(sheet?.getLastRow()).toBeGreaterThanOrEqual(3); // ヘッダー + 2行（集計シート）
     });
 
     it('should handle multiple PR chain', () => {
@@ -217,10 +217,10 @@ describe('CodingTime / CycleTime Write', () => {
       const spreadsheet = mockContainer.spreadsheetClient.openById(
         mockContainer.spreadsheetId
       ) as MockSpreadsheet;
-      const sheet = spreadsheet.getSheetByName('owner/repo1/サイクルタイム');
+      const sheet = spreadsheet.getSheetByName('owner/repo1 - サイクルタイム');
 
       expect(sheet).not.toBeNull();
-      expect(sheet?.getLastRow()).toBe(2); // ヘッダー + 1行
+      expect(sheet?.getLastRow()).toBe(2); // ヘッダー + 1行（集計シート）
     });
 
     it('should group details by repository', () => {
@@ -268,14 +268,14 @@ describe('CodingTime / CycleTime Write', () => {
         mockContainer.spreadsheetId
       ) as MockSpreadsheet;
 
-      // repo1 に 2つ、repo2 に 1つ
-      const sheet1 = spreadsheet.getSheetByName('owner/repo1/サイクルタイム');
-      const sheet2 = spreadsheet.getSheetByName('owner/repo2/サイクルタイム');
+      // repo1 に 2つ、repo2 に 1つ（集計シート）
+      const sheet1 = spreadsheet.getSheetByName('owner/repo1 - サイクルタイム');
+      const sheet2 = spreadsheet.getSheetByName('owner/repo2 - サイクルタイム');
 
       expect(sheet1).not.toBeNull();
       expect(sheet2).not.toBeNull();
-      expect(sheet1?.getLastRow()).toBe(3); // ヘッダー + 2行
-      expect(sheet2?.getLastRow()).toBe(2); // ヘッダー + 1行
+      expect(sheet1?.getLastRow()).toBe(3); // ヘッダー + 2行（2つのIssueが異なる日付）
+      expect(sheet2?.getLastRow()).toBe(2); // ヘッダー + 1行（1つのIssue）
     });
   });
 
@@ -312,10 +312,10 @@ describe('CodingTime / CycleTime Write', () => {
 
       const result = writeCodingTimeToAllRepositorySheets(mockContainer.spreadsheetId, metrics);
 
-      // 2リポジトリに書き込み
+      // 2リポジトリに書き込み（集計シート1行 + 詳細シート1行 = 計2行）
       expect(result.size).toBe(2);
-      expect(result.get('owner/repo1')?.written).toBe(1);
-      expect(result.get('owner/repo2')?.written).toBe(1);
+      expect(result.get('owner/repo1')?.written).toBe(2);
+      expect(result.get('owner/repo2')?.written).toBe(2);
     });
   });
 
@@ -352,10 +352,10 @@ describe('CodingTime / CycleTime Write', () => {
 
       const result = writeCycleTimeToAllRepositorySheets(mockContainer.spreadsheetId, metrics);
 
-      // 2リポジトリに書き込み
+      // 2リポジトリに書き込み（集計シート1行 + 詳細シート1行 = 計2行）
       expect(result.size).toBe(2);
-      expect(result.get('owner/repo1')?.written).toBe(1);
-      expect(result.get('owner/repo2')?.written).toBe(1);
+      expect(result.get('owner/repo1')?.written).toBe(2);
+      expect(result.get('owner/repo2')?.written).toBe(2);
     });
   });
 });

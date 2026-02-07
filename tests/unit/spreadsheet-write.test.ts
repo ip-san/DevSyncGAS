@@ -247,8 +247,10 @@ describe('Spreadsheet Write Operations', () => {
       );
 
       expect(results.size).toBe(2); // 2リポジトリ
-      expect(results.get('owner/repo1')?.written).toBe(1);
-      expect(results.get('owner/repo2')?.written).toBe(2);
+      // repo1: 1 aggregate + 1 detail = 2
+      expect(results.get('owner/repo1')?.written).toBe(2);
+      // repo2: 2 aggregates + 2 details = 4
+      expect(results.get('owner/repo2')?.written).toBe(4);
     });
 
     it('should handle empty prDetails', () => {
