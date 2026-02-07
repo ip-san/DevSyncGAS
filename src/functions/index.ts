@@ -18,10 +18,8 @@ export { ensureContainerInitialized } from './helpers';
 // DORA指標同期
 export {
   syncDevOpsMetrics,
-  syncAllProjects,
   syncProject,
   syncHistoricalMetrics,
-  syncAllProjectsHistorical,
   // 日別バックフィル
   syncDailyBackfill,
   backfillAllProjectsDaily,

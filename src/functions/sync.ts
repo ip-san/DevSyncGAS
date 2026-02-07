@@ -123,67 +123,6 @@ export async function syncDevOpsMetrics(dateRange?: DateRange): Promise<void> {
  *
  * 各プロジェクトでリポジトリ別シート、Dashboard、Summaryを生成。
  */
-export async function syncAllProjects(dateRange?: DateRange): Promise<void> {
-  ensureContainerInitialized();
-  const config = getConfig();
-  const projects = config.projects ?? [];
-
-  if (projects.length === 0) {
-    Logger.log('⚠️ No projects configured. Using single spreadsheet mode.');
-    await syncDevOpsMetrics(dateRange);
-    return;
-  }
-
-  Logger.log(`📊 Syncing ${projects.length} project groups`);
-
-  const token = getGitHubToken();
-
-  for (const project of projects) {
-    Logger.log(`\n🔹 Project: ${project.name}`);
-    Logger.log(`   Spreadsheet: ${project.spreadsheetId}`);
-    Logger.log(`   Repositories: ${project.repositories.length}`);
-
-    if (project.repositories.length === 0) {
-      Logger.log(`   ⚠️ No repositories in this project, skipping`);
-      continue;
-    }
-
-    project.repositories.forEach((repo) => {
-      Logger.log(`     - ${repo.fullName}`);
-    });
-
-    const { pullRequests, workflowRuns, deployments } = fetchRepositoriesData(
-      project.repositories,
-      token,
-      { dateRange }
-    );
-
-    Logger.log(
-      `   📥 Fetched ${pullRequests.length} PRs, ${workflowRuns.length} workflow runs, ${deployments.length} deployments`
-    );
-
-    const metrics: DevOpsMetrics[] = project.repositories.map((repo) =>
-      calculateMetricsForRepository({
-        repository: repo.fullName,
-        prs: pullRequests,
-        runs: workflowRuns,
-        deployments,
-      })
-    );
-
-    // リポジトリ別シートに書き込み
-    writeMetricsToAllRepositorySheets(project.spreadsheetId, metrics, { skipDuplicates: true });
-
-    // Dashboard更新
-    await writeDashboard(project.spreadsheetId, metrics);
-    await writeDashboardTrends(project.spreadsheetId, metrics);
-
-    Logger.log(`   ✅ Synced metrics to ${metrics.length} repository sheets`);
-  }
-
-  Logger.log(`\n✅ All ${projects.length} projects synced`);
-}
-
 /**
  * 指定したプロジェクトのDevOps指標を収集
  *
@@ -251,21 +190,6 @@ export async function syncHistoricalMetrics(days: number): Promise<void> {
   Logger.log(`   To: ${until.toISOString()}`);
 
   await syncDevOpsMetrics({ since, until });
-}
-
-/**
- * 全プロジェクトの過去N日分のメトリクスを取得
- */
-export async function syncAllProjectsHistorical(days: number): Promise<void> {
-  const until = new Date();
-  const since = new Date();
-  since.setDate(since.getDate() - days);
-
-  Logger.log(`📅 Fetching metrics for the last ${days} days`);
-  Logger.log(`   From: ${since.toISOString()}`);
-  Logger.log(`   To: ${until.toISOString()}`);
-
-  await syncAllProjects({ since, until });
 }
 
 // =============================================================================
