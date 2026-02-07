@@ -18,13 +18,24 @@ DevSyncGASに関するよくある質問と回答をまとめたガイドです�
 
 ### Q: 複数のリポジトリを監視できますか？
 
-**A:** はい、`addRepo()` で複数のリポジトリを追加できます。
+**A:** はい、`src/init.ts` で複数のリポジトリを設定できます。
 
-```javascript
-addRepo('owner', 'repo1');
-addRepo('owner', 'repo2');
-addRepo('other-owner', 'repo3');
+```typescript
+// src/init.ts
+projects: [
+  {
+    name: 'My Project',
+    spreadsheet: { id: 'xxx' },
+    repositories: [
+      { owner: 'owner', name: 'repo1' },
+      { owner: 'owner', name: 'repo2' },
+      { owner: 'other-owner', name: 'repo3' },
+    ],
+  },
+],
 ```
+
+変更後は `bun run push` → `initConfig()` で反映してください。
 
 ---
 

@@ -28,12 +28,17 @@ DevSyncGASは以下のセキュリティ原則に基づいて設計されてい�
 - Private Key形式
 
 **例:**
-```javascript
-// ❌ 不正な入力は拒否される
-addRepo('../../../etc', 'passwd');  // Error: Invalid repository name
+```typescript
+// src/init.ts での設定
+// ❌ 不正な入力は拒否される（initConfig() 実行時にエラー）
+repositories: [
+  { owner: '../../../etc', name: 'passwd' },  // Error: Invalid repository name
+],
 
 // ✅ 正しい入力のみ受け入れる
-addRepo('your-org', 'your-repo');
+repositories: [
+  { owner: 'your-org', name: 'your-repo' },
+],
 ```
 
 **検証ルール:**

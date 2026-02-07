@@ -42,10 +42,8 @@ showCodingTimeConfig()           // コーディングタイム設定確認
 showLogLevel()                   // ログレベル確認
 showSlackConfig()                // Slack通知設定確認
 
-// リポジトリ・プロジェクト管理
+// リポジトリ・プロジェクト一覧（診断用）
 listRepos()                      // 登録リポジトリ一覧
-addRepo('owner', 'repo-name')    // リポジトリ追加
-removeRepo('owner/repo-name')    // リポジトリ削除
 listProjects()                   // プロジェクト一覧
 ```
 
@@ -71,7 +69,7 @@ syncDailyBackfill(30)            // 過去30日分をバックフィル
 initConfig()  // src/init.ts の設定を PropertiesService に保存
 ```
 
-> **📝 Note:** 細かい設定（API/ラベル/除外ブランチ/ログレベル等）は `src/init.ts` で設定 → `bun run push` → `initConfig()` で反映。詳細: [init.example.ts](src/init.example.ts)
+> **📝 Note:** プロジェクト・リポジトリ管理、細かい設定（API/ラベル/除外ブランチ/ログレベル等）は `src/init.ts` で設定 → `bun run push` → `initConfig()` で反映。詳細: [init.example.ts](src/init.example.ts)
 
 ### Slack通知
 ```javascript

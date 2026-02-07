@@ -24,15 +24,9 @@ import {
   syncAllMetricsFromScratch,
   // セットアップ・設定
   showAuthMode,
-  addRepo,
-  removeRepo,
   listRepos,
   createDailyTrigger,
-  createProject,
-  deleteProject,
   listProjects,
-  addRepoToProject,
-  removeRepoFromProject,
   checkConfig,
   testPermissions,
   // 主要な設定表示
@@ -96,17 +90,9 @@ global.checkConfig = checkConfig;
 global.testPermissions = testPermissions;
 global.showAuthMode = showAuthMode;
 
-// リポジトリ管理
-global.addRepo = addRepo;
-global.removeRepo = removeRepo;
+// リポジトリ・プロジェクト一覧（診断用）
 global.listRepos = listRepos;
-
-// プロジェクト管理
-global.createProject = createProject;
-global.deleteProject = deleteProject;
 global.listProjects = listProjects;
-global.addRepoToProject = addRepoToProject;
-global.removeRepoFromProject = removeRepoFromProject;
 
 // トリガー設定
 global.createDailyTrigger = createDailyTrigger;
