@@ -280,16 +280,33 @@ export function initializeFromConfig(config: InitConfig | LegacyInitConfig): voi
   // 旧形式の設定を新形式に変換
   const normalizedConfig = isLegacyConfig(config) ? convertLegacyConfig(config) : config;
 
-  Logger.log('🚀 Starting initialization...');
+  Logger.log('━'.repeat(60));
+  Logger.log('🚀 DevSyncGAS 初期設定を開始します...');
+  Logger.log('━'.repeat(60));
+  Logger.log('');
   Logger.log(
-    `🔐 Auth mode: ${normalizedConfig.auth.type === 'token' ? 'Personal Access Token' : 'GitHub App'}`
+    `🔐 認証方式: ${normalizedConfig.auth.type === 'token' ? 'Personal Access Token' : 'GitHub App'}`
   );
-  Logger.log(`📊 Projects count: ${normalizedConfig.projects.length}`);
+  Logger.log(`📊 プロジェクト数: ${normalizedConfig.projects.length}`);
+  Logger.log('');
 
   // 各プロジェクトを初期化
   for (const project of normalizedConfig.projects) {
     initializeProject(project, normalizedConfig.auth);
   }
 
-  Logger.log('\n✅ 初期設定完了');
+  Logger.log('');
+  Logger.log('━'.repeat(60));
+  Logger.log('✅ 初期設定完了！');
+  Logger.log('━'.repeat(60));
+  Logger.log('');
+  Logger.log('📋 次のステップ:');
+  Logger.log('  1. syncAllMetrics(30) を実行してデータを取得');
+  Logger.log('  2. スプレッドシートを開いて Dashboard シートを確認');
+  Logger.log('');
+  Logger.log('💡 困ったときは:');
+  Logger.log('  - checkConfig() で設定診断');
+  Logger.log('  - docs/TROUBLESHOOTING.md を参照');
+  Logger.log('');
+  Logger.log('━'.repeat(60));
 }
