@@ -1,6 +1,6 @@
 # デプロイ記録の設定ガイド
 
-**📌 このガイドは:** DORA 4指標の1つ「デプロイ頻度」を計測するための追加設定手順です。
+**📌 このガイドは:** DORA指標の1つ「デプロイ頻度」を計測するための追加設定手順です。
 
 **いつ読む？** [クイックスタートガイド](QUICK_START.md)完了後、デプロイ頻度を正確に計測したい場合。
 
@@ -15,7 +15,7 @@
 DevSyncGASでデプロイ頻度を計測するには、**GitHub上にデプロイ記録が必要**です。
 
 **現在の状態:**
-- ✅ リードタイム、変更障害率、MTTRは計測可能（PRベース）
+- ✅ リードタイム、変更障害率、MTTR、デプロイ再作業率は計測可能（PRベース）
 - ❌ デプロイ頻度は「yearly」と表示される（記録が存在しないため）
 
 **このガイドの対象者:**
@@ -60,6 +60,9 @@ on:
 jobs:
   record:
     runs-on: ubuntu-latest
+    permissions:
+      deployments: write
+      contents: read
     steps:
       - name: Record deployment to GitHub
         uses: chrnorm/deployment-action@v2
