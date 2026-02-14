@@ -5,3 +5,4 @@
  */
 
 export { debugCycleTimeForIssue } from './cycleTimeDebug';
+export { debugDeploymentFrequency } from './deploymentFrequencyDebug';

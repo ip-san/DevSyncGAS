@@ -177,7 +177,7 @@ auth: {
 プロジェクトの識別名です。ログ出力に使用されます。
 
 ```typescript
-name: 'JobAntenna v4'
+name: 'My Project'
 ```
 
 #### spreadsheet（必須）
@@ -197,8 +197,8 @@ spreadsheet: {
 
 ```typescript
 repositories: [
-  { owner: 'RyukyuInteractive', name: 'jobantenna-v4' },
-  { owner: 'RyukyuInteractive', name: 'another-repo' },
+  { owner: 'your-org', name: 'your-repo' },
+  { owner: 'your-org', name: 'another-repo' },
 ]
 ```
 
@@ -266,16 +266,16 @@ GASエディタで `initConfig` 関数を実行します。
 🔐 Auth mode: GitHub App
 📊 Projects count: 1
 
-📦 Initializing project: JobAntenna v4
+📦 Initializing project: My Project
 ✅ Configuration saved (GitHub App auth)
-✅ Added repository: RyukyuInteractive/jobantenna-v4
+✅ Added repository: your-org/your-repo
 ✅ PR size exclude branches: production, staging (partial match)
 ✅ Review efficiency exclude branches: production, staging (partial match)
 ✅ Cycle time exclude branches: production, staging (partial match)
 ✅ Coding time exclude branches: production, staging (partial match)
 ✅ Rework rate exclude branches: production, staging (partial match)
 ✅ Deploy workflow patterns: deploy (partial match)
-✅ Project "JobAntenna v4" initialized
+✅ Project "My Project" initialized
 
 ✅ 初期設定完了
 ```

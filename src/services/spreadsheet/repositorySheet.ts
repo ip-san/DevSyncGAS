@@ -15,8 +15,28 @@ import { REPOSITORY_NAME_MAX_LENGTH } from '../../config/apiConfig';
 /**
  * 文字列が有効なデプロイメント頻度かをチェックする型ガード
  */
-function isValidDeploymentFrequency(value: unknown): value is DevOpsMetrics['deploymentFrequency'] {
-  return value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'yearly';
+/**
+ * レガシー形式のデプロイ頻度（文字列）を数値に変換
+ * マイグレーション用のヘルパー関数
+ */
+function convertLegacyDeploymentFrequency(value: unknown): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+  // レガシー形式の変換（後方互換性）
+  if (value === 'daily') {
+    return 1.0;
+  }
+  if (value === 'weekly') {
+    return 1 / 7;
+  }
+  if (value === 'monthly') {
+    return 1 / 30;
+  }
+  if (value === 'yearly') {
+    return 1 / 365;
+  }
+  return 0;
 }
 
 /**
@@ -209,13 +229,11 @@ export function writeMetricsToAllRepositorySheets(
  * 行データをDevOpsMetricsにパース（リポジトリ別シート用）
  */
 function parseRepositoryMetricRow(row: unknown[], repository: string): DevOpsMetrics {
-  const frequency = isValidDeploymentFrequency(row[2]) ? row[2] : 'daily';
-
   return {
     date: String(row[0]),
     repository: repository,
     deploymentCount: Number(row[1]) || 0,
-    deploymentFrequency: frequency,
+    deploymentFrequency: convertLegacyDeploymentFrequency(row[2]),
     leadTimeForChangesHours: Number(row[3]) || 0,
     totalDeployments: Number(row[4]) || 0,
     failedDeployments: Number(row[5]) || 0,

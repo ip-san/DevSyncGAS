@@ -39,6 +39,11 @@ showAuthMode()                   // 認証方式確認（PAT/GitHub Apps）
 // リポジトリ・プロジェクト一覧
 listRepos()                      // 登録リポジトリ一覧
 listProjects()                   // プロジェクト一覧
+
+// 🔍 メトリクス診断ツール
+debugDeploymentFrequency('owner', 'repo')        // デプロイ頻度の診断（なぜyearlyになるのか等）
+debugDeploymentFrequency('owner', 'repo', 90)    // 過去90日間で診断
+debugCycleTimeForIssue('owner', 'repo', 123)     // Issue #123のサイクルタイム追跡診断
 ```
 
 ---

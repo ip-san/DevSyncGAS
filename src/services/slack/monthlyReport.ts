@@ -80,7 +80,7 @@ function calculateMonthlyAverages(metrics: DevOpsMetrics[]): MonthlyAverages {
   }
 
   const avgDeploymentFreq =
-    metrics.reduce((sum, m) => sum + parseFloat(m.deploymentFrequency), 0) / metrics.length;
+    metrics.reduce((sum, m) => sum + m.deploymentFrequency, 0) / metrics.length;
 
   const validLeadTimes = metrics
     .map((m) => m.leadTimeForChangesHours)

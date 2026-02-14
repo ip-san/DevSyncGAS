@@ -12,6 +12,7 @@
 | **GraphQL vs REST** | [ADR-0001](docs/adr/0001-graphql-api-default.md) | src/services/github/graphql/, rest/ |
 | **DORA指標計算** | [DORA_METRICS.md](docs/DORA_METRICS.md) | src/services/metrics/ |
 | **拡張指標計算** | [EXTENDED_METRICS.md](docs/EXTENDED_METRICS.md) | src/services/metrics/ |
+| **デプロイ記録設定** | [DEPLOYMENT_RECORDING.md](docs/DEPLOYMENT_RECORDING.md) | GitHub Actions, AWS CodeBuild |
 | **PRサイズ除外設定** | [PR_SIZE.md](docs/PR_SIZE.md) | src/config/metrics.ts, src/functions/extendedMetrics.ts |
 | **スプレッドシート操作** | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | src/services/spreadsheet/ |
 | **チャート生成** | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | src/services/spreadsheet/charts.ts |
@@ -20,6 +21,7 @@
 | **初期設定** | [SETUP.md](docs/SETUP.md) | src/init.ts |
 | **GitHub Apps認証** | [GITHUB_APPS_AUTH.md](docs/GITHUB_APPS_AUTH.md) | src/core/config.ts |
 | **Slack通知** | src/functions/slack.ts | 週次レポート、インシデント日次サマリー |
+| **診断ツール** | [CLAUDE_COMMANDS.md](CLAUDE_COMMANDS.md) | debugDeploymentFrequency(), debugCycleTimeForIssue() |
 | **トラブルシューティング** | [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | checkConfig() |
 
 ---

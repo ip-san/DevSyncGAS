@@ -29,7 +29,7 @@ function calculateOverallAverage(
 ): Omit<RepositoryLatestData, 'repository' | 'latestDate'> {
   if (repoDataList.length === 0) {
     return {
-      deploymentFrequency: 'N/A',
+      deploymentFrequency: 0,
       leadTimeHours: null,
       changeFailureRate: null,
       mttrHours: null,
@@ -49,7 +49,7 @@ function calculateOverallAverage(
   };
 
   return {
-    deploymentFrequency: '(平均)',
+    deploymentFrequency: avgOrNull(repoDataList.map((d) => d.deploymentFrequency)) ?? 0,
     leadTimeHours: avgOrNull(repoDataList.map((d) => d.leadTimeHours)),
     changeFailureRate: avgOrNull(repoDataList.map((d) => d.changeFailureRate)),
     mttrHours: avgOrNull(repoDataList.map((d) => d.mttrHours)),

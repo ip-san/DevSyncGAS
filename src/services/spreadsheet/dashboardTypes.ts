@@ -22,7 +22,8 @@ export interface WeeklyTrendData {
 export interface RepositoryLatestData {
   repository: string;
   latestDate: string; // 最新データ日付
-  deploymentFrequency: string;
+  /** デプロイ頻度（回/日） */
+  deploymentFrequency: number;
   leadTimeHours: number | null;
   changeFailureRate: number | null;
   mttrHours: number | null;

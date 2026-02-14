@@ -81,7 +81,7 @@ function calculateWeeklyAverages(metrics: DevOpsMetrics[]): WeeklyAverages {
   }
 
   const avgDeploymentFreq =
-    metrics.reduce((sum, m) => sum + parseFloat(m.deploymentFrequency), 0) / metrics.length;
+    metrics.reduce((sum, m) => sum + m.deploymentFrequency, 0) / metrics.length;
 
   const validLeadTimes = metrics
     .map((m) => m.leadTimeForChangesHours)

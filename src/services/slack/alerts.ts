@@ -132,7 +132,7 @@ function checkChangeFailureRate(metric: DevOpsMetrics): Alert | null {
  * デプロイ頻度のアラートを検出
  */
 function checkDeploymentFrequency(metric: DevOpsMetrics): Alert | null {
-  const deploymentFreq = parseFloat(metric.deploymentFrequency);
+  const deploymentFreq = metric.deploymentFrequency;
 
   if (deploymentFreq < 1.0) {
     return {
