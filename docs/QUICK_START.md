@@ -166,10 +166,10 @@ bun run push
 
 **なぜ:** 実際にGitHubからデータを取得して、スプレッドシートに書き込めることを確認します。
 
-GASエディタで `syncDevOpsMetrics` 関数を実行:
+GASエディタで `syncAllMetrics` 関数を実行:
 
 ```javascript
-syncDevOpsMetrics();
+syncAllMetrics(30);  // 過去30日分のデータを取得
 ```
 
 **実行中（30秒〜1分）...**
@@ -189,10 +189,16 @@ syncDevOpsMetrics();
 
 毎日自動でメトリクスを収集したい場合、トリガーを設定します:
 
+**方法1: GAS関数で設定（推奨）**
+```javascript
+createDailyTrigger();  // syncAllMetricsIncremental を毎日9時に実行
+```
+
+**方法2: 手動で設定**
 1. GASエディタ → 左サイドバー「トリガー」（時計アイコン）
 2. 「トリガーを追加」をクリック
 3. 以下を設定:
-   - 実行する関数: `syncDevOpsMetrics`
+   - 実行する関数: `syncAllMetricsIncremental`
    - イベントのソース: `時間主導型`
    - 時間ベースのトリガー: `日付ベースのタイマー`
    - 時刻: `午前9時〜10時`

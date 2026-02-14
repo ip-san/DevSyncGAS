@@ -5,8 +5,7 @@
  *
  * 構成:
  * - helpers.ts: 共通ヘルパー関数
- * - sync.ts: DORA指標同期関数
- * - extendedMetrics.ts: 拡張指標同期関数
+ * - extendedMetrics.ts: 全指標同期関数（DORA + 拡張指標）
  * - setup.ts: セットアップ・設定関数
  * - config.ts: 設定表示・変更関数
  * - migration.ts: マイグレーション関数
@@ -15,11 +14,12 @@
 // 共通ヘルパー
 export { ensureContainerInitialized } from './helpers';
 
-// DORA指標同期
-export { syncDevOpsMetrics } from './sync';
-
-// 拡張指標同期
-export { syncAllMetrics, syncAllMetricsFromScratch } from './extendedMetrics';
+// メトリクス同期（DORA + 拡張指標）
+export {
+  syncAllMetrics,
+  syncAllMetricsIncremental,
+  syncAllMetricsFromScratch,
+} from './extendedMetrics';
 
 // セットアップ・設定
 export {

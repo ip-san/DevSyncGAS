@@ -107,27 +107,38 @@ export function createDailyTrigger(): void {
   const { triggerClient, logger } = getContainer();
 
   try {
-    // 既存のトリガーを削除
+    // 既存のトリガーを削除（旧関数名も含む）
     const triggers = triggerClient.getProjectTriggers();
     for (const trigger of triggers) {
-      if (trigger.getHandlerFunction() === 'syncDevOpsMetrics') {
+      const funcName = trigger.getHandlerFunction();
+      if (funcName === 'syncAllMetricsIncremental' || funcName === 'syncDevOpsMetrics') {
         triggerClient.deleteTrigger(trigger);
       }
     }
 
-    // 毎日午前9時に実行
-    triggerClient.newTrigger('syncDevOpsMetrics').timeBased().everyDays(1).atHour(9).create();
+    // 毎日午前9時に実行（差分更新）
+    triggerClient
+      .newTrigger('syncAllMetricsIncremental')
+      .timeBased()
+      .everyDays(1)
+      .atHour(9)
+      .create();
 
     // 監査ログ
     auditLog('trigger.create', {
-      functionName: 'syncDevOpsMetrics',
+      functionName: 'syncAllMetricsIncremental',
       schedule: 'daily at 9:00 AM',
     });
 
-    logger.info('✅ Daily trigger created for 9:00 AM');
+    logger.info('✅ Daily trigger created for syncAllMetricsIncremental at 9:00 AM');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    auditLog('trigger.create', { functionName: 'syncDevOpsMetrics' }, 'failure', errorMessage);
+    auditLog(
+      'trigger.create',
+      { functionName: 'syncAllMetricsIncremental' },
+      'failure',
+      errorMessage
+    );
     throw error;
   }
 }
