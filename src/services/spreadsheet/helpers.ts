@@ -261,25 +261,32 @@ export function getExistingDates(sheet: Sheet): Set<string> {
 }
 
 /**
- * ヘッダーセルにコメント（Note）を追加する
+ * ヘッダーセルにコメント（Note）とリンクを追加する
  *
- * SheetSchemaのdescriptionフィールドを使用して、各列のヘッダーセルに
- * ホバー時に表示されるコメントを設定する。
+ * SheetSchemaのdescriptionとdocUrlフィールドを使用して、各列のヘッダーセルに
+ * ホバー時に表示されるコメントとクリック可能なリンクを設定する。
  *
  * @param sheet - 対象シート
- * @param schema - スキーマ定義（columns配列にdescriptionを含む）
+ * @param schema - スキーマ定義（columns配列にdescription/docUrlを含む）
  */
 export function addHeaderNotes(
   sheet: Sheet,
-  schema: { columns: Array<{ description?: string }> }
+  schema: { columns: Array<{ header: string; description?: string; docUrl?: string }> }
 ): void {
   const { columns } = schema;
 
   for (let i = 0; i < columns.length; i++) {
     const column = columns[i];
+    const headerCell = sheet.getRange(1, i + 1);
+
+    // descriptionがあればコメントを設定
     if (column.description) {
-      const headerCell = sheet.getRange(1, i + 1);
       headerCell.setNote(column.description);
+    }
+
+    // docUrlがあればリンク付きヘッダーを設定
+    if (column.docUrl) {
+      headerCell.setHeaderWithLink(column.header, column.docUrl);
     }
   }
 }

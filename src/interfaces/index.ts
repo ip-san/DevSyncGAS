@@ -79,6 +79,11 @@ export interface SheetRange {
   setFontSize(size: number): void;
   setWrap(wrap: boolean): void;
   setNote(note: string): void;
+  /**
+   * ヘッダーセルにリンク付きテキストを設定
+   * テキストの末尾に📖アイコンを追加し、そこにURLを設定
+   */
+  setHeaderWithLink(text: string, url: string): void;
 }
 
 export type BorderStyle = 'dotted' | 'dashed' | 'solid' | 'solid_medium' | 'solid_thick' | 'double';
