@@ -30,7 +30,7 @@ GitHub複数リポジトリ → DORA metrics収集 → Googleスプレッドシ�
 ```
 src/
 ├── functions/       # GAS公開関数（global.* でエクスポート）
-│   ├── index.ts     # syncDevOpsMetrics等
+│   ├── index.ts     # syncAllMetrics等のエクスポート
 │   ├── setup.ts     # initConfig等
 │   └── slack.ts     # Slack通知
 │

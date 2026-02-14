@@ -74,8 +74,7 @@ src/
 │   ├── settings.ts         # スクリプトプロパティ管理
 │   └── doraThresholds.ts   # DORAパフォーマンス閾値
 ├── functions/              # ビジネスロジック層
-│   ├── sync.ts             #   DORA指標同期
-│   ├── extendedMetrics.ts  #   拡張指標同期
+│   ├── extendedMetrics.ts  #   全指標同期（DORA + 拡張指標）
 │   ├── setup.ts            #   初期セットアップ
 │   ├── config.ts           #   設定管理
 │   ├── migration.ts        #   スキーママイグレーション
@@ -112,7 +111,7 @@ src/
 
 ## 🔄 データフロー
 
-### DORA指標同期（syncDevOpsMetrics）
+### 全指標同期（syncAllMetrics / syncAllMetricsIncremental）
 
 ```
 1. 設定読み込み
@@ -122,11 +121,15 @@ src/
    services/github/ → PR、デプロイメント、ワークフロー
 
 3. 指標計算
-   utils/metrics/dora.ts → Deployment Frequency, Lead Time, CFR, MTTR
+   - DORA指標: utils/metrics/dora.ts → Deployment Frequency, Lead Time, CFR, MTTR
+   - 拡張指標: Cycle Time, Coding Time, Rework Rate, Review Efficiency, PR Size
 
 4. スプレッドシート書き出し
    services/spreadsheet/repositorySheet.ts → リポジトリ別シート
    services/spreadsheet/dashboard.ts → Dashboard, Trend シート
+
+5. 同期日時の記録（syncAllMetricsIncremental のみ）
+   PropertiesService → 次回の差分更新に使用
 ```
 
 ### サイクルタイム計測
@@ -273,7 +276,7 @@ owner/repo-b | 2024-01-02 | 3  | weekly | ...
 
 ```typescript
 // DORA指標のみ同期（Dashboard自動生成）
-syncDevOpsMetrics();
+syncAllMetrics(30);
 
 // DORA + 拡張指標を全て同期（推奨、履歴データ含む）
 syncAllMetrics();       // デフォルト: 過去30日

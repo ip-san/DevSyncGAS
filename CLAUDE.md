@@ -36,8 +36,9 @@ bunx tsc --noEmit && bun run lint && bun test && bun run build  # 完了前チ�
 ```
 
 ```javascript
-checkConfig()             // 設定診断（困ったら最初に実行）
-syncDevOpsMetrics()       // メイン同期（Dashboard/チャート自動生成）
+checkConfig()                  // 設定診断（困ったら最初に実行）
+syncAllMetrics(30)             // 全指標同期（DORA+拡張、期間指定）
+syncAllMetricsIncremental()    // 差分更新（定期実行用）
 ```
 
 ## 🛠 利用可能なツール

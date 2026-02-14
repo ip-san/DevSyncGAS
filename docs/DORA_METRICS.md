@@ -353,10 +353,10 @@ Incident Issueが存在しない場合、デプロイメントの時系列を追
 
 ```javascript
 // DORA指標を同期（デフォルト: 過去30日）
-syncDevOpsMetrics();
+syncAllMetrics(30);
 
 // 過去90日間
-syncDevOpsMetrics(90);
+syncAllMetrics(90);
 
 // DORA + 拡張指標を全て同期（推奨）
 syncAllMetrics();       // デフォルト: 過去30日
@@ -465,7 +465,7 @@ resetIncidentLabelsConfig();
 // 1. GitHubでIssueを作成
 // 2. 設定したラベル（例: "incident"）を付与
 // 3. 復旧後にIssueをクローズ
-// → syncDevOpsMetrics() で自動的にMTTRが計算されます
+// → syncAllMetrics(30) で自動的にMTTRが計算されます
 ```
 
 推奨運用:

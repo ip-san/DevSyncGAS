@@ -51,11 +51,10 @@ debugCycleTimeForIssue('owner', 'repo', 123)     // Issue #123のサイクルタ
 ## 📊 GAS関数（データ同期）
 
 ```javascript
-// 🚀 一括同期（推奨）※引数で日数指定可能（デフォルト: 30日）
-syncAllMetrics()                 // 全指標を一括同期（DORA + 拡張指標全部、履歴データ含む）
-
-// DORA指標のみ同期（通常は syncAllMetrics を使用）
-syncDevOpsMetrics()              // DORA指標を同期（Dashboard/チャート自動生成）
+// 🚀 メトリクス同期
+syncAllMetrics(30)               // 全指標同期（DORA+拡張、過去30日分）
+syncAllMetricsIncremental()      // 差分更新（前回同期以降のデータのみ、定期実行用）
+syncAllMetricsFromScratch(30)    // 完全再構築（既存シートをクリアして再同期）
 ```
 
 ---

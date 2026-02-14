@@ -14,10 +14,9 @@
  * - トリガーから呼ばれる関数は公開が必須
  */
 import {
-  // DORA指標同期
-  syncDevOpsMetrics,
-  // 拡張指標同期
+  // メトリクス同期（DORA + 拡張指標）
   syncAllMetrics,
+  syncAllMetricsIncremental,
   // 診断・設定
   showAuthMode,
   listRepos,
@@ -58,8 +57,8 @@ import './init';
 // データ同期（トリガーから実行される）
 // =============================================================================
 
-global.syncDevOpsMetrics = syncDevOpsMetrics;
 global.syncAllMetrics = syncAllMetrics;
+global.syncAllMetricsIncremental = syncAllMetricsIncremental;
 
 // =============================================================================
 // 診断・確認

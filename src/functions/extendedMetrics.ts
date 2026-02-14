@@ -368,6 +368,7 @@ function syncPRSize(days = 30): void {
  * @param days - 過去何日分のデータを取得するか（デフォルト: 30日）
  */
 export async function syncAllMetrics(days = 30): Promise<void> {
+  ensureContainerInitialized();
   Logger.log(`🚀 Starting full metrics sync (past ${days} days)`);
   Logger.log(`   This will sync all DORA + Extended metrics`);
   Logger.log(`   📝 Mode: Incremental (skips duplicates)`);
@@ -375,12 +376,41 @@ export async function syncAllMetrics(days = 30): Promise<void> {
   const startTime = Date.now();
 
   try {
-    // DORA指標同期（Dashboard含む）
+    // DORA指標同期
     Logger.log(`\n📊 [1/6] Syncing DORA metrics...`);
-    const { syncDevOpsMetrics } = await import('./sync');
+    const config = getConfig();
+    const token = getGitHubToken();
     const since = new Date();
     since.setDate(since.getDate() - days);
-    await syncDevOpsMetrics({ since });
+
+    // GitHubデータ取得
+    const { getAllRepositoriesDataGraphQL } = await import('../services/github');
+    const { pullRequests, workflowRuns, deployments } = getAllRepositoriesDataGraphQL(
+      config.github.repositories,
+      token,
+      { dateRange: { since } }
+    );
+
+    Logger.log(
+      `   📥 Fetched ${pullRequests.length} PRs, ${workflowRuns.length} workflow runs, ${deployments.length} deployments`
+    );
+
+    // DORA指標計算
+    const { calculateMetricsForRepository } = await import('../utils/metrics');
+    const doraMetrics = config.github.repositories.map((repo) =>
+      calculateMetricsForRepository({
+        repository: repo.fullName,
+        prs: pullRequests,
+        runs: workflowRuns,
+        deployments,
+      })
+    );
+
+    // リポジトリ別シートに書き込み
+    const { writeMetricsToAllRepositorySheets } = await import('../services/spreadsheet');
+    writeMetricsToAllRepositorySheets(config.spreadsheet.id, doraMetrics, { skipDuplicates: true });
+
+    Logger.log(`   ✅ Synced ${doraMetrics.length} DORA metrics`);
 
     // サイクルタイム同期
     Logger.log(`\n⏱️  [2/6] Syncing Cycle Time...`);
@@ -404,7 +434,6 @@ export async function syncAllMetrics(days = 30): Promise<void> {
 
     // ダッシュボードを再更新（拡張指標を反映）
     Logger.log(`\n📊 [7/7] Updating Dashboard with extended metrics...`);
-    const config = getConfig();
     const { writeDashboard, readMetricsFromAllRepositorySheets } =
       await import('../services/spreadsheet');
     const repositories = config.github.repositories.map((repo) => repo.fullName);
@@ -500,6 +529,74 @@ export async function syncAllMetricsFromScratch(days = 30): Promise<void> {
     Logger.log(`   All repository sheets recreated from scratch!`);
   } catch (error) {
     Logger.log(`\n❌ Failed to rebuild metrics: ${String(error)}`);
+    throw error;
+  }
+}
+
+// =============================================================================
+// 差分同期（定期実行用）
+// =============================================================================
+
+/** PropertiesServiceのキー: 最終同期日時 */
+const LAST_SYNC_TIMESTAMP_KEY = 'lastMetricsSyncTimestamp';
+
+/** デフォルトの初回同期日数 */
+const DEFAULT_INITIAL_SYNC_DAYS = 30;
+
+/**
+ * 前回同期以降の差分データを自動取得して更新（定期実行用）
+ *
+ * PropertiesServiceで最終同期日時を管理:
+ * - 初回実行: 過去30日分を取得
+ * - 2回目以降: 前回同期日時以降のデータのみ取得
+ * - APIレート制限を大幅に節約
+ *
+ * **推奨用途:**
+ * - 定期実行トリガー（毎日・毎時）
+ * - 差分更新でAPIコールを最小化
+ *
+ * **手動実行の場合:**
+ * - 期間指定したい場合: `syncAllMetrics(days)` を使用
+ * - 完全再構築したい場合: `syncAllMetricsFromScratch(days)` を使用
+ */
+export async function syncAllMetricsIncremental(): Promise<void> {
+  ensureContainerInitialized();
+
+  const properties = PropertiesService.getScriptProperties();
+  const now = new Date();
+  const lastSyncTimestamp = properties.getProperty(LAST_SYNC_TIMESTAMP_KEY);
+
+  let days: number;
+  let syncMode: string;
+
+  if (!lastSyncTimestamp) {
+    // 初回実行: 過去30日分を取得
+    days = DEFAULT_INITIAL_SYNC_DAYS;
+    syncMode = 'Initial sync';
+    Logger.log(`🔄 ${syncMode} (past ${days} days)`);
+  } else {
+    // 2回目以降: 前回同期日時以降のデータを取得
+    const lastSync = new Date(lastSyncTimestamp);
+    const diffMs = now.getTime() - lastSync.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    // 最低1日、最大90日（異常値対策）
+    days = Math.max(1, Math.min(diffDays + 1, 90));
+    syncMode = 'Incremental sync';
+    Logger.log(`🔄 ${syncMode}`);
+    Logger.log(`   Last sync: ${lastSync.toISOString()}`);
+    Logger.log(`   Days to fetch: ${days} (${diffDays} days since last sync)`);
+  }
+
+  try {
+    // 全メトリクスを同期
+    await syncAllMetrics(days);
+
+    // 同期日時を更新
+    properties.setProperty(LAST_SYNC_TIMESTAMP_KEY, now.toISOString());
+    Logger.log(`\n📝 Updated last sync timestamp: ${now.toISOString()}`);
+  } catch (error) {
+    Logger.log(`\n❌ Incremental sync failed: ${String(error)}`);
     throw error;
   }
 }

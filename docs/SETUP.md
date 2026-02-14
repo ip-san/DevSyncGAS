@@ -146,7 +146,7 @@ DevSyncGASが正常に動作するには、以下の権限を**すべて許可**
 
 #### 認証ダイアログの流れ
 
-1. GASエディタで関数を実行（例: `syncDevOpsMetrics`）
+1. GASエディタで関数を実行（例: `syncAllMetricsIncremental`）
 2. 「認証が必要です」ダイアログが表示される
 3. 「権限を確認」をクリック
 4. Googleアカウントを選択

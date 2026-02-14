@@ -568,7 +568,7 @@ showAuthMode();  // => "🔐 Current auth mode: GitHub App"
 ### 問題: 「デプロイメントが取得できない」
 
 **症状:**
-- `syncDevOpsMetrics()` でデプロイメント数が0
+- `syncAllMetrics(30)` でデプロイメント数が0
 
 **原因:**
 - 環境名が一致しない（デフォルトは "production"）
