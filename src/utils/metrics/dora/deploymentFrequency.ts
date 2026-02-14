@@ -3,7 +3,6 @@
  */
 
 import type { GitHubDeployment, GitHubWorkflowRun, DevOpsMetrics } from '../../../types';
-import { getFrequencyCategory } from '../../../config/doraThresholds';
 import { getDeployWorkflowPatterns } from '../../../config/metrics';
 
 // =============================================================================
@@ -13,13 +12,13 @@ import { getDeployWorkflowPatterns } from '../../../config/metrics';
 /**
  * DORA Metrics: Deployment Frequency
  *
- * 定義: 本番環境へのデプロイ頻度
+ * 定義: 本番環境へのデプロイ頻度（回/日）
  *
- * 分類基準 (DORA):
- * - Elite: 1日1回以上 (daily)
- * - High: 週1回以上 (weekly)
- * - Medium: 月1回以上 (monthly)
- * - Low: 月1回未満 (yearly)
+ * DORA分類の参考基準:
+ * - Elite: 1回/日以上
+ * - High: 0.14回/日以上（週1回以上）
+ * - Medium: 0.03回/日以上（月1回以上）
+ * - Low: 0.03回/日未満
  */
 export function calculateDeploymentFrequency(
   deployments: GitHubDeployment[],
@@ -44,8 +43,8 @@ export function calculateDeploymentFrequency(
     }).length;
   }
 
-  const avgPerDay = count / periodDays;
-  const frequency = getFrequencyCategory(avgPerDay);
+  // デプロイ頻度: 1日あたりのデプロイ回数
+  const frequency = count / periodDays;
 
   return { count, frequency };
 }

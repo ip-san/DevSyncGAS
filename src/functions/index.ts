@@ -83,3 +83,6 @@ export {
 
 // ログレベル設定
 export { showLogLevel, configureLogLevel } from './logLevel';
+
+// 診断ツール
+export { debugCycleTimeForIssue, debugDeploymentFrequency } from './diagnostics';

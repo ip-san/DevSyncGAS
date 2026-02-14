@@ -24,6 +24,9 @@ import {
   listProjects,
   checkConfig,
   testPermissions,
+  // 診断ツール
+  debugCycleTimeForIssue,
+  debugDeploymentFrequency,
 } from './functions';
 import {
   // Slack週次レポート
@@ -67,6 +70,10 @@ global.testPermissions = testPermissions;
 global.showAuthMode = showAuthMode;
 global.listRepos = listRepos;
 global.listProjects = listProjects;
+
+// 診断ツール
+global.debugCycleTimeForIssue = debugCycleTimeForIssue;
+global.debugDeploymentFrequency = debugDeploymentFrequency;
 
 // =============================================================================
 // Slack通知（トリガーから実行される）

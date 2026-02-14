@@ -35,7 +35,7 @@ ESLintの `max-lines-per-function` ルール（上限50行）に違反する関�
    - 同じコードが2回以上出現している
    - 類似パターンが複数箇所にある
 
-   例: [PR #113](https://github.com/ip-san/dev-sync-gas/pull/113) - ページネーション結果構築ロジック
+   例: PR #113 - ページネーション結果構築ロジック
    ```typescript
    // Before: paginateAPI と paginateAndReduce で重複
    // After: buildPaginationResponse, buildReduceResponse に抽出
@@ -45,7 +45,7 @@ ESLintの `max-lines-per-function` ルール（上限50行）に違反する関�
    - 関数内で異なる責務が混在している
    - 「〜して、その後〜する」という2段階処理
 
-   例: [PR #115](https://github.com/ip-san/dev-sync-gas/pull/115) - マイグレーション結果構築
+   例: PR #115 - マイグレーション結果構築
    ```typescript
    // Before: updateSheetHeadersOnly内で4パターンの結果オブジェクト構築
    // After: 各パターンを専用のbuilder関数に抽出
@@ -55,12 +55,12 @@ ESLintの `max-lines-per-function` ルール（上限50行）に違反する関�
    - if/else の各ブロックが10行以上
    - switch の各caseが複雑
 
-   例: [PR #107](https://github.com/ip-san/dev-sync-gas/pull/107) - バッチ処理の条件分岐
+   例: PR #107 - バッチ処理の条件分岐
 
 4. **データ変換のステップが複数**
    - 入力 → 中間形式 → 最終形式 のような多段変換
 
-   例: [PR #114](https://github.com/ip-san/dev-sync-gas/pull/114) - 集計データから行データへの変換
+   例: PR #114 - 集計データから行データへの変換
 
 #### 分割すべきでないケース
 
@@ -207,9 +207,9 @@ $ bun run lint | grep "max-lines-per-function"
 - レビューが容易な粒度を維持
 
 **実例:**
-- [PR #107](https://github.com/ip-san/dev-sync-gas/pull/107): 1ファイル、3警告解消
-- [PR #108](https://github.com/ip-san/dev-sync-gas/pull/108): 1ファイル、3警告解消
-- [PR #113](https://github.com/ip-san/dev-sync-gas/pull/113): 1ファイル、2警告解消
+- PR #107: 1ファイル、3警告解消
+- PR #108: 1ファイル、3警告解消
+- PR #113: 1ファイル、2警告解消
 
 **例外:**
 - 最終PR（#115）は1警告のみだが、複雑度が高いため単独で実施

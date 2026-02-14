@@ -33,7 +33,7 @@ describe('Slack Alerts', () => {
         {
           repository: 'owner/repo1',
           date: '2024-01-15',
-          deploymentFrequency: '5.0', // Good
+          deploymentFrequency: 5.0, // Good
           leadTimeForChangesHours: 10.0, // Good
           changeFailureRate: 3.0, // Good
           meanTimeToRecoveryHours: 1.0,
@@ -56,7 +56,7 @@ describe('Slack Alerts', () => {
         {
           repository: 'owner/repo1',
           date: '2024-01-15',
-          deploymentFrequency: '2.0',
+          deploymentFrequency: 2.0,
           leadTimeForChangesHours: 400.0, // Critical (> 336 = 168*2)
           changeFailureRate: 5.0,
           meanTimeToRecoveryHours: 2.0,
@@ -84,7 +84,7 @@ describe('Slack Alerts', () => {
         {
           repository: 'owner/repo1',
           date: '2024-01-15',
-          deploymentFrequency: '2.0',
+          deploymentFrequency: 2.0,
           leadTimeForChangesHours: 200.0, // Warning (> 168)
           changeFailureRate: 5.0,
           meanTimeToRecoveryHours: 2.0,
@@ -110,7 +110,7 @@ describe('Slack Alerts', () => {
         {
           repository: 'owner/repo1',
           date: '2024-01-15',
-          deploymentFrequency: '2.0',
+          deploymentFrequency: 2.0,
           leadTimeForChangesHours: 24.0,
           changeFailureRate: 25.0, // Critical (> 22.5 = 15*1.5)
           meanTimeToRecoveryHours: 2.0,
@@ -136,7 +136,7 @@ describe('Slack Alerts', () => {
         {
           repository: 'owner/repo1',
           date: '2024-01-15',
-          deploymentFrequency: '0.7', // Warning (< 1.0)
+          deploymentFrequency: 0.7, // Warning (< 1.0)
           leadTimeForChangesHours: 24.0,
           changeFailureRate: 5.0,
           meanTimeToRecoveryHours: 2.0,
@@ -162,7 +162,7 @@ describe('Slack Alerts', () => {
         {
           repository: 'owner/repo1',
           date: '2024-01-15',
-          deploymentFrequency: '0.3', // Critical (< 0.5)
+          deploymentFrequency: 0.3, // Critical (< 0.5)
           leadTimeForChangesHours: 24.0,
           changeFailureRate: 5.0,
           meanTimeToRecoveryHours: 2.0,
@@ -188,7 +188,7 @@ describe('Slack Alerts', () => {
         {
           repository: 'owner/repo1',
           date: '2024-01-15',
-          deploymentFrequency: '0.3', // Critical
+          deploymentFrequency: 0.3, // Critical
           leadTimeForChangesHours: 400.0, // Critical (> 336)
           changeFailureRate: 25.0, // Critical (> 22.5)
           meanTimeToRecoveryHours: 2.0,
@@ -212,7 +212,7 @@ describe('Slack Alerts', () => {
         {
           repository: 'owner/repo1',
           date: '2024-01-15',
-          deploymentFrequency: '0.3',
+          deploymentFrequency: 0.3,
           leadTimeForChangesHours: 200.0,
           changeFailureRate: 5.0,
           meanTimeToRecoveryHours: 2.0,
@@ -227,7 +227,7 @@ describe('Slack Alerts', () => {
         {
           repository: 'owner/repo2',
           date: '2024-01-15',
-          deploymentFrequency: '2.0',
+          deploymentFrequency: 2.0,
           leadTimeForChangesHours: 24.0,
           changeFailureRate: 20.0, // Warning (> 15)
           meanTimeToRecoveryHours: 2.0,

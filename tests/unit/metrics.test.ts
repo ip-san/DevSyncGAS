@@ -250,11 +250,11 @@ describe('calculateLeadTimeDetailed', () => {
 });
 
 describe('calculateDeploymentFrequency', () => {
-  it('デプロイがない場合はyearlyを返す', () => {
+  it('デプロイがない場合は0を返す', () => {
     const result = calculateDeploymentFrequency([], [], 30);
 
     expect(result.count).toBe(0);
-    expect(result.frequency).toBe('yearly');
+    expect(result.frequency).toBe(0);
   });
 
   it('GitHub Deploymentsを優先して使用する', () => {
@@ -272,7 +272,7 @@ describe('calculateDeploymentFrequency', () => {
 
     const result = calculateDeploymentFrequency(deployments, runs, 30);
     expect(result.count).toBe(30);
-    expect(result.frequency).toBe('daily');
+    expect(result.frequency).toBe(1); // 30回 / 30日 = 1回/日
   });
 
   it('デプロイメントがない場合はワークフローにフォールバック', () => {
@@ -288,7 +288,7 @@ describe('calculateDeploymentFrequency', () => {
 
     const result = calculateDeploymentFrequency([], runs, 30);
     expect(result.count).toBe(5);
-    expect(result.frequency).toBe('weekly');
+    expect(result.frequency).toBeCloseTo(0.167, 2); // 5回 / 30日 ≈ 0.167回/日
   });
 
   it('デプロイメントがある場合はワークフローを使用しない', () => {

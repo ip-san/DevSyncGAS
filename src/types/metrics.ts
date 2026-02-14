@@ -294,7 +294,8 @@ export interface DevOpsMetrics {
   date: string;
   repository: string;
   deploymentCount: number;
-  deploymentFrequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  /** デプロイ頻度（回/日） */
+  deploymentFrequency: number;
   leadTimeForChangesHours: number;
   /**
    * Lead Time測定の内訳
