@@ -68,16 +68,35 @@ interface DailyReviewAggregate {
 }
 
 /**
- * PR詳細をマージ日ごとにグループ化して集計
+ * 数値配列の平均値を計算
  */
-function aggregateReviewByDate(
-  details: ReviewEfficiencyMetrics['prDetails']
-): DailyReviewAggregate[] {
-  if (details.length === 0) {
-    return [];
+function calculateAverage(values: number[]): number {
+  if (values.length === 0) {
+    return 0;
   }
+  return values.reduce((acc, val) => acc + val, 0) / values.length;
+}
 
-  // 日付ごとにグループ化
+/**
+ * 数値配列の中央値を計算
+ */
+function calculateMedian(sortedValues: number[]): number {
+  if (sortedValues.length === 0) {
+    return 0;
+  }
+  const mid = Math.floor(sortedValues.length / 2);
+  if (sortedValues.length % 2 === 0) {
+    return (sortedValues[mid - 1] + sortedValues[mid]) / 2;
+  }
+  return sortedValues[mid];
+}
+
+/**
+ * PR詳細を日付ごとにグループ化
+ */
+function groupByMergeDate(
+  details: ReviewEfficiencyMetrics['prDetails']
+): Map<string, ReviewEfficiencyMetrics['prDetails']> {
   const grouped = new Map<string, ReviewEfficiencyMetrics['prDetails']>();
   for (const detail of details) {
     if (!detail.mergedAt) {
@@ -88,9 +107,22 @@ function aggregateReviewByDate(
     existing.push(detail);
     grouped.set(date, existing);
   }
+  return grouped;
+}
 
-  // 各日付の統計値を計算
+/**
+ * PR詳細をマージ日ごとにグループ化して集計
+ */
+function aggregateReviewByDate(
+  details: ReviewEfficiencyMetrics['prDetails']
+): DailyReviewAggregate[] {
+  if (details.length === 0) {
+    return [];
+  }
+
+  const grouped = groupByMergeDate(details);
   const aggregates: DailyReviewAggregate[] = [];
+
   for (const [date, prs] of grouped) {
     const timeToFirstReviews = prs
       .map((pr) => pr.timeToFirstReviewHours)
@@ -101,39 +133,13 @@ function aggregateReviewByDate(
       .filter((t): t is number => t !== null)
       .sort((a, b) => a - b);
 
-    const avgTimeToFirstReview =
-      timeToFirstReviews.length > 0
-        ? timeToFirstReviews.reduce((acc, val) => acc + val, 0) / timeToFirstReviews.length
-        : 0;
-    const medianTimeToFirstReview =
-      timeToFirstReviews.length > 0
-        ? timeToFirstReviews.length % 2 === 0
-          ? (timeToFirstReviews[timeToFirstReviews.length / 2 - 1] +
-              timeToFirstReviews[timeToFirstReviews.length / 2]) /
-            2
-          : timeToFirstReviews[Math.floor(timeToFirstReviews.length / 2)]
-        : 0;
-
-    const avgReviewDuration =
-      reviewDurations.length > 0
-        ? reviewDurations.reduce((acc, val) => acc + val, 0) / reviewDurations.length
-        : 0;
-    const medianReviewDuration =
-      reviewDurations.length > 0
-        ? reviewDurations.length % 2 === 0
-          ? (reviewDurations[reviewDurations.length / 2 - 1] +
-              reviewDurations[reviewDurations.length / 2]) /
-            2
-          : reviewDurations[Math.floor(reviewDurations.length / 2)]
-        : 0;
-
     aggregates.push({
       date,
       prCount: prs.length,
-      avgTimeToFirstReview,
-      medianTimeToFirstReview,
-      avgReviewDuration,
-      medianReviewDuration,
+      avgTimeToFirstReview: calculateAverage(timeToFirstReviews),
+      medianTimeToFirstReview: calculateMedian(timeToFirstReviews),
+      avgReviewDuration: calculateAverage(reviewDurations),
+      medianReviewDuration: calculateMedian(reviewDurations),
     });
   }
 
