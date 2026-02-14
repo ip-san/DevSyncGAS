@@ -84,5 +84,8 @@ export {
 // ログレベル設定
 export { showLogLevel, configureLogLevel } from './logLevel';
 
+// Slack設定
+export { configureSlackWebhook, removeSlackWebhook, showSlackConfig } from './slackConfig';
+
 // 診断ツール
 export { debugCycleTimeForIssue, debugDeploymentFrequency } from './diagnostics';
