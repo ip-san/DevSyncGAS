@@ -44,9 +44,7 @@ projects: [
 **A:** はい、各関数に日数を指定できます。
 
 ```javascript
-syncHistoricalMetrics(90);  // 過去90日のDORA指標
-syncCycleTime(60);           // 過去60日のサイクルタイム
-syncReworkRate(90);          // 過去90日の手戻り率
+syncAllMetrics(90);  // 過去90日のDORA指標 + 拡張指標（サイクルタイム、手戻り率等）
 ```
 
 ---

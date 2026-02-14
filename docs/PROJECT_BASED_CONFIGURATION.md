@@ -357,7 +357,8 @@ bunx tsc --noEmit
 
 - [CLAUDE_COMMANDS.md](../CLAUDE_COMMANDS.md) - コマンドリファレンス
 - [QUICK_START.md](./QUICK_START.md) - クイックスタートガイド
-- [AUTHENTICATION.md](./AUTHENTICATION.md) - 認証設定の詳細
+- [GITHUB_APPS_AUTH.md](./GITHUB_APPS_AUTH.md) - GitHub Apps認証設定
+- [SETUP.md](./SETUP.md) - セットアップガイド（認証設定を含む）
 
 ---
 
