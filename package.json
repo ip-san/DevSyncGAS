@@ -21,7 +21,9 @@
     "check:unused": "ts-prune",
     "check:types": "type-coverage --at-least 95",
     "check:doc": "bun run scripts/check-doc-size.ts",
-    "check:all": "bun run lint && bun run check:circular && bun run check:unused && bun run check:types && bunx tsc --noEmit"
+    "check:all": "bun run lint && bun run check:circular && bun run check:unused && bun run check:types && bunx tsc --noEmit",
+    "setup": "bun run scripts/setup.ts",
+    "check:env": "bun run scripts/check-env.ts"
   },
   "devDependencies": {
     "@google/clasp": "^2.4.2",

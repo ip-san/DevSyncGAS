@@ -369,15 +369,22 @@ function syncPRSize(days = 30): void {
  */
 export async function syncAllMetrics(days = 30): Promise<void> {
   ensureContainerInitialized();
-  Logger.log(`🚀 Starting full metrics sync (past ${days} days)`);
-  Logger.log(`   This will sync all DORA + Extended metrics`);
-  Logger.log(`   📝 Mode: Incremental (skips duplicates)`);
+
+  Logger.log('━'.repeat(60));
+  Logger.log('📊 DevSyncGAS データ取得を開始します');
+  Logger.log('━'.repeat(60));
+  Logger.log('');
+  Logger.log(`📅 対象期間: 過去 ${days} 日`);
+  Logger.log(`📝 モード: 差分更新（重複をスキップ）`);
+  Logger.log('');
+  Logger.log('⏳ データ取得中です... (30秒〜1分ほどかかります)');
+  Logger.log('');
 
   const startTime = Date.now();
 
   try {
     // DORA指標同期
-    Logger.log(`\n📊 [1/6] Syncing DORA metrics...`);
+    Logger.log(`📊 [1/7] DORA指標を取得中...`);
     const config = getConfig();
     const token = getGitHubToken();
     const since = new Date();
@@ -392,7 +399,7 @@ export async function syncAllMetrics(days = 30): Promise<void> {
     );
 
     Logger.log(
-      `   📥 Fetched ${pullRequests.length} PRs, ${workflowRuns.length} workflow runs, ${deployments.length} deployments`
+      `   📥 ${pullRequests.length} PRs, ${workflowRuns.length} Workflow実行, ${deployments.length} デプロイメントを取得`
     );
 
     // DORA指標計算
@@ -410,30 +417,30 @@ export async function syncAllMetrics(days = 30): Promise<void> {
     const { writeMetricsToAllRepositorySheets } = await import('../services/spreadsheet');
     writeMetricsToAllRepositorySheets(config.spreadsheet.id, doraMetrics, { skipDuplicates: true });
 
-    Logger.log(`   ✅ Synced ${doraMetrics.length} DORA metrics`);
+    Logger.log(`   ✅ ${doraMetrics.length}リポジトリの DORA指標を同期完了`);
 
     // サイクルタイム同期
-    Logger.log(`\n⏱️  [2/6] Syncing Cycle Time...`);
+    Logger.log(`\n⏱️  [2/7] サイクルタイムを取得中...`);
     syncCycleTime(days);
 
     // コーディング時間同期
-    Logger.log(`\n⌨️  [3/6] Syncing Coding Time...`);
+    Logger.log(`\n⌨️  [3/7] コーディング時間を取得中...`);
     syncCodingTime(days);
 
     // 手戻り率同期
-    Logger.log(`\n🔄 [4/6] Syncing Rework Rate...`);
+    Logger.log(`\n🔄 [4/7] 手戻り率を取得中...`);
     syncReworkRate(days);
 
     // レビュー効率同期
-    Logger.log(`\n👀 [5/6] Syncing Review Efficiency...`);
+    Logger.log(`\n👀 [5/7] レビュー効率を取得中...`);
     syncReviewEfficiency(days);
 
     // PRサイズ同期
-    Logger.log(`\n📏 [6/6] Syncing PR Size...`);
+    Logger.log(`\n📏 [6/7] PRサイズを取得中...`);
     syncPRSize(days);
 
     // ダッシュボードを再更新（拡張指標を反映）
-    Logger.log(`\n📊 [7/7] Updating Dashboard with extended metrics...`);
+    Logger.log(`\n📊 [7/7] ダッシュボードを更新中...`);
     const { writeDashboard, readMetricsFromAllRepositorySheets } =
       await import('../services/spreadsheet');
     const repositories = config.github.repositories.map((repo) => repo.fullName);
@@ -441,10 +448,37 @@ export async function syncAllMetrics(days = 30): Promise<void> {
     await writeDashboard(config.spreadsheet.id, metrics);
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    Logger.log(`\n✅ All metrics synced successfully in ${elapsed}s`);
-    Logger.log(`   Check your spreadsheet for updated data!`);
+
+    Logger.log('');
+    Logger.log('━'.repeat(60));
+    Logger.log(`✅ すべてのデータ取得が完了しました！ (${elapsed}秒)`);
+    Logger.log('━'.repeat(60));
+    Logger.log('');
+    Logger.log('📋 次のステップ:');
+    Logger.log('  1. スプレッドシートを開く');
+    Logger.log('  2. "Dashboard" シートで全体指標を確認');
+    Logger.log('  3. "Dashboard - Trend" シートで週次トレンドを確認');
+    Logger.log('  4. リポジトリ別シートで詳細データを確認');
+    Logger.log('');
+    Logger.log('💡 ヒント:');
+    Logger.log('  - 日次自動実行: createDailyTrigger() を実行');
+    Logger.log('  - 設定確認: checkConfig() を実行');
+    Logger.log('');
+    Logger.log('━'.repeat(60));
   } catch (error) {
-    Logger.log(`\n❌ Failed to sync metrics: ${String(error)}`);
+    Logger.log('');
+    Logger.log('━'.repeat(60));
+    Logger.log(`❌ データ取得中にエラーが発生しました`);
+    Logger.log('━'.repeat(60));
+    Logger.log('');
+    Logger.log(`エラー内容: ${String(error)}`);
+    Logger.log('');
+    Logger.log('💡 トラブルシューティング:');
+    Logger.log('  1. checkConfig() で設定を確認');
+    Logger.log('  2. docs/TROUBLESHOOTING.md を参照');
+    Logger.log('  3. GitHub APIレート制限を確認');
+    Logger.log('');
+    Logger.log('━'.repeat(60));
     throw error;
   }
 }

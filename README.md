@@ -162,18 +162,48 @@ Fixes #123
 
 ## 🚀 始める
 
-### ⚡ 最速セットアップ（5分）
+### ⚡ 自動セットアップ（10分・推奨）
 
-**この手順で計測できる指標:** リードタイム、変更障害率、MTTR、手戻り率、レビュー効率、PRサイズ（PRベース）
+**対話的なスクリプトが全自動でセットアップします！**
 
 ```bash
-# 1. インストール
+# 1. プロジェクトを準備
+git clone https://github.com/your-org/dev-sync-gas.git
+cd dev-sync-gas
+bun install
+
+# 2. 環境診断（オプション）
+bun run check:env
+
+# 3. 自動セットアップを実行
+bun run setup
+```
+
+スクリプトが以下を自動実行します：
+- ✅ 前提条件チェック
+- ✅ GitHub Token入力
+- ✅ Spreadsheet ID入力
+- ✅ 設定ファイル自動生成
+- ✅ GASプロジェクト作成・デプロイ
+
+スクリプト完了後、GASエディタで `initConfig()` と `syncAllMetrics()` を実行するだけ！
+
+詳しい手順は [クイックスタートガイド](docs/QUICK_START.md) を参照してください。
+
+---
+
+### 🔧 手動セットアップ（15分）
+
+自分で設定ファイルを編集したい場合：
+
+```bash
+# 1. プロジェクトを準備
 git clone https://github.com/your-org/dev-sync-gas.git
 cd dev-sync-gas
 bun install
 
 # 2. 設定ファイルを作成
-cp src/init.example.ts src/init.ts
+cp src/init.simple.example.ts src/init.ts
 # src/init.ts を編集して認証情報とリポジトリを設定
 
 # 3. GASにデプロイ
@@ -182,8 +212,10 @@ bunx clasp create --title "DevSyncGAS" --type standalone --rootDir ./dist
 bun run push
 
 # 4. GASエディタで初期設定
-# initConfig() を実行
+# initConfig() と syncAllMetrics() を実行
 ```
+
+**📌 計測できる指標:** リードタイム、変更障害率、MTTR、手戻り率、レビュー効率、PRサイズ（PRベース）
 
 詳しい手順は [クイックスタートガイド](docs/QUICK_START.md) を参照してください。
 
@@ -205,9 +237,10 @@ bun run push
 ## ドキュメント
 
 ### セットアップ
-- [クイックスタート](docs/QUICK_START.md) - 5分で始める
-- [セットアップガイド](docs/SETUP.md) - チーム運用・初期設定
+- [クイックスタート](docs/QUICK_START.md) - 10分で始める（自動セットアップ）
+- [セットアップガイド](docs/SETUP.md) - チーム運用・詳細設定
 - [トラブルシューティング](docs/TROUBLESHOOTING.md) - エラー解決方法
+- [セットアップチェックリスト](docs/SETUP_CHECKLIST.md) - 印刷用チェックリスト
 
 ### 計測する指標
 - [DORA指標の詳細](docs/DORA_METRICS.md) - 4つの指標の定義とGitHubデータでの計算方法
@@ -222,11 +255,19 @@ bun run push
 ## 開発者向け
 
 ```bash
+# セットアップ
+bun run setup       # 対話的セットアップ
+bun run check:env   # 環境診断
+
+# ビルド・デプロイ
 bun run build       # ビルド
 bun run push        # ビルド＆GASにデプロイ
+
+# テスト・品質チェック
 bun test            # テスト実行
 bun run lint        # Lintチェック
-bun run check:all   # 全品質チェック
+bun run check:all   # 全品質チェック（コード）
+bun run check:doc   # ドキュメントサイズチェック
 ```
 
 詳細は [CLAUDE.md](CLAUDE.md) を参照してください。
