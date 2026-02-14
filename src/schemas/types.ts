@@ -20,6 +20,10 @@ export interface ColumnDefinition {
   defaultValue?: unknown;
   /** 数値フォーマット（GASのsetNumberFormat用） */
   numberFormat?: string;
+  /** ヘッダーセルのコメント説明（ホバー時に表示） */
+  description?: string;
+  /** 詳細ドキュメントのURL */
+  docUrl?: string;
 }
 
 /**

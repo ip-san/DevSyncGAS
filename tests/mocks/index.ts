@@ -88,6 +88,7 @@ export class MockSheetRange implements SheetRange {
   private verticalAlignment: string = '';
   private fontSize: number = 10;
   private wrap: boolean = false;
+  private note: string = '';
 
   constructor(initialValues: unknown[][] = []) {
     this.values = initialValues;
@@ -157,7 +158,14 @@ export class MockSheetRange implements SheetRange {
     this.wrap = wrap;
   }
 
+  setNote(note: string): void {
+    this.note = note;
+  }
+
   // Test helpers
+  getNote(): string {
+    return this.note;
+  }
   getFontWeight(): string {
     return this.fontWeight;
   }

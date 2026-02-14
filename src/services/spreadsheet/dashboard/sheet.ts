@@ -14,6 +14,7 @@ import {
   styleHeaderRow,
   applyDataBorders,
   styleSummaryRow,
+  addHeaderNotes,
 } from '../helpers';
 import { DASHBOARD_SCHEMA, getHeadersFromSchema } from '../../../schemas';
 import { extractLatestMetricsByRepository, enrichWithExtendedMetrics } from './metrics';
@@ -169,6 +170,9 @@ function initializeDashboardSheet(spreadsheet: Spreadsheet): Sheet {
   // ヘッダー設定
   sheet.getRange(1, 1, 1, DASHBOARD_HEADERS.length).setValues([DASHBOARD_HEADERS]);
   styleHeaderRow(sheet, DASHBOARD_HEADERS.length);
+
+  // ヘッダーセルにコメント追加
+  addHeaderNotes(sheet, DASHBOARD_SCHEMA);
 
   return sheet;
 }
