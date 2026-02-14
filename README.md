@@ -114,7 +114,13 @@ GitHub  ──→  Google Apps Script  ──→  Google スプレッドシー�
 - **週次レポート** - 毎週月曜9時に先週との比較レポート
 - **インシデント日次サマリー** - 毎日18時にその日のインシデント状況
 
-詳細は [CLAUDE.md - Slack通知設定](CLAUDE.md#slack通知設定) を参照してください。
+**設定方法:**
+1. SlackでIncoming Webhook URLを取得
+2. GASエディタで以下を実行:
+   ```javascript
+   configureSlackWebhook('https://hooks.slack.com/services/YOUR/WEBHOOK/URL');
+   ```
+3. トリガー設定: GASエディタの「トリガー」メニューから `sendWeeklyReport` や `sendIncidentDailySummary` の定期実行を設定
 
 ## 📋 計測に必要な運用
 
