@@ -78,6 +78,7 @@ export interface SheetRange {
   setVerticalAlignment(alignment: 'top' | 'middle' | 'bottom'): void;
   setFontSize(size: number): void;
   setWrap(wrap: boolean): void;
+  setNote(note: string): void;
 }
 
 export type BorderStyle = 'dotted' | 'dashed' | 'solid' | 'solid_medium' | 'solid_thick' | 'double';

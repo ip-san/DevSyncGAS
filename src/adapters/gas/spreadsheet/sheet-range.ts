@@ -77,4 +77,8 @@ export class GasSheetRange implements SheetRange {
   setWrap(wrap: boolean): void {
     this.range.setWrap(wrap);
   }
+
+  setNote(note: string): void {
+    this.range.setNote(note);
+  }
 }

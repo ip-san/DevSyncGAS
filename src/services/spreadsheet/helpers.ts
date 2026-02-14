@@ -259,3 +259,27 @@ export function getExistingDates(sheet: Sheet): Set<string> {
 
   return dates;
 }
+
+/**
+ * ヘッダーセルにコメント（Note）を追加する
+ *
+ * SheetSchemaのdescriptionフィールドを使用して、各列のヘッダーセルに
+ * ホバー時に表示されるコメントを設定する。
+ *
+ * @param sheet - 対象シート
+ * @param schema - スキーマ定義（columns配列にdescriptionを含む）
+ */
+export function addHeaderNotes(
+  sheet: Sheet,
+  schema: { columns: Array<{ description?: string }> }
+): void {
+  const { columns } = schema;
+
+  for (let i = 0; i < columns.length; i++) {
+    const column = columns[i];
+    if (column.description) {
+      const headerCell = sheet.getRange(1, i + 1);
+      headerCell.setNote(column.description);
+    }
+  }
+}
