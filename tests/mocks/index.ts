@@ -162,6 +162,14 @@ export class MockSheetRange implements SheetRange {
     this.note = note;
   }
 
+  setHeaderWithLink(text: string, url: string): void {
+    // モックでは単純にテキストと📖を結合して保存
+    const fullText = `${text} 📖`;
+    this.setValue(fullText);
+    // URLは内部的に保持（テスト用）
+    this.note = `Link: ${url}`;
+  }
+
   // Test helpers
   getNote(): string {
     return this.note;

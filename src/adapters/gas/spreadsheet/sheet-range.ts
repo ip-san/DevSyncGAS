@@ -81,4 +81,17 @@ export class GasSheetRange implements SheetRange {
   setNote(note: string): void {
     this.range.setNote(note);
   }
+
+  setHeaderWithLink(text: string, url: string): void {
+    const fullText = `${text} 📖`;
+    const linkStart = text.length + 1; // ' 📖'の📖の開始位置
+    const linkEnd = fullText.length;
+
+    const richText = SpreadsheetApp.newRichTextValue()
+      .setText(fullText)
+      .setLinkUrl(linkStart, linkEnd, url)
+      .build();
+
+    this.range.setRichTextValue(richText);
+  }
 }
