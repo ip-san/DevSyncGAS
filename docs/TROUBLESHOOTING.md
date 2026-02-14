@@ -599,11 +599,8 @@ testPermissions();
 各指標の取得関数を少ない日数で実行して、接続を確認できます：
 
 ```javascript
-// GitHub接続テスト（DORA指標）
-syncHistoricalMetrics(7);  // 過去7日分で軽くテスト
-
-// サイクルタイム接続テスト（GitHub Issue/PR）
-syncCycleTime(7);  // 過去7日分で軽くテスト
+// GitHub接続テスト（DORA指標 + 拡張指標）
+syncAllMetrics(7);  // 過去7日分で軽くテスト
 
 // リポジトリ一覧確認
 listRepos();

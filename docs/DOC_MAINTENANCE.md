@@ -57,7 +57,7 @@ docs/*.md（詳細情報・仕様）
 ## データフロー
 GitHub API → データ取得 → メトリクス計算 → スプレッドシート出力
 
-**詳細**: [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+**詳細**: [ARCHITECTURE.md](./ARCHITECTURE.md)
 ```
 
 ---

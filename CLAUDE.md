@@ -22,7 +22,7 @@ GitHub複数リポジトリ → DORA metrics収集 → Googleスプレッドシ�
 - セキュリティ脆弱性に注意（XSS/SQLi/Command Injection）
 
 **ドキュメント原則:**
-- CLAUDE_*.mdは670行以下に維持（現在: 606行）
+- CLAUDE_*.mdは670行以下に維持（現在: 574行）
 - 詳細情報はdocs/に委譲（頻出情報のみCLAUDE_*.mdに記載）
 - 追加前チェック: `bun run check:doc`（詳細: [DOC_MAINTENANCE.md](docs/DOC_MAINTENANCE.md)）
 
@@ -57,7 +57,7 @@ syncAllMetricsIncremental()    // 差分更新（定期実行用）
 - **[CLAUDE_TASKS.md](CLAUDE_TASKS.md)** - タスク別フロー（新機能実装、バグ修正、指標追加、PR作成前等）
 - **[CLAUDE_NAV.md](CLAUDE_NAV.md)** - キーワード検索、ファイルパス逆引き、ドキュメント索引
 - **[CLAUDE_ARCH.md](CLAUDE_ARCH.md)** - アーキテクチャ概要、ディレクトリ構造、設計思想
-- **[docs/](docs/)** - 各機能の詳細仕様（20個のドキュメント）
+- **[docs/](docs/)** - 各機能の詳細仕様（31個のドキュメント）
 
 ## 🎯 重要事項
 

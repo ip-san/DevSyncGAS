@@ -10,17 +10,17 @@
 |-----------|-------------|------------|
 | **GitHub API実装** | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | src/services/github/ |
 | **GraphQL vs REST** | [ADR-0001](docs/adr/0001-graphql-api-default.md) | src/services/github/graphql/, rest/ |
-| **DORA指標計算** | [DORA_METRICS.md](docs/DORA_METRICS.md) | src/services/metrics/ |
-| **拡張指標計算** | [EXTENDED_METRICS.md](docs/EXTENDED_METRICS.md) | src/services/metrics/ |
+| **DORA指標計算** | [DORA_METRICS.md](docs/DORA_METRICS.md) | src/utils/metrics/dora/ |
+| **拡張指標計算** | [EXTENDED_METRICS.md](docs/EXTENDED_METRICS.md) | src/utils/metrics/ |
 | **デプロイ記録設定** | [DEPLOYMENT_RECORDING.md](docs/DEPLOYMENT_RECORDING.md) | GitHub Actions, AWS CodeBuild |
 | **PRサイズ除外設定** | [PR_SIZE.md](docs/PR_SIZE.md) | src/config/metrics.ts, src/functions/extendedMetrics.ts |
 | **スプレッドシート操作** | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | src/services/spreadsheet/ |
 | **チャート生成** | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | src/services/spreadsheet/charts.ts |
-| **DIコンテナ** | [ADR-0002](docs/adr/0002-di-container-for-gas-abstraction.md) | src/core/container.ts |
+| **DIコンテナ** | [ADR-0002](docs/adr/0002-di-container-for-gas-abstraction.md) | src/container.ts |
 | **エラーハンドリング** | src/utils/errors.ts | ErrorCode 1000-9000番台 |
 | **初期設定** | [SETUP.md](docs/SETUP.md) | src/init.ts |
-| **GitHub Apps認証** | [GITHUB_APPS_AUTH.md](docs/GITHUB_APPS_AUTH.md) | src/core/config.ts |
-| **Slack通知** | src/functions/slack.ts | 週次レポート、インシデント日次サマリー |
+| **GitHub Apps認証** | [GITHUB_APPS_AUTH.md](docs/GITHUB_APPS_AUTH.md) | src/config/ |
+| **Slack通知** | src/functions/ | slackWeekly.ts, slackMonthly.ts, slackIncidents.ts, slackAlerts.ts |
 | **診断ツール** | [CLAUDE_COMMANDS.md](CLAUDE_COMMANDS.md) | debugDeploymentFrequency(), debugCycleTimeForIssue() |
 | **トラブルシューティング** | [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | checkConfig() |
 
@@ -32,12 +32,12 @@
 |---------------------|-----------------|------|
 | `src/functions/` | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | GAS公開関数（global.*でエクスポート） |
 | `src/services/github/` | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | GitHub API実装（GraphQL/REST） |
-| `src/services/metrics/` | [DORA_METRICS.md](docs/DORA_METRICS.md) | DORA + 拡張指標計算ロジック |
+| `src/utils/metrics/` | [DORA_METRICS.md](docs/DORA_METRICS.md) | DORA + 拡張指標計算ロジック |
 | `src/services/spreadsheet/` | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | スプレッドシート操作、シート生成、チャート |
-| `src/core/container.ts` | [ADR-0002](docs/adr/0002-di-container-for-gas-abstraction.md) | DIコンテナ、依存性注入 |
-| `src/core/config.ts` | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 設定管理、Secret Manager |
+| `src/container.ts` | [ADR-0002](docs/adr/0002-di-container-for-gas-abstraction.md) | DIコンテナ、依存性注入 |
+| `src/config/` | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 設定管理（複数ファイル） |
 | `src/utils/errors.ts` | src/utils/errors.ts | カスタムエラークラス、ErrorCode |
-| `src/utils/logger.ts` | [LOGGING_GUIDELINES.md](docs/LOGGING_GUIDELINES.md) | ログ管理、ログレベル制御 |
+| `src/utils/logLevel.ts` | [LOGGING_GUIDELINES.md](docs/LOGGING_GUIDELINES.md) | ログレベル制御 |
 | `src/init.ts` | [SETUP.md](docs/SETUP.md) | 初期設定ファイル |
 
 ---
