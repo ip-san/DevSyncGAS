@@ -22,6 +22,49 @@
 
 ## 📐 全体像
 
+### システムアーキテクチャ（Mermaid図）
+
+```mermaid
+graph TB
+    subgraph GAS["Google Apps Script"]
+        Main["main.ts<br/>(グローバル関数)"]
+        Functions["functions/<br/>(ビジネスロジック)"]
+
+        subgraph Services["services/"]
+            GitHub["github/<br/>(REST/GraphQL)"]
+            SS["spreadsheet/<br/>(シート操作)"]
+            Migration["migration.ts<br/>(スキーマ管理)"]
+        end
+
+        Container["container.ts<br/>(DIコンテナ)"]
+        Adapters["adapters/gas/<br/>(GAS API抽象化)"]
+
+        Main --> Functions
+        Functions --> Services
+        Services --> Container
+        Container --> Adapters
+    end
+
+    Adapters -->|"UrlFetchApp.fetch"| GitHubAPI["GitHub API<br/>(REST/GraphQL)"]
+    Adapters -->|"SpreadsheetApp"| Sheet["Google スプレッドシート"]
+
+    style Main fill:#4285f4,color:#fff
+    style Functions fill:#34a853,color:#fff
+    style Container fill:#fbbc04,color:#000
+    style Adapters fill:#ea4335,color:#fff
+    style GitHubAPI fill:#24292e,color:#fff
+    style Sheet fill:#0f9d58,color:#fff
+```
+
+**レイヤー構成:**
+1. **main.ts** - GAS公開関数（`global.*` でエクスポート）
+2. **functions/** - ビジネスロジック（機能単位）
+3. **services/** - 外部システム連携（GitHub、スプレッドシート）
+4. **container.ts** - 依存性注入（DI）
+5. **adapters/gas/** - GAS固有API実装（テスト時はモック可能）
+
+### 詳細図（ASCII）
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        Google Apps Script                           │
@@ -112,6 +155,44 @@ src/
 ## 🔄 データフロー
 
 ### 全指標同期（syncAllMetrics / syncAllMetricsIncremental）
+
+```mermaid
+sequenceDiagram
+    participant User as GASエディタ
+    participant Main as syncAllMetrics()
+    participant Config as config/settings
+    participant GitHub as GitHub API
+    participant Calc as metrics計算
+    participant Sheet as Spreadsheet
+
+    User->>Main: syncAllMetrics(30) 実行
+    Main->>Config: リポジトリ一覧取得
+    Config-->>Main: repos: [repo1, repo2, ...]
+
+    loop 各リポジトリ
+        Main->>GitHub: PR一覧取得 (過去30日)
+        GitHub-->>Main: PRs
+        Main->>GitHub: デプロイ記録取得
+        GitHub-->>Main: Deployments
+        Main->>GitHub: ワークフロー実行取得
+        GitHub-->>Main: Workflows
+
+        Main->>Calc: DORA指標計算
+        Calc-->>Main: Deployment Freq, Lead Time, CFR, MTTR
+        Main->>Calc: 拡張指標計算
+        Calc-->>Main: Cycle Time, Rework Rate, etc.
+
+        Main->>Sheet: リポジトリ別シートに書き込み
+        Sheet-->>Main: 完了
+    end
+
+    Main->>Sheet: Dashboard/Trendシート更新
+    Sheet-->>Main: 完了
+    Main->>Config: 最終同期日時を記録
+    Main-->>User: 同期完了
+```
+
+**処理ステップ（テキスト版）:**
 
 ```
 1. 設定読み込み
