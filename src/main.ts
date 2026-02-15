@@ -17,12 +17,17 @@ import {
   // メトリクス同期（DORA + 拡張指標）
   syncAllMetrics,
   syncAllMetricsIncremental,
+  syncAllMetricsFromScratch,
   // 診断・設定
   showAuthMode,
   listRepos,
   listProjects,
   checkConfig,
   testPermissions,
+  // Slack設定
+  configureSlackWebhook,
+  removeSlackWebhook,
+  showSlackConfig,
   // 診断ツール
   debugCycleTimeForIssue,
   debugDeploymentFrequency,
@@ -59,6 +64,7 @@ import './init';
 
 global.syncAllMetrics = syncAllMetrics;
 global.syncAllMetricsIncremental = syncAllMetricsIncremental;
+global.syncAllMetricsFromScratch = syncAllMetricsFromScratch;
 
 // =============================================================================
 // 診断・確認
@@ -82,3 +88,11 @@ global.sendWeeklyReport = sendWeeklyReport;
 global.checkAndSendAlerts = checkAndSendAlerts;
 global.sendMonthlyReport = sendMonthlyReport;
 global.sendIncidentDailySummary = sendIncidentDailySummary;
+
+// =============================================================================
+// Slack設定
+// =============================================================================
+
+global.configureSlackWebhook = configureSlackWebhook;
+global.removeSlackWebhook = removeSlackWebhook;
+global.showSlackConfig = showSlackConfig;
