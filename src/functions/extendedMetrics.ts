@@ -355,6 +355,130 @@ function syncPRSize(days = 30): void {
 // =============================================================================
 
 /**
+ * DORA指標を同期
+ *
+ * @param days - 過去何日分のデータを取得するか
+ */
+async function syncDORAMetrics(days: number): Promise<void> {
+  Logger.log(`📊 [1/7] DORA指標を取得中...`);
+  const config = getConfig();
+  const token = getGitHubToken();
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  // GitHubデータ取得
+  const { getAllRepositoriesDataGraphQL } = await import('../services/github');
+  const { pullRequests, workflowRuns, deployments } = getAllRepositoriesDataGraphQL(
+    config.github.repositories,
+    token,
+    { dateRange: { since } }
+  );
+
+  Logger.log(
+    `   📥 ${pullRequests.length} PRs, ${workflowRuns.length} Workflow実行, ${deployments.length} デプロイメントを取得`
+  );
+
+  // DORA指標計算
+  const { calculateMetricsForRepository } = await import('../utils/metrics');
+  const doraMetrics = config.github.repositories.map((repo) =>
+    calculateMetricsForRepository({
+      repository: repo.fullName,
+      prs: pullRequests,
+      runs: workflowRuns,
+      deployments,
+    })
+  );
+
+  // リポジトリ別シートに書き込み
+  const { writeMetricsToAllRepositorySheets } = await import('../services/spreadsheet');
+  writeMetricsToAllRepositorySheets(config.spreadsheet.id, doraMetrics, { skipDuplicates: true });
+
+  Logger.log(`   ✅ ${doraMetrics.length}リポジトリの DORA指標を同期完了`);
+}
+
+/**
+ * 拡張指標（サイクルタイム、コーディング時間、手戻り率、レビュー効率、PRサイズ）を同期
+ *
+ * @param days - 過去何日分のデータを取得するか
+ */
+function syncAllExtendedMetrics(days: number): void {
+  Logger.log(`\n⏱️  [2/7] サイクルタイムを取得中...`);
+  syncCycleTime(days);
+
+  Logger.log(`\n⌨️  [3/7] コーディング時間を取得中...`);
+  syncCodingTime(days);
+
+  Logger.log(`\n🔄 [4/7] 手戻り率を取得中...`);
+  syncReworkRate(days);
+
+  Logger.log(`\n👀 [5/7] レビュー効率を取得中...`);
+  syncReviewEfficiency(days);
+
+  Logger.log(`\n📏 [6/7] PRサイズを取得中...`);
+  syncPRSize(days);
+}
+
+/**
+ * ダッシュボードを更新
+ */
+async function updateDashboard(): Promise<void> {
+  Logger.log(`\n📊 [7/7] ダッシュボードを更新中...`);
+  const config = getConfig();
+  const { writeDashboard, readMetricsFromAllRepositorySheets } =
+    await import('../services/spreadsheet');
+  const repositories = config.github.repositories.map((repo) => repo.fullName);
+  const metrics = readMetricsFromAllRepositorySheets(config.spreadsheet.id, repositories);
+  await writeDashboard(config.spreadsheet.id, metrics);
+}
+
+/**
+ * 同期完了ログを出力
+ *
+ * @param startTime - 開始時刻（ミリ秒）
+ */
+function logSyncSuccess(startTime: number): void {
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+  Logger.log('');
+  Logger.log('━'.repeat(60));
+  Logger.log(`✅ すべてのデータ取得が完了しました！ (${elapsed}秒)`);
+  Logger.log('━'.repeat(60));
+  Logger.log('');
+  Logger.log('📋 次のステップ:');
+  Logger.log('  1. スプレッドシートを開く');
+  Logger.log('  2. "Dashboard" シートで全体指標を確認');
+  Logger.log('  3. "Dashboard - Trend" シートで週次トレンドを確認');
+  Logger.log('  4. リポジトリ別シートで詳細データを確認');
+  Logger.log('');
+  Logger.log('💡 ヒント:');
+  Logger.log('  - 日次自動実行: scheduleDailyMetricsSync() を実行');
+  Logger.log('  - 設定確認: checkConfig() を実行');
+  Logger.log('');
+  Logger.log('━'.repeat(60));
+}
+
+/**
+ * 同期エラーログを出力
+ *
+ * @param error - エラーオブジェクト
+ */
+function logSyncError(error: unknown): void {
+  Logger.log('');
+  Logger.log('━'.repeat(60));
+  Logger.log(`❌ データ取得中にエラーが発生しました`);
+  Logger.log('━'.repeat(60));
+  Logger.log('');
+  Logger.log(`エラー内容: ${String(error)}`);
+  Logger.log('');
+  Logger.log('💡 トラブルシューティング:');
+  Logger.log('  1. checkConfig() で設定を確認');
+  Logger.log('  2. docs/TROUBLESHOOTING.md を参照');
+  Logger.log('  3. GitHub APIレート制限を確認');
+  Logger.log('');
+  Logger.log('━'.repeat(60));
+}
+
+/**
  * 全指標（DORA + 拡張指標）を一括同期
  *
  * GASエディタで一発で全シート生成できる便利関数。
@@ -383,102 +507,12 @@ export async function syncAllMetrics(days = 30): Promise<void> {
   const startTime = Date.now();
 
   try {
-    // DORA指標同期
-    Logger.log(`📊 [1/7] DORA指標を取得中...`);
-    const config = getConfig();
-    const token = getGitHubToken();
-    const since = new Date();
-    since.setDate(since.getDate() - days);
-
-    // GitHubデータ取得
-    const { getAllRepositoriesDataGraphQL } = await import('../services/github');
-    const { pullRequests, workflowRuns, deployments } = getAllRepositoriesDataGraphQL(
-      config.github.repositories,
-      token,
-      { dateRange: { since } }
-    );
-
-    Logger.log(
-      `   📥 ${pullRequests.length} PRs, ${workflowRuns.length} Workflow実行, ${deployments.length} デプロイメントを取得`
-    );
-
-    // DORA指標計算
-    const { calculateMetricsForRepository } = await import('../utils/metrics');
-    const doraMetrics = config.github.repositories.map((repo) =>
-      calculateMetricsForRepository({
-        repository: repo.fullName,
-        prs: pullRequests,
-        runs: workflowRuns,
-        deployments,
-      })
-    );
-
-    // リポジトリ別シートに書き込み
-    const { writeMetricsToAllRepositorySheets } = await import('../services/spreadsheet');
-    writeMetricsToAllRepositorySheets(config.spreadsheet.id, doraMetrics, { skipDuplicates: true });
-
-    Logger.log(`   ✅ ${doraMetrics.length}リポジトリの DORA指標を同期完了`);
-
-    // サイクルタイム同期
-    Logger.log(`\n⏱️  [2/7] サイクルタイムを取得中...`);
-    syncCycleTime(days);
-
-    // コーディング時間同期
-    Logger.log(`\n⌨️  [3/7] コーディング時間を取得中...`);
-    syncCodingTime(days);
-
-    // 手戻り率同期
-    Logger.log(`\n🔄 [4/7] 手戻り率を取得中...`);
-    syncReworkRate(days);
-
-    // レビュー効率同期
-    Logger.log(`\n👀 [5/7] レビュー効率を取得中...`);
-    syncReviewEfficiency(days);
-
-    // PRサイズ同期
-    Logger.log(`\n📏 [6/7] PRサイズを取得中...`);
-    syncPRSize(days);
-
-    // ダッシュボードを再更新（拡張指標を反映）
-    Logger.log(`\n📊 [7/7] ダッシュボードを更新中...`);
-    const { writeDashboard, readMetricsFromAllRepositorySheets } =
-      await import('../services/spreadsheet');
-    const repositories = config.github.repositories.map((repo) => repo.fullName);
-    const metrics = readMetricsFromAllRepositorySheets(config.spreadsheet.id, repositories);
-    await writeDashboard(config.spreadsheet.id, metrics);
-
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-
-    Logger.log('');
-    Logger.log('━'.repeat(60));
-    Logger.log(`✅ すべてのデータ取得が完了しました！ (${elapsed}秒)`);
-    Logger.log('━'.repeat(60));
-    Logger.log('');
-    Logger.log('📋 次のステップ:');
-    Logger.log('  1. スプレッドシートを開く');
-    Logger.log('  2. "Dashboard" シートで全体指標を確認');
-    Logger.log('  3. "Dashboard - Trend" シートで週次トレンドを確認');
-    Logger.log('  4. リポジトリ別シートで詳細データを確認');
-    Logger.log('');
-    Logger.log('💡 ヒント:');
-    Logger.log('  - 日次自動実行: scheduleDailyMetricsSync() を実行');
-    Logger.log('  - 設定確認: checkConfig() を実行');
-    Logger.log('');
-    Logger.log('━'.repeat(60));
+    await syncDORAMetrics(days);
+    syncAllExtendedMetrics(days);
+    await updateDashboard();
+    logSyncSuccess(startTime);
   } catch (error) {
-    Logger.log('');
-    Logger.log('━'.repeat(60));
-    Logger.log(`❌ データ取得中にエラーが発生しました`);
-    Logger.log('━'.repeat(60));
-    Logger.log('');
-    Logger.log(`エラー内容: ${String(error)}`);
-    Logger.log('');
-    Logger.log('💡 トラブルシューティング:');
-    Logger.log('  1. checkConfig() で設定を確認');
-    Logger.log('  2. docs/TROUBLESHOOTING.md を参照');
-    Logger.log('  3. GitHub APIレート制限を確認');
-    Logger.log('');
-    Logger.log('━'.repeat(60));
+    logSyncError(error);
     throw error;
   }
 }
