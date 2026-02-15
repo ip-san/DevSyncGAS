@@ -6,7 +6,6 @@
 import { getContainer } from '../container';
 import { DISPLAY_KEYS } from './propertyKeys';
 import { SHEET_NAMES as DEFAULT_SHEET_NAMES } from './apiConfig';
-import { auditLog } from '../utils/auditLog';
 
 /**
  * シート名設定の型
@@ -64,8 +63,6 @@ export function setSheetNames(config: Partial<SheetNamesConfig>): void {
   const merged = { ...current, ...config };
 
   storageClient.setProperty(DISPLAY_KEYS.SHEET_NAMES, JSON.stringify(merged));
-
-  auditLog('display.sheet_names.update', { config });
 }
 
 /**
@@ -91,6 +88,4 @@ export function setAuditLogSheetName(name: string): void {
   }
 
   storageClient.setProperty(DISPLAY_KEYS.AUDIT_LOG_SHEET_NAME, name);
-
-  auditLog('display.audit_log_sheet_name.update', { name });
 }
