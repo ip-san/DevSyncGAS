@@ -22,14 +22,19 @@ DevSyncGASは、プロジェクトごとに設定をグループ化する**プ�
 
 ```typescript
 export const config = {
-  auth: { ... },        // 認証設定（全プロジェクト共通）
-  projects: [           // プロジェクト一覧
+  auth: { ... },                 // 認証設定（全プロジェクト共通）
+  sheetNames: { ... },           // グローバル設定：シート名（省略可）
+  auditLogSheetName: '...',      // グローバル設定：監査ログシート名（省略可）
+  projects: [                    // プロジェクト一覧
     {
       name: 'プロジェクト名',
       spreadsheet: { ... },
       repositories: [ ... ],
       excludeBranches: { ... },
       deployWorkflowPatterns: [ ... ],
+      initialSyncDays: 30,       // プロジェクト別設定（省略可）
+      healthThresholds: { ... }, // プロジェクト別設定（省略可）
+      excludeMetricsLabels: [ ...], // プロジェクト別設定（省略可）
     },
     // 複数プロジェクト対応
   ],
@@ -84,6 +89,14 @@ export const config: InitConfig = {
 
       // デプロイワークフローパターン（省略可）
       deployWorkflowPatterns: ['deploy', 'release'],
+
+      // プロジェクト固有の設定（省略可）
+      initialSyncDays: 90,  // 初回同期日数（デフォルト: 30）
+      healthThresholds: {   // 健全性判定閾値（部分設定可能）
+        leadTime: { good: 48, warning: 336 },
+        changeFailureRate: { good: 10, warning: 20 },
+      },
+      excludeMetricsLabels: ['exclude-metrics', 'dependencies', 'bot'],
     },
   ],
 };
@@ -234,6 +247,83 @@ deployWorkflowPatterns: ['deploy', 'release', 'cd-pipeline']
 - `auto-deploy.yml`
 - `deployment-pipeline.yml`
 
+#### initialSyncDays（省略可）
+
+初回同期時に取得する過去データの日数を指定します。
+
+```typescript
+initialSyncDays: 90  // デフォルト: 30
+```
+
+- **範囲**: 1〜365日
+- **用途**: 初回実行時の `syncAllMetricsIncremental()` で使用
+- **デフォルト**: 30日
+
+#### healthThresholds（省略可）
+
+ダッシュボードの健全性判定閾値をカスタマイズします（**部分設定可能**）。
+
+```typescript
+healthThresholds: {
+  leadTime: { good: 48, warning: 336 },         // リードタイム（時間）
+  changeFailureRate: { good: 10, warning: 20 }, // 変更失敗率（%）
+  cycleTime: { good: 24, warning: 168 },        // サイクルタイム（時間）
+  timeToFirstReview: { good: 4, warning: 24 },  // 初回レビュー時間（時間）
+}
+```
+
+**デフォルト値**:
+- leadTime: `{ good: 24, warning: 168 }`（1日/7日）
+- changeFailureRate: `{ good: 15, warning: 30 }`（15%/30%）
+- cycleTime: `{ good: 24, warning: 168 }`（1日/7日）
+- timeToFirstReview: `{ good: 4, warning: 24 }`（4時間/24時間）
+
+#### excludeMetricsLabels（省略可）
+
+メトリクス計測から除外するPR/Issueのラベルを指定します。
+
+```typescript
+excludeMetricsLabels: ['exclude-metrics', 'dependencies', 'bot']
+```
+
+**デフォルト**: `['exclude-metrics']`
+
+**用途**: Dependabotの自動PR、ボットによる変更など、人間の開発活動でないものを除外
+
+### 3. グローバル設定（InitConfigのトップレベル）
+
+#### sheetNames（省略可）
+
+スプレッドシートのシート名を一括カスタマイズします（**i18n対応**）。
+
+```typescript
+sheetNames: {
+  prSize: 'PR Size',
+  reviewEfficiency: 'Review Efficiency',
+  cycleTime: 'Cycle Time',
+  codingTime: 'Coding Time',
+  reworkRate: 'Rework Rate',
+  dashboard: 'Dashboard',
+  dashboardTrend: 'Dashboard Trend',
+  dashboardMetrics: 'Dashboard Metrics',
+}
+```
+
+**デフォルト**: 日本語シート名（PRサイズ、レビュー効率、など）
+
+**用途**: 英語環境でのスプレッドシート運用
+
+#### auditLogSheetName（省略可）
+
+監査ログシートの名前を指定します。
+
+```typescript
+auditLogSheetName: 'Configuration Audit'  // デフォルト: 'Audit Log'
+```
+
+- **制限**: 1〜100文字
+- **デフォルト**: `'Audit Log'`
+
 ---
 
 ## 初期化手順
@@ -280,7 +370,38 @@ GASエディタで `initConfig` 関数を実行します。
 ✅ 初期設定完了
 ```
 
-### 4. 機密情報の削除
+### 4. 設定確認
+
+初期化後、設定が正しく保存されているか確認できます。
+
+```javascript
+checkConfig()
+```
+
+プロジェクト別設定の確認：
+
+```javascript
+// 特定リポジトリの初回同期日数
+Logger.log(getInitialSyncDaysForRepository('owner', 'repo'));
+
+// 健全性判定閾値
+Logger.log(getHealthThresholdsForRepository('owner', 'repo'));
+
+// 除外ラベル
+Logger.log(getExcludeMetricsLabelsForRepository('owner', 'repo'));
+```
+
+グローバル設定の確認：
+
+```javascript
+// シート名設定
+Logger.log(JSON.stringify(getSheetNames()));
+
+// 監査ログシート名
+Logger.log(getAuditLogSheetName());
+```
+
+### 5. 機密情報の削除
 
 設定完了後、`src/init.ts` から機密情報（Private Key、Token）を削除してOKです。
 PropertiesServiceに保存済みのため、再実行時も動作します。
@@ -328,6 +449,18 @@ export const config: LegacyInitConfig = {
 ### Q4. 除外設定を後から変更できますか？
 
 **A**: はい、`src/init.ts` を編集して `bun run push` → `initConfig` を再実行してください。
+
+### Q5. プロジェクトごとに異なる初回同期日数を設定できますか？
+
+**A**: はい、各プロジェクトに `initialSyncDays` を指定できます。デフォルトは30日で、1〜365日の範囲で設定可能です。
+
+### Q6. 健全性判定の閾値を一部だけカスタマイズできますか？
+
+**A**: はい、`healthThresholds` は部分設定が可能です。例えば `leadTime` のみ指定すれば、他の閾値はデフォルト値が使用されます。
+
+### Q7. スプレッドシートのシート名を英語にできますか？
+
+**A**: はい、`sheetNames` をトップレベルに指定することで、全シート名を一括でカスタマイズできます。
 
 ---
 

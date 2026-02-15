@@ -19,6 +19,8 @@
 | **DIコンテナ** | [ADR-0002](docs/adr/0002-di-container-for-gas-abstraction.md) | src/container.ts |
 | **エラーハンドリング** | src/utils/errors.ts | ErrorCode 1000-9000番台 |
 | **初期設定** | [SETUP.md](docs/SETUP.md) | src/init.ts |
+| **プロジェクト別設定** | [PROJECT_BASED_CONFIGURATION.md](docs/PROJECT_BASED_CONFIGURATION.md) | src/config/projects.ts, projectSettings.ts |
+| **グローバル設定** | [PROJECT_BASED_CONFIGURATION.md](docs/PROJECT_BASED_CONFIGURATION.md) | src/config/display.ts |
 | **GitHub Apps認証** | [GITHUB_APPS_AUTH.md](docs/GITHUB_APPS_AUTH.md) | src/config/ |
 | **Slack通知** | src/functions/ | slackWeekly.ts, slackMonthly.ts, slackIncidents.ts, slackAlerts.ts |
 | **GAS関数リファレンス** | [GAS_FUNCTIONS.md](docs/GAS_FUNCTIONS.md) | 全グローバル関数の詳細（引数、実行方法） |
@@ -37,6 +39,8 @@
 | `src/services/spreadsheet/` | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | スプレッドシート操作、シート生成、チャート |
 | `src/container.ts` | [ADR-0002](docs/adr/0002-di-container-for-gas-abstraction.md) | DIコンテナ、依存性注入 |
 | `src/config/` | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 設定管理（複数ファイル） |
+| `src/config/projectSettings.ts` | [PROJECT_BASED_CONFIGURATION.md](docs/PROJECT_BASED_CONFIGURATION.md) | プロジェクト別設定取得（初回同期日数、健全性閾値、除外ラベル） |
+| `src/config/display.ts` | [PROJECT_BASED_CONFIGURATION.md](docs/PROJECT_BASED_CONFIGURATION.md) | グローバル表示設定（シート名、監査ログシート名） |
 | `src/utils/errors.ts` | src/utils/errors.ts | カスタムエラークラス、ErrorCode |
 | `src/utils/logLevel.ts` | [LOGGING_GUIDELINES.md](docs/LOGGING_GUIDELINES.md) | ログレベル制御 |
 | `src/init.ts` | [SETUP.md](docs/SETUP.md) | 初期設定ファイル |
@@ -58,6 +62,7 @@
 | ドキュメント | 内容 | 読むタイミング |
 |-------------|------|--------------|
 | [SETUP.md](docs/SETUP.md) | 初期設定、認証設定、clasp、初回デプロイ | 初回セットアップ時 |
+| [PROJECT_BASED_CONFIGURATION.md](docs/PROJECT_BASED_CONFIGURATION.md) | プロジェクト別設定ガイド（初回同期日数、健全性閾値、シート名等） | プロジェクト設定をカスタマイズする時 |
 | [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | 診断ツール、エラー解決 | エラー発生時 |
 | [FAQ.md](docs/FAQ.md) | よくある質問 | 疑問点がある時 |
 | [QUICK_START.md](docs/QUICK_START.md) | 5分で動かす手順 | 初回セットアップ時 |
