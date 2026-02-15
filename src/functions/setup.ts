@@ -53,8 +53,8 @@ export function listRepos(): void {
 // トリガー管理
 // =============================================================================
 
-/** 日次実行用トリガー設定 */
-export function createDailyTrigger(): void {
+/** 日次メトリクス同期のスケジュール設定（syncAllMetricsIncrementalを毎日午前9時に自動実行） */
+export function scheduleDailyMetricsSync(): void {
   ensureContainerInitialized();
   const { triggerClient, logger } = getContainer();
 

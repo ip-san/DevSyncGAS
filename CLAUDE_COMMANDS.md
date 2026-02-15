@@ -79,6 +79,21 @@ checkAndSendAlerts()             // アラート確認
 
 ---
 
+## 📖 GAS関数 詳細リファレンス
+
+**全グローバル関数の詳細（引数、戻り値、使用例、実行方法）:**
+👉 **[docs/GAS_FUNCTIONS.md](docs/GAS_FUNCTIONS.md)** を参照してください。
+
+### 初回セットアップ実行順序
+
+```javascript
+initConfig()           // 1. 初期設定を反映
+checkConfig()          // 2. 設定確認
+syncAllMetrics(30)     // 3. データ同期開始（過去30日分）
+```
+
+---
+
 ## 💡 よくあるパターン
 
 ### 設定変更

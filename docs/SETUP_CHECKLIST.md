@@ -175,7 +175,7 @@
 
 ### 日次自動実行の設定（推奨）
 
-□ GASエディタで `createDailyTrigger()` を実行
+□ GASエディタで `scheduleDailyMetricsSync()` を実行
 
 □ トリガーが作成されたことを確認:
   - GASエディタ → 左サイドバー「トリガー」で確認

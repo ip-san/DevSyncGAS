@@ -23,7 +23,7 @@ import {
   listRepos,
   checkConfig,
   testPermissions,
-  createDailyTrigger,
+  scheduleDailyMetricsSync,
   // Slack設定
   configureSlackWebhook,
   removeSlackWebhook,
@@ -83,7 +83,7 @@ global.debugDeploymentFrequency = debugDeploymentFrequency;
 // トリガー管理
 // =============================================================================
 
-global.createDailyTrigger = createDailyTrigger;
+global.scheduleDailyMetricsSync = scheduleDailyMetricsSync;
 
 // =============================================================================
 // Slack通知（トリガーから実行される）
