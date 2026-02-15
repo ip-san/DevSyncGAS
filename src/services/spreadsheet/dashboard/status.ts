@@ -4,21 +4,21 @@
  * メトリクスから健全性ステータスを判定し、表示用にフォーマット
  */
 
-import type { HealthStatus } from '../../../types';
+import type { HealthStatus, HealthThresholds } from '../../../types';
 import { DEFAULT_HEALTH_THRESHOLDS } from '../../../types/dashboard';
 import { evaluateMetric, selectWorstStatus } from '../../../utils/healthStatus';
 
 /**
  * 健全性ステータスを判定
  */
+// eslint-disable-next-line max-params
 export function determineHealthStatus(
   leadTimeHours: number | null,
   changeFailureRate: number | null,
   cycleTimeHours: number | null,
-  timeToFirstReviewHours: number | null
+  timeToFirstReviewHours: number | null,
+  thresholds: HealthThresholds = DEFAULT_HEALTH_THRESHOLDS
 ): HealthStatus {
-  const thresholds = DEFAULT_HEALTH_THRESHOLDS;
-
   // 各指標を評価
   const statuses = [
     evaluateMetric(leadTimeHours, thresholds.leadTime),
