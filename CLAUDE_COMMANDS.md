@@ -1,6 +1,18 @@
 # DevSyncGAS - コマンドリファレンス
 
-日常的に使用するコマンドとGAS関数のクイックリファレンス。
+**📌 このドキュメントは:** 日常的に使用する「よく使うコマンド」と「よく使うGAS関数」のクイックリファレンスです。
+
+**🎯 このドキュメントの役割:**
+- **開発コマンド** - `bun run build`, `bun test` 等、開発時に頻繁に使うコマンド
+- **GAS関数（概要）** - `checkConfig()`, `syncAllMetrics(30)` 等、よく使うGAS関数の概要
+
+**📚 関連ドキュメント:**
+- **全GAS関数の詳細:** 引数、戻り値、実行方法は [docs/GAS_FUNCTIONS.md](docs/GAS_FUNCTIONS.md) を参照
+- **タスク別フロー:** 機能追加、バグ修正等のフローは [CLAUDE_TASKS.md](CLAUDE_TASKS.md) を参照
+
+**💡 使い分け:**
+- 日常的に使うコマンドを確認したい → **このドキュメント**
+- GAS関数の詳細な使い方を知りたい → [docs/GAS_FUNCTIONS.md](docs/GAS_FUNCTIONS.md)
 
 ---
 
