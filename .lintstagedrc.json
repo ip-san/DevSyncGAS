@@ -1,7 +1,6 @@
 {
   "*.ts": [
     "eslint --fix",
-    "prettier --write",
-    "bash -c 'bunx tsc --noEmit'"
+    "prettier --write"
   ]
 }

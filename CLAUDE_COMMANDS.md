@@ -14,16 +14,19 @@ bun run push           # ビルド + GASにデプロイ
 
 ### テスト・品質チェック
 ```bash
-bun test               # テスト実行
-bun run lint           # ESLintチェック
-bun run lint:fix       # ESLint自動修正
-bun run format         # Prettierフォーマット
-bun run check:all      # 全チェックを一括実行（循環依存、未使用コード、型カバレッジ）
+bun test                # テスト実行
+bun run lint            # ESLintチェック
+bun run lint:fix        # ESLint自動修正
+bun run format          # Prettierフォーマット
+bun run check:all       # 全チェックを一括実行（循環依存、未使用コード、型カバレッジ）
+bun run check:unused    # 未使用エクスポート（ノイズ除外済み）
 ```
 
-### 完了前の必須チェック
+### ワンコマンド便利スクリプト
 ```bash
-bunx tsc --noEmit && bun run lint && bun test && bun run build
+bun run precommit      # コミット前の最小チェック（lint + test）
+bun run prepush        # プッシュ前の完全チェック（check:all + test + build）
+bun run deploy         # 完全チェック後にデプロイ（prepush + push）
 ```
 
 ---
@@ -110,8 +113,7 @@ src/init.ts 編集 → bun run push → initConfig() → checkConfig()
 
 ### 作業完了チェックリスト
 ```bash
-bunx tsc --noEmit && bun run lint && bun test && bun run build
-bun run check:all  # 循環依存、未使用コード、型カバレッジ
+bun run prepush    # 完全チェック（型チェック、lint、test、build、コード品質）
 /review            # コードレビュー実行
 ```
 
