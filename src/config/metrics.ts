@@ -235,6 +235,58 @@ export function resetIncidentLabels(): void {
   deleteProperty(LABEL_KEYS.INCIDENT);
 }
 
+/**
+ * 指定したリポジトリのインシデント判定ラベルを取得
+ * リポジトリが属するプロジェクトのインシデントラベルを返す
+ * プロジェクトに設定がない場合はデフォルト値を返す
+ *
+ * @param owner リポジトリオーナー
+ * @param repoName リポジトリ名
+ * @returns インシデント判定ラベル配列（デフォルト: ['incident']）
+ */
+export function getIncidentLabelsForRepository(owner: string, repoName: string): string[] {
+  const { storageClient } = getContainer();
+  const projectsJson = storageClient.getProperty('PROJECT_GROUPS');
+
+  if (!projectsJson) {
+    // プロジェクト設定がない場合はグローバル設定を返す
+    return getIncidentLabels();
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(projectsJson);
+    if (!Array.isArray(parsed)) {
+      return getIncidentLabels();
+    }
+
+    // リポジトリが属するプロジェクトを検索
+    const fullName = `${owner}/${repoName}`;
+    const project = parsed.find(
+      (
+        p: unknown
+      ): p is { repositories?: Array<{ fullName?: string }>; incidentLabels?: string[] } =>
+        typeof p === 'object' &&
+        p !== null &&
+        'repositories' in p &&
+        Array.isArray(p.repositories) &&
+        p.repositories.some(
+          (r: unknown) =>
+            typeof r === 'object' && r !== null && 'fullName' in r && r.fullName === fullName
+        )
+    );
+
+    if (project?.incidentLabels && Array.isArray(project.incidentLabels)) {
+      return project.incidentLabels.length > 0 ? project.incidentLabels : ['incident'];
+    }
+
+    // プロジェクトが見つからないか、インシデントラベルが設定されていない場合はデフォルト
+    return ['incident'];
+  } catch (error) {
+    // パースエラーの場合はデフォルト値を返す
+    return ['incident'];
+  }
+}
+
 // ============================================================
 // PRサイズ設定
 // ============================================================
