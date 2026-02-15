@@ -64,6 +64,7 @@ export {
   getIncidentLabels,
   setIncidentLabels,
   resetIncidentLabels,
+  getIncidentLabelsForRepository,
   getExcludePRSizeBaseBranches,
   setExcludePRSizeBaseBranches,
   resetExcludePRSizeBaseBranches,

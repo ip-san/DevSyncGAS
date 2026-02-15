@@ -306,7 +306,7 @@ MTTR = Issue close日時 - Issue作成日時
 ```
 
 デフォルト設定: DevSyncGASはIncident Issueを優先的に使用します。
-インシデント判定ラベルは `configureIncidentLabels()` でカスタマイズ可能です。
+インシデント判定ラベルは **init.ts で設定** してください（プロジェクトごとにカスタマイズ可能）。
 
 #### フォールバック1: GitHub Deployments API
 
@@ -451,10 +451,66 @@ resetProductionBranch();
 
 ### MTTR（Incident）ラベル設定
 
-インシデント判定に使用するラベルをカスタマイズできます（デフォルト: `"incident"`）。
+インシデント判定に使用するラベルは **プロジェクトごとに設定** できます（デフォルト: `['incident']`）。
+
+#### 推奨: init.tsで設定
+
+```typescript
+// src/init.ts
+export const config: InitConfig = {
+  auth: { ... },
+  projects: [
+    {
+      name: 'JobAntenna v4',
+      spreadsheet: { ... },
+      repositories: [ ... ],
+
+      // プロジェクトごとにインシデント判定ラベルを設定
+      incidentLabels: ['incident', 'bug', 'p0'],  // チームのラベル運用に合わせる
+    },
+  ],
+};
+```
+
+**複数プロジェクトで異なるラベル体系を使う例:**
+
+```typescript
+projects: [
+  {
+    name: 'Project A',
+    incidentLabels: ['incident', 'critical'],  // Project Aのルール
+    // ...
+  },
+  {
+    name: 'Project B',
+    incidentLabels: ['bug', 'p0', 'urgent'],  // Project Bのルール
+    // ...
+  },
+]
+```
+
+#### 使用例
 
 ```javascript
-// インシデントラベルを設定（プロジェクトのルールに合わせて）
+// 1. 本番障害が発生したら、設定したインシデントラベルを付けてIssueを作成
+// 2. 対応・調査を進める
+// 3. 復旧後にIssueをクローズ
+// → syncAllMetrics(30) で自動的にMTTRが計算されます
+```
+
+#### 推奨運用
+
+- 本番障害が発生したら設定したインシデントラベル付きIssueを作成
+- 復旧完了後にIssueをクローズ
+- より正確なMTTRが自動計測されます
+- **プロジェクト・チームごとにラベル運用ルールをカスタマイズ可能**
+
+#### 従来の方法（後方互換性）
+
+デプロイ後にGAS関数で変更することもできます:
+
+```javascript
+// グローバル設定として全プロジェクトに適用（非推奨）
 configureIncidentLabels(['incident', 'bug', 'p0']);
 
 // 現在の設定を確認
@@ -462,19 +518,9 @@ showIncidentLabels();
 
 // デフォルトに戻す
 resetIncidentLabelsConfig();
-
-// 障害Issueを作成する場合の例
-// 1. GitHubでIssueを作成
-// 2. 設定したラベル（例: "incident"）を付与
-// 3. 復旧後にIssueをクローズ
-// → syncAllMetrics(30) で自動的にMTTRが計算されます
 ```
 
-推奨運用:
-- 本番障害が発生したら設定したインシデントラベル付きIssueを作成
-- 復旧完了後にIssueをクローズ
-- より正確なMTTRが自動計測されます
-- プロジェクトのラベル運用ルールに合わせてカスタマイズ可能
+※ **init.tsでの設定を推奨します**。プロジェクトごとの柔軟な設定が可能で、設定が明示的です。
 
 ### GraphQL vs REST API
 
@@ -538,7 +584,7 @@ DevSyncGASは、DORA指標に加えて**拡張指標**も提供します。
 
 - 復旧パターン（失敗→成功）が存在しない場合、nullになります
 - インシデントラベル付きIssueを作成すると、より正確なMTTRを計測できます
-- インシデントラベルは `configureIncidentLabels()` でカスタマイズ可能（デフォルト: `"incident"`）
+- インシデントラベルは **init.tsでプロジェクトごとに設定** してください（デフォルト: `['incident']`）
 
 ## 参考資料
 

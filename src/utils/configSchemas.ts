@@ -39,6 +39,7 @@ export const ProjectGroupSchema = z.object({
   spreadsheetId: z.string().min(1),
   sheetName: z.string().min(1),
   repositories: z.array(ProjectRepositorySchema),
+  incidentLabels: z.array(z.string()).optional(),
 });
 
 /**

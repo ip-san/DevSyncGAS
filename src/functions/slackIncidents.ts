@@ -98,7 +98,7 @@ function collectRepositoryIncidents(
   for (const githubIssue of response.data) {
     const incidentIssue = toIncidentIssue(githubIssue, repo.owner, repo.name);
 
-    if (!isIncident(incidentIssue.labels)) {
+    if (!isIncident(incidentIssue.labels, repo.owner, repo.name)) {
       continue;
     }
 

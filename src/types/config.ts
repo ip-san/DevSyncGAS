@@ -53,6 +53,8 @@ export interface ProjectGroup {
   sheetName: string;
   /** このグループに属するリポジトリ一覧 */
   repositories: GitHubRepository[];
+  /** インシデント判定に使用するラベル（デフォルト: ['incident']） */
+  incidentLabels?: string[];
 }
 
 // =============================================================================

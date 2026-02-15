@@ -44,7 +44,7 @@ describe('Slack Incident Daily Summary', () => {
         body: 'Service is down',
       };
 
-      expect(isIncident(issue.labels)).toBe(true);
+      expect(isIncident(issue.labels, 'owner', 'repo')).toBe(true);
     });
 
     it('should return false when issue has no incident label', () => {
@@ -59,7 +59,7 @@ describe('Slack Incident Daily Summary', () => {
         updated_at: '2024-01-15T10:00:00Z',
       };
 
-      expect(isIncident(issue.labels)).toBe(false);
+      expect(isIncident(issue.labels, 'owner', 'repo')).toBe(false);
     });
 
     it('should be case-insensitive for incident label matching', () => {
@@ -74,7 +74,7 @@ describe('Slack Incident Daily Summary', () => {
         updated_at: '2024-01-15T10:00:00Z',
       };
 
-      expect(isIncident(issue.labels)).toBe(true);
+      expect(isIncident(issue.labels, 'owner', 'repo')).toBe(true);
     });
   });
 

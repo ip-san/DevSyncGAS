@@ -7,7 +7,7 @@
 
 import type { SlackMessage, SlackBlock } from '../../interfaces';
 import type { GitHubIssue } from '../../types/github';
-import { getIncidentLabels } from '../../config/metrics';
+import { getIncidentLabelsForRepository } from '../../config/metrics';
 
 export type IncidentEventType = 'opened' | 'closed';
 
@@ -48,9 +48,12 @@ export function toIncidentIssue(issue: GitHubIssue, owner: string, repo: string)
 
 /**
  * Issueがインシデントかどうかを判定
+ * @param labels Issueのラベル一覧
+ * @param owner リポジトリオーナー
+ * @param repoName リポジトリ名
  */
-export function isIncident(labels: string[]): boolean {
-  const incidentLabels = getIncidentLabels();
+export function isIncident(labels: string[], owner: string, repoName: string): boolean {
+  const incidentLabels = getIncidentLabelsForRepository(owner, repoName);
 
   // 設定されたインシデントラベルのいずれかが付いているか
   return labels.some((label: string) =>

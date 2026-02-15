@@ -13,6 +13,7 @@ import {
   setExcludeReworkRateBaseBranches,
   setDeployWorkflowPatterns,
   setProductionBranchPattern,
+  addProject,
 } from './settings';
 import { initializeContainer, isContainerInitialized } from '../container';
 import { createGasAdapters } from '../adapters/gas';
@@ -75,6 +76,8 @@ export interface ProjectConfig {
   deployWorkflowPatterns?: string[];
   /** Productionブランチパターン（デフォルト: "production"） */
   productionBranchPattern?: string;
+  /** インシデント判定に使用するラベル（デフォルト: ['incident']） */
+  incidentLabels?: string[];
 }
 
 /**
@@ -265,6 +268,25 @@ function initializeProject(project: ProjectConfig, auth: AuthConfig): void {
 
   // Productionブランチパターンを適用
   applyProductionBranchPattern(project.productionBranchPattern);
+
+  // プロジェクトグループを追加（インシデントラベルを含む）
+  const repositories = project.repositories.map((repo) => ({
+    owner: repo.owner,
+    name: repo.name,
+    fullName: `${repo.owner}/${repo.name}`,
+  }));
+
+  addProject({
+    name: project.name,
+    spreadsheetId: project.spreadsheet.id,
+    sheetName,
+    repositories,
+    incidentLabels: project.incidentLabels,
+  });
+
+  if (project.incidentLabels && project.incidentLabels.length > 0) {
+    Logger.log(`✅ Incident labels for "${project.name}": ${project.incidentLabels.join(', ')}`);
+  }
 
   Logger.log(`✅ Project "${project.name}" initialized`);
 }
