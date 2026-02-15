@@ -9,7 +9,7 @@ import type { GitHubRepository } from '../types/index.js';
 import { getGitHubAuthMode } from './authMode.js';
 import { GitHubRepositoriesSchema } from '../utils/configSchemas.js';
 import { SPREADSHEET_ID_DISPLAY_LENGTH } from './apiConfig.js';
-import { getProjects } from './settings.js';
+import { getProjects } from './projects.js';
 
 export interface ConfigDiagnosticItem {
   name: string;
