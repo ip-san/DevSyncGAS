@@ -54,6 +54,15 @@ showAuthMode()                   // 認証方式確認（PAT/GitHub Apps）
 // リポジトリ一覧
 listRepos()                      // 登録リポジトリ一覧
 
+// プロジェクト別設定の確認
+getInitialSyncDaysForRepository('owner', 'repo')    // 初回同期日数
+getHealthThresholdsForRepository('owner', 'repo')   // 健全性判定閾値
+getExcludeMetricsLabelsForRepository('owner', 'repo') // 除外ラベル
+
+// グローバル設定の確認
+getSheetNames()                  // シート名設定（JSON形式）
+getAuditLogSheetName()           // 監査ログシート名
+
 // 🔍 メトリクス診断ツール
 debugDeploymentFrequency('owner', 'repo')        // デプロイ頻度の診断（なぜyearlyになるのか等）
 debugDeploymentFrequency('owner', 'repo', 90)    // 過去90日間で診断
@@ -80,7 +89,13 @@ syncAllMetricsFromScratch(30)    // 完全再構築（既存シートをクリ�
 initConfig()  // src/init.ts の設定を PropertiesService に保存
 ```
 
-> **📝 Note:** すべての設定（プロジェクト、リポジトリ、API、ラベル、除外ブランチ、ログレベル、Slack Webhook、トリガー等）は `src/init.ts` で設定 → `bun run push` → `initConfig()` で反映。詳細: [init.example.ts](src/init.example.ts)
+> **📝 Note:** すべての設定（プロジェクト、リポジトリ、API、ラベル、除外ブランチ、ログレベル、Slack Webhook、トリガー等）は `src/init.ts` で設定 → `bun run push` → `initConfig()` で反映。
+>
+> **カスタマイズ可能な設定:**
+> - **プロジェクト別**: 初回同期日数、健全性閾値、除外ラベル、インシデントラベル
+> - **グローバル**: シート名（i18n対応）、監査ログシート名
+>
+> 詳細: [PROJECT_BASED_CONFIGURATION.md](docs/PROJECT_BASED_CONFIGURATION.md), [init.example.ts](src/init.example.ts)
 
 ### Slack通知（手動送信テスト用）
 ```javascript
