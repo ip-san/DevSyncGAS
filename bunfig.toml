@@ -1,0 +1,6 @@
+[test]
+coverage = false
+
+[install]
+cache = true
+registry = "https://registry.npmjs.org"

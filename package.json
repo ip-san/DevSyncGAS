@@ -26,7 +26,13 @@
     "precommit": "bun run lint && bun test",
     "prepush": "bun run check:all && bun test && bun run build",
     "setup": "bun run scripts/setup.ts",
-    "check:env": "bun run scripts/check-env.ts"
+    "check:env": "bun run scripts/check-env.ts",
+    "c": "bun run precommit",
+    "p": "bun run prepush",
+    "d": "bun run deploy",
+    "t": "bun test",
+    "l": "bun run lint",
+    "f": "bun run format"
   },
   "devDependencies": {
     "@google/clasp": "^2.4.2",
