@@ -305,6 +305,35 @@ syncAllMetrics(90);     // 過去90日分
 
 ---
 
+## 🛠 技術スタック詳細
+
+### GAS制約への対応
+
+| 制約 | 対応 | 理由 |
+|------|------|------|
+| `fetch` 不可 | `UrlFetchApp.fetch` を使用 | GAS標準API |
+| モジュールシステム不可 | esbuildで単一ファイルにバンドル | GAS実行環境の制約 |
+| Node.js標準ライブラリ不可 | GAS互換のユーティリティを実装 | `Buffer`, `crypto`等は利用不可 |
+| ストレージ | `PropertiesService` を使用 | GAS標準の永続化機構 |
+
+### 品質管理ツール
+
+```bash
+# 全品質チェック（一括実行）
+bun run check:all
+
+# 個別チェック
+bun run check:types    # 型チェック（目標95%以上）
+bun run check:circular # 循環依存チェック
+bun run check:unused   # 未使用コードチェック
+```
+
+**型カバレッジ**: 95%以上を維持（`bun run check:types`で測定）
+
+**詳細**: [CODE_QUALITY.md](CODE_QUALITY.md)
+
+---
+
 ## 関連ドキュメント
 
 ### 設計思想
