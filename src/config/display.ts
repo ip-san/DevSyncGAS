@@ -49,7 +49,8 @@ export function getSheetNames(): SheetNamesConfig {
     return { ...defaults, ...parsed };
   } catch (error) {
     const { logger } = getContainer();
-    logger.error('Failed to parse SHEET_NAMES config, using defaults', { error });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`Failed to parse SHEET_NAMES config, using defaults: ${errorMessage}`);
     return defaults;
   }
 }
