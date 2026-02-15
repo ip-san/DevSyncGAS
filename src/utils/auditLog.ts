@@ -6,6 +6,7 @@
 import { z } from 'zod';
 import { getContainer } from '../container';
 import { AUDIT_LOG_VALUE_MAX_LENGTH } from '../config/apiConfig';
+import { getAuditLogSheetName } from '../config/display';
 
 /**
  * 監査ログエントリのzodスキーマ
@@ -186,10 +187,13 @@ export function getAuditLogs(limit = 100): AuditLogEntry[] {
  * 長期保存・監査対応のための機能
  *
  * @param spreadsheetId - 書き出し先スプレッドシートID
- * @param sheetName - シート名（デフォルト: "Audit Log"）
+ * @param sheetName - シート名（省略時は設定から取得、デフォルト: "Audit Log"）
  */
-export function exportAuditLogsToSheet(spreadsheetId: string, sheetName = 'Audit Log'): void {
+export function exportAuditLogsToSheet(spreadsheetId: string, sheetName?: string): void {
   const { spreadsheetClient, logger } = getContainer();
+
+  // シート名が指定されていない場合は設定から取得
+  const actualSheetName = sheetName ?? getAuditLogSheetName();
 
   const logs = getAuditLogs(1000); // 直近1000件
   if (logs.length === 0) {
@@ -198,11 +202,11 @@ export function exportAuditLogsToSheet(spreadsheetId: string, sheetName = 'Audit
   }
 
   const spreadsheet = spreadsheetClient.openById(spreadsheetId);
-  let sheet = spreadsheet.getSheetByName(sheetName);
+  let sheet = spreadsheet.getSheetByName(actualSheetName);
 
   // シートが存在しない場合は作成
   if (!sheet) {
-    sheet = spreadsheet.insertSheet(sheetName);
+    sheet = spreadsheet.insertSheet(actualSheetName);
   }
 
   // ヘッダー行

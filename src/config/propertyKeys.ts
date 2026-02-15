@@ -143,6 +143,16 @@ export const DEPLOYMENT_KEYS = {
 } as const;
 
 /**
+ * グローバル表示設定キー
+ */
+export const DISPLAY_KEYS = {
+  /** 拡張指標シート名設定（JSON） */
+  SHEET_NAMES: 'SHEET_NAMES',
+  /** 監査ログシート名 */
+  AUDIT_LOG_SHEET_NAME: 'AUDIT_LOG_SHEET_NAME',
+} as const;
+
+/**
  * 全ての設定キーを統合したオブジェクト
  */
 export const CONFIG_KEYS = {
@@ -160,6 +170,7 @@ export const CONFIG_KEYS = {
   CODING_TIME_EXCLUDE: CODING_TIME_EXCLUDE_KEYS,
   REWORK_RATE_EXCLUDE: REWORK_RATE_EXCLUDE_KEYS,
   DEPLOYMENT: DEPLOYMENT_KEYS,
+  DISPLAY: DISPLAY_KEYS,
 } as const;
 
 /**
@@ -180,4 +191,5 @@ export type ConfigKeyValue =
   | (typeof CYCLE_TIME_EXCLUDE_KEYS)[keyof typeof CYCLE_TIME_EXCLUDE_KEYS]
   | (typeof CODING_TIME_EXCLUDE_KEYS)[keyof typeof CODING_TIME_EXCLUDE_KEYS]
   | (typeof REWORK_RATE_EXCLUDE_KEYS)[keyof typeof REWORK_RATE_EXCLUDE_KEYS]
-  | (typeof DEPLOYMENT_KEYS)[keyof typeof DEPLOYMENT_KEYS];
+  | (typeof DEPLOYMENT_KEYS)[keyof typeof DEPLOYMENT_KEYS]
+  | (typeof DISPLAY_KEYS)[keyof typeof DISPLAY_KEYS];

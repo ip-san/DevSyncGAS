@@ -8,6 +8,7 @@ import type { DevOpsMetrics } from '../../types';
 import type { SlackMessage, SlackBlock } from '../../interfaces';
 import { determineHealthStatus } from '../spreadsheet/dashboard';
 import { DEFAULT_HEALTH_THRESHOLDS } from '../../types/dashboard';
+import { getHealthThresholdsForRepository } from '../../config/settings';
 import { getContainer } from '../../container';
 
 /**
@@ -35,11 +36,17 @@ export interface Alert {
  * 健全性ステータスのアラートを検出
  */
 function checkHealthStatus(metric: DevOpsMetrics): Alert | null {
+  // リポジトリ名を分解して閾値を取得
+  const [owner, repo] = metric.repository.split('/');
+  const thresholds =
+    owner && repo ? getHealthThresholdsForRepository(owner, repo) : DEFAULT_HEALTH_THRESHOLDS;
+
   const healthStatus = determineHealthStatus(
     metric.leadTimeForChangesHours,
     metric.changeFailureRate,
     null,
-    null
+    null,
+    thresholds
   );
 
   if (healthStatus === 'critical') {
@@ -64,7 +71,10 @@ function checkLeadTime(metric: DevOpsMetrics): Alert | null {
     return null;
   }
 
-  const thresholds = DEFAULT_HEALTH_THRESHOLDS;
+  // リポジトリ名を分解して閾値を取得
+  const [owner, repo] = metric.repository.split('/');
+  const thresholds =
+    owner && repo ? getHealthThresholdsForRepository(owner, repo) : DEFAULT_HEALTH_THRESHOLDS;
   const leadTimeCritical = thresholds.leadTime.warning * 2;
 
   if (metric.leadTimeForChangesHours > leadTimeCritical) {
@@ -100,7 +110,10 @@ function checkChangeFailureRate(metric: DevOpsMetrics): Alert | null {
     return null;
   }
 
-  const thresholds = DEFAULT_HEALTH_THRESHOLDS;
+  // リポジトリ名を分解して閾値を取得
+  const [owner, repo] = metric.repository.split('/');
+  const thresholds =
+    owner && repo ? getHealthThresholdsForRepository(owner, repo) : DEFAULT_HEALTH_THRESHOLDS;
   const cfrCritical = thresholds.changeFailureRate.warning * 1.5;
 
   if (metric.changeFailureRate > cfrCritical) {

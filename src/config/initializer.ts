@@ -15,6 +15,7 @@ import {
   setProductionBranchPattern,
   addProject,
 } from './settings';
+import { setSheetNames, setAuditLogSheetName } from './display';
 import { initializeContainer, isContainerInitialized } from '../container';
 import { createGasAdapters } from '../adapters/gas';
 
@@ -78,6 +79,17 @@ export interface ProjectConfig {
   productionBranchPattern?: string;
   /** インシデント判定に使用するラベル（デフォルト: ['incident']） */
   incidentLabels?: string[];
+  /** 初回同期日数（デフォルト: 30） */
+  initialSyncDays?: number;
+  /** 健全性判定閾値（部分設定可能、デフォルト: DEFAULT_HEALTH_THRESHOLDS） */
+  healthThresholds?: {
+    leadTime?: { good: number; warning: number };
+    changeFailureRate?: { good: number; warning: number };
+    cycleTime?: { good: number; warning: number };
+    timeToFirstReview?: { good: number; warning: number };
+  };
+  /** 計測から除外するラベル（デフォルト: ['exclude-metrics']） */
+  excludeMetricsLabels?: string[];
 }
 
 /**
@@ -88,6 +100,19 @@ export interface InitConfig {
   auth: AuthConfig;
   /** プロジェクト一覧 */
   projects: ProjectConfig[];
+  /** 拡張指標シート名設定（グローバル、デフォルト: 日本語名） */
+  sheetNames?: {
+    cycleTime?: string;
+    codingTime?: string;
+    reworkRate?: string;
+    reviewEfficiency?: string;
+    prSize?: string;
+    dashboard?: string;
+    dashboardTrend?: string;
+    devopsSummary?: string;
+  };
+  /** 監査ログシート名（グローバル、デフォルト: 'Audit Log'） */
+  auditLogSheetName?: string;
 }
 
 /**
@@ -282,13 +307,48 @@ function initializeProject(project: ProjectConfig, auth: AuthConfig): void {
     sheetName,
     repositories,
     incidentLabels: project.incidentLabels,
+    initialSyncDays: project.initialSyncDays,
+    healthThresholds: project.healthThresholds,
+    excludeMetricsLabels: project.excludeMetricsLabels,
   });
 
+  // ログ出力
   if (project.incidentLabels && project.incidentLabels.length > 0) {
     Logger.log(`✅ Incident labels for "${project.name}": ${project.incidentLabels.join(', ')}`);
   }
 
+  if (project.initialSyncDays) {
+    Logger.log(`✅ Initial sync days for "${project.name}": ${project.initialSyncDays}`);
+  }
+
+  if (project.healthThresholds) {
+    Logger.log(`✅ Custom health thresholds configured for "${project.name}"`);
+  }
+
+  if (project.excludeMetricsLabels) {
+    Logger.log(
+      `✅ Exclude metrics labels for "${project.name}": ${project.excludeMetricsLabels.join(', ')}`
+    );
+  }
+
   Logger.log(`✅ Project "${project.name}" initialized`);
+}
+
+/**
+ * グローバル設定を適用
+ */
+function applyGlobalSettings(config: InitConfig): void {
+  Logger.log('\n🌐 Applying global settings...');
+
+  if (config.sheetNames) {
+    setSheetNames(config.sheetNames);
+    Logger.log('✅ Custom sheet names configured');
+  }
+
+  if (config.auditLogSheetName) {
+    setAuditLogSheetName(config.auditLogSheetName);
+    Logger.log(`✅ Audit log sheet name: ${config.auditLogSheetName}`);
+  }
 }
 
 /**
@@ -311,6 +371,9 @@ export function initializeFromConfig(config: InitConfig | LegacyInitConfig): voi
   );
   Logger.log(`📊 プロジェクト数: ${normalizedConfig.projects.length}`);
   Logger.log('');
+
+  // グローバル設定を適用
+  applyGlobalSettings(normalizedConfig);
 
   // 各プロジェクトを初期化
   for (const project of normalizedConfig.projects) {

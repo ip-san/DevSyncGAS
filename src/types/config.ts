@@ -5,6 +5,7 @@
  */
 
 import type { GitHubRepository } from './github';
+import type { HealthThresholds } from './dashboard';
 
 // =============================================================================
 // GitHub Apps認証
@@ -55,6 +56,12 @@ export interface ProjectGroup {
   repositories: GitHubRepository[];
   /** インシデント判定に使用するラベル（デフォルト: ['incident']） */
   incidentLabels?: string[];
+  /** 初回同期日数（デフォルト: 30） */
+  initialSyncDays?: number;
+  /** 健全性判定閾値（部分設定可能、デフォルト: DEFAULT_HEALTH_THRESHOLDS） */
+  healthThresholds?: Partial<HealthThresholds>;
+  /** 計測から除外するラベル（デフォルト: ['exclude-metrics']） */
+  excludeMetricsLabels?: string[];
 }
 
 // =============================================================================

@@ -104,3 +104,25 @@ export { getGitHubAuthMode } from './authMode.js';
 
 export type { ConfigDiagnosticItem, ConfigDiagnosticResult } from './diagnostics.js';
 export { diagnoseConfig, formatDiagnosticResult } from './diagnostics.js';
+
+// =============================================================================
+// Display Configuration (Re-export from display.ts)
+// =============================================================================
+
+export type { SheetNamesConfig } from './display.js';
+export {
+  getSheetNames,
+  setSheetNames,
+  getAuditLogSheetName,
+  setAuditLogSheetName,
+} from './display.js';
+
+// =============================================================================
+// Project-Specific Settings (Re-export from projectSettings.ts)
+// =============================================================================
+
+export {
+  getInitialSyncDaysForRepository,
+  getHealthThresholdsForRepository,
+  getExcludeMetricsLabelsForRepository,
+} from './projectSettings.js';
