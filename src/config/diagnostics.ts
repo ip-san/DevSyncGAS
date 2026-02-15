@@ -9,12 +9,14 @@ import type { GitHubRepository } from '../types/index.js';
 import { getGitHubAuthMode } from './authMode.js';
 import { GitHubRepositoriesSchema } from '../utils/configSchemas.js';
 import { SPREADSHEET_ID_DISPLAY_LENGTH } from './apiConfig.js';
+import { getProjects } from './projects.js';
 
 export interface ConfigDiagnosticItem {
   name: string;
   status: 'ok' | 'warning' | 'error';
   message: string;
   hint?: string;
+  details?: string[]; // プロジェクト一覧などの詳細情報
 }
 
 export interface ConfigDiagnosticResult {
@@ -238,6 +240,49 @@ function diagnoseRepositories(): ConfigDiagnosticItem {
 }
 
 /**
+ * プロジェクト設定を診断
+ */
+function diagnoseProjects(): ConfigDiagnosticItem {
+  try {
+    const projects = getProjects();
+
+    if (projects.length === 0) {
+      return {
+        name: 'プロジェクト',
+        status: 'ok',
+        message: 'プロジェクトなし（単一スプレッドシート運用）',
+      };
+    }
+
+    const details: string[] = [];
+    for (const project of projects) {
+      details.push(`🔹 ${project.name}`);
+      details.push(`   Spreadsheet: ${project.spreadsheetId}`);
+      details.push(`   Sheet: ${project.sheetName}`);
+      details.push(`   Repositories: ${project.repositories.length}件`);
+      project.repositories.forEach((repo) => {
+        details.push(`     - ${repo.fullName}`);
+      });
+    }
+
+    return {
+      name: 'プロジェクト',
+      status: 'ok',
+      message: `${projects.length}件登録済み`,
+      details,
+    };
+  } catch {
+    // 設定が不完全な場合（他の診断項目でエラーを報告するため、ここでは警告のみ）
+    return {
+      name: 'プロジェクト',
+      status: 'warning',
+      message: '設定の取得に失敗しました',
+      hint: '他の設定エラーを修正してください',
+    };
+  }
+}
+
+/**
  * 診断結果のサマリーを計算
  */
 function calculateSummary(items: ConfigDiagnosticItem[]): {
@@ -268,6 +313,9 @@ export function diagnoseConfig(): ConfigDiagnosticResult {
   // 3. リポジトリ設定
   items.push(diagnoseRepositories());
 
+  // 4. プロジェクト設定
+  items.push(diagnoseProjects());
+
   // 結果のサマリー
   const summary = calculateSummary(items);
 
@@ -286,6 +334,10 @@ export function formatDiagnosticResult(result: ConfigDiagnosticResult): string {
     lines.push(`${icon} ${item.name}: ${item.message}`);
     if (item.hint) {
       lines.push(`   → ${item.hint}`);
+    }
+    if (item.details) {
+      lines.push('');
+      lines.push(...item.details);
     }
   }
 
