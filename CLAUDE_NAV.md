@@ -21,6 +21,7 @@
 | **初期設定** | [SETUP.md](docs/SETUP.md) | src/init.ts |
 | **GitHub Apps認証** | [GITHUB_APPS_AUTH.md](docs/GITHUB_APPS_AUTH.md) | src/config/ |
 | **Slack通知** | src/functions/ | slackWeekly.ts, slackMonthly.ts, slackIncidents.ts, slackAlerts.ts |
+| **GAS関数リファレンス** | [GAS_FUNCTIONS.md](docs/GAS_FUNCTIONS.md) | 全グローバル関数の詳細（引数、実行方法） |
 | **診断ツール** | [CLAUDE_COMMANDS.md](CLAUDE_COMMANDS.md) | debugDeploymentFrequency(), debugCycleTimeForIssue() |
 | **トラブルシューティング** | [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | checkConfig() |
 

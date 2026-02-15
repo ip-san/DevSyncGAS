@@ -564,7 +564,7 @@ Fixes #123
 
 **方法1: GAS関数で設定（推奨）**
 ```javascript
-createDailyTrigger();  // syncAllMetricsIncremental を毎日9時に実行
+scheduleDailyMetricsSync();  // syncAllMetricsIncremental を毎日9時に実行
 ```
 
 **方法2: 手動で設定**

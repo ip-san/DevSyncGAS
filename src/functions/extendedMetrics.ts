@@ -461,7 +461,7 @@ export async function syncAllMetrics(days = 30): Promise<void> {
     Logger.log('  4. リポジトリ別シートで詳細データを確認');
     Logger.log('');
     Logger.log('💡 ヒント:');
-    Logger.log('  - 日次自動実行: createDailyTrigger() を実行');
+    Logger.log('  - 日次自動実行: scheduleDailyMetricsSync() を実行');
     Logger.log('  - 設定確認: checkConfig() を実行');
     Logger.log('');
     Logger.log('━'.repeat(60));
