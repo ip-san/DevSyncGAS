@@ -30,9 +30,10 @@ GitHub複数リポジトリ → DORA metrics収集 → Googleスプレッドシ�
 
 ```bash
 bun run push              # ビルド + デプロイ
-bun run check:all         # 全品質チェック（コード）
+bun run deploy            # 完全チェック後にデプロイ（推奨）
+bun run prepush           # PR前の完全チェック（型・lint・test・build）
+bun run precommit         # コミット前の最小チェック（lint・test）
 bun run check:doc         # ドキュメントサイズチェック
-bunx tsc --noEmit && bun run lint && bun test && bun run build  # 完了前チェック
 ```
 
 ```javascript
