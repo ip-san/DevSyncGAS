@@ -32,13 +32,12 @@ bunx tsc --noEmit && bun run lint && bun test && bun run build
 
 ```javascript
 // 設定診断
-checkConfig()                    // 設定診断（困ったら最初に実行）
+checkConfig()                    // 設定診断（リポジトリ・プロジェクト一覧を含む、困ったら最初に実行）
 testPermissions()                // GitHub API権限テスト
 showAuthMode()                   // 認証方式確認（PAT/GitHub Apps）
 
-// リポジトリ・プロジェクト一覧
+// リポジトリ一覧
 listRepos()                      // 登録リポジトリ一覧
-listProjects()                   // プロジェクト一覧
 
 // 🔍 メトリクス診断ツール
 debugDeploymentFrequency('owner', 'repo')        // デプロイ頻度の診断（なぜyearlyになるのか等）

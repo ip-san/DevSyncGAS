@@ -22,21 +22,7 @@ export {
 } from './extendedMetrics';
 
 // セットアップ・設定
-export {
-  showAuthMode,
-  addRepo,
-  removeRepo,
-  listRepos,
-  createDailyTrigger,
-  createProject,
-  deleteProject,
-  listProjects,
-  addRepoToProject,
-  removeRepoFromProject,
-  modifyProject,
-  checkConfig,
-  testPermissions,
-} from './setup';
+export { showAuthMode, listRepos, createDailyTrigger, checkConfig, testPermissions } from './setup';
 
 // 設定表示・変更
 export {

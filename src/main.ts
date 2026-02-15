@@ -21,9 +21,9 @@ import {
   // 診断・設定
   showAuthMode,
   listRepos,
-  listProjects,
   checkConfig,
   testPermissions,
+  createDailyTrigger,
   // Slack設定
   configureSlackWebhook,
   removeSlackWebhook,
@@ -74,11 +74,16 @@ global.checkConfig = checkConfig;
 global.testPermissions = testPermissions;
 global.showAuthMode = showAuthMode;
 global.listRepos = listRepos;
-global.listProjects = listProjects;
 
 // 診断ツール
 global.debugCycleTimeForIssue = debugCycleTimeForIssue;
 global.debugDeploymentFrequency = debugDeploymentFrequency;
+
+// =============================================================================
+// トリガー管理
+// =============================================================================
+
+global.createDailyTrigger = createDailyTrigger;
 
 // =============================================================================
 // Slack通知（トリガーから実行される）
