@@ -4,24 +4,21 @@
 
 ---
 
-## 🎯 プロジェクトの本質
+## 🎯 プロジェクト概要 & 設計思想
 
-### 何を作っているか
-GitHub複数リポジトリ → DORA metrics収集 → Googleスプレッドシート出力（GAS）
+**何を作っているか**: GitHub複数リポジトリ → DORA metrics収集 → Googleスプレッドシート出力（GAS）
 
-### 技術的特徴
-- **実行環境**: Google Apps Script（GAS）
-- **制約**: fetch不可、UrlFetchApp使用必須、PropertiesServiceでストレージ管理
+**技術的特徴**:
+- **実行環境**: Google Apps Script（fetch禁止、UrlFetchApp使用）
 - **計測思想**: Issue作成 = 作業開始（[MEASUREMENT_PHILOSOPHY.md](docs/MEASUREMENT_PHILOSOPHY.md)）
-- **API戦略**: GraphQL優先（[ADR-0001](docs/adr/0001-graphql-api-default.md)）
-- **アーキテクチャ**: DIコンテナ（[ADR-0002](docs/adr/0002-di-container-for-gas-abstraction.md)）
+- **API戦略**: GraphQL優先（30倍効率化、[ADR-0001](docs/adr/0001-graphql-api-default.md)）
+- **アーキテクチャ**: DIコンテナ（テスト容易性、[ADR-0002](docs/adr/0002-di-container-for-gas-abstraction.md)）
 
-### 主要機能
-- **DORA指標**: Deployment Frequency, Lead Time, Change Failure Rate, MTTR
-- **拡張指標**: Cycle Time, Coding Time, Rework Rate, Review Efficiency, PR Size
-- **出力**: リポジトリ別シート + Dashboard + チャート自動生成
-- **認証**: GitHub PAT / GitHub Apps 両対応
-- **通知**: Slack週次レポート、インシデント日次サマリー
+**主要機能**:
+- DORA指標 + 拡張指標（9種類）
+- リポジトリ別シート + Dashboard + チャート自動生成
+- GitHub PAT / Apps 両対応
+- Slack通知（週次・月次・インシデント）
 
 ---
 
@@ -48,28 +45,6 @@ src/
 GitHub API → データ取得 → メトリクス計算 → スプレッドシート出力 → チャート生成 → Slack通知
 
 **詳細**: [ARCHITECTURE.md](docs/ARCHITECTURE.md)
-
----
-
-## 🧩 重要な設計判断
-
-### 計測起点: Issue作成 = 作業開始
-- 従来: PR作成 = 作業開始
-- DevSyncGAS: Issue作成 = 作業開始
-- メリット: 計画・設計フェーズも含めた真のサイクルタイム計測
-- **詳細**: [MEASUREMENT_PHILOSOPHY.md](docs/MEASUREMENT_PHILOSOPHY.md)
-
-### API選択: GraphQL優先
-- REST API: 5,000リクエスト/時
-- GraphQL API: 単一クエリで複数データ取得可能
-- 複数リポジトリの同期でレート制限に達しにくい
-- **詳細**: [ADR-0001](docs/adr/0001-graphql-api-default.md)
-
-### DIコンテナ採用
-- GAS固有API（UrlFetchApp, PropertiesService）を抽象化
-- テスト時にモックに差し替え可能
-- API実装（GraphQL/REST）の切り替えが容易
-- **詳細**: [ADR-0002](docs/adr/0002-di-container-for-gas-abstraction.md)
 
 ---
 
