@@ -37,6 +37,7 @@ export {
   getReworkDataForPRsGraphQL,
   getPRSizeDataForPRsGraphQL,
   getReviewEfficiencyDataForPRsGraphQL,
+  getPRCycleTimeDataGraphQL,
 } from './pullRequests/index.js';
 
 // Deployment 操作

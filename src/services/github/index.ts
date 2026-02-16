@@ -51,6 +51,7 @@ export {
   trackToProductionMergeGraphQL,
   getCycleTimeDataGraphQL,
   getCodingTimeDataGraphQL,
+  getPRCycleTimeDataGraphQL,
   // 複合機能
   getAllRepositoriesDataGraphQL,
 } from './graphql';

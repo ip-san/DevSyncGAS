@@ -66,6 +66,15 @@ export const DASHBOARD_SCHEMA: SheetSchema = {
       docUrl: 'https://github.com/ip-san/dev-sync-gas/blob/main/docs/CODING_TIME.md',
     },
     {
+      id: 'prCycleTimeHours',
+      header: 'PR Cycle Time (時間)',
+      type: 'number',
+      numberFormat: '#,##0.0',
+      description:
+        '【PR Cycle Time】\nPR作成からPRマージまでの時間\nIssueなしPRも計測される\n\n📖 詳細: https://github.com/ip-san/dev-sync-gas/blob/main/docs/PR_CYCLE_TIME.md',
+      docUrl: 'https://github.com/ip-san/dev-sync-gas/blob/main/docs/PR_CYCLE_TIME.md',
+    },
+    {
       id: 'timeToFirstReviewHours',
       header: 'レビュー待ち (時間)',
       type: 'number',

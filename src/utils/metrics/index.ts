@@ -35,6 +35,7 @@ export {
 // 拡張指標
 export { calculateCycleTime } from './cycleTime';
 export { calculateCodingTime } from './codingTime';
+export { calculatePRCycleTime } from './prCycleTime';
 export { calculateReworkRate } from './reworkRate';
 export { calculateReviewEfficiency } from './reviewEfficiency';
 export { calculatePRSize } from './prSize';

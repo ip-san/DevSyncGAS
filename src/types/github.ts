@@ -152,3 +152,23 @@ export interface IssueCodingTime {
   /** コーディングタイム（時間）- PRがない場合はnull */
   codingTimeHours: number | null;
 }
+
+/**
+ * PR Cycle Timeデータ
+ * PR作成からPRマージまでの時間を計測（Issue有無は問わない）
+ */
+export interface PRCycleTime {
+  prNumber: number;
+  prTitle: string;
+  repository: string;
+  /** PR作成日時（開始点） */
+  prCreatedAt: string;
+  /** PRマージ日時（終了点） - マージされていない場合はnull */
+  prMergedAt: string | null;
+  /** PR Cycle Time（時間） - マージされていない場合はnull */
+  prCycleTimeHours: number | null;
+  /** リンクされているIssue番号（なければnull） */
+  linkedIssueNumber: number | null;
+  /** ベースブランチ名 */
+  baseBranch: string;
+}

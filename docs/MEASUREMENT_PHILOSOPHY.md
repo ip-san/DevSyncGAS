@@ -173,6 +173,43 @@ JiraやAsanaでタスク管理をしていても、GitHubのデータだけで�
 
 だからこそ、Issue作成時点からの計測が実態に合います。
 
+### 理由3: IssueなしPRへの対応（PR Cycle Time）
+
+AI駆動開発では、さらに一歩進んだ変化が起きています。
+
+**Issue作成すらスキップするケース:**
+
+```
+タイポ発見
+    ↓（Issueを作らずに）
+Claude Codeで即修正
+    ↓（5分後）
+PR作成・マージ
+```
+
+このようなケースでは、従来の「Issue作成から計測」では捕捉できません。
+
+**解決策: PR Cycle Time**
+
+| 指標 | 計測対象 | 用途 |
+|------|---------|------|
+| サイクルタイム | Issueありタスク | チーム全体の開発速度 |
+| **PR Cycle Time** | **全PR（Issueなし含む）** | **純粋なコードレビュー速度** |
+
+```
+Issue作成 ─→ PR作成 ─→ PRマージ ─→ Productionマージ
+    │                      │                  │
+    └── Cycle Time ────────┘                  │
+             └── PR Cycle Time ──┘            │
+```
+
+**両方を計測することで:**
+- 計画的な開発（Issue→PR）の速度を見る
+- 小さな修正（PR直接）のレビュー速度も見る
+- AI駆動開発の実態を可視化する
+
+詳細は [PR Cycle Time](PR_CYCLE_TIME.md) を参照してください。
+
 ## 公式フレームワークとの関係
 
 DevSyncGASは複数のフレームワークの考え方を組み合わせています。
@@ -205,11 +242,12 @@ Issue作成を「開始」とするか、In Progress遷移を「開始」とす�
 
 ## 計測指標の全体像
 
-| 指標 | 起点 | 終点 | フレームワーク |
-|------|------|------|---------------|
-| サイクルタイム | Issue作成 | Productionマージ | EBM / Kanban |
-| コーディング時間 | Issue作成 | PR作成 | SPACE (Activity) |
-| Lead Time for Changes | First Commit | Production Deploy | DORA |
+| 指標 | 起点 | 終点 | 対象 | フレームワーク |
+|------|------|------|------|---------------|
+| サイクルタイム | Issue作成 | Productionマージ | Issueあり | EBM / Kanban |
+| コーディング時間 | Issue作成 | PR作成 | Issueあり | SPACE (Activity) |
+| **PR Cycle Time** | **PR作成** | **PRマージ** | **全PR** | **カンバン** |
+| Lead Time for Changes | First Commit | Production Deploy | 全コミット | DORA |
 
 同じ「開発速度」でも、異なる視点から計測できます。
 

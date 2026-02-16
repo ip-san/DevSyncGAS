@@ -90,6 +90,50 @@ export interface CodingTimeMetrics {
 }
 
 // =============================================================================
+// PR Cycle Time指標
+// =============================================================================
+
+/**
+ * 個別PRのサイクルタイム詳細
+ */
+export interface PRCycleTimeDetail {
+  prNumber: number;
+  title: string;
+  repository: string;
+  /** PR作成日時（開始点） */
+  prCreatedAt: string;
+  /** PRマージ日時（終了点） */
+  prMergedAt: string;
+  /** PR Cycle Time（時間） */
+  prCycleTimeHours: number;
+  /** リンクされているIssue番号（なければnull） */
+  linkedIssueNumber: number | null;
+  /** ベースブランチ名 */
+  baseBranch: string;
+}
+
+/**
+ * PR Cycle Time指標
+ * PR作成〜PRマージの時間を測定（Issue有無は問わない）
+ */
+export interface PRCycleTimeMetrics {
+  /** 計測期間 */
+  period: string;
+  /** マージ済みPR数 */
+  mergedPRCount: number;
+  /** 平均PR Cycle Time（時間） */
+  avgPRCycleTimeHours: number | null;
+  /** 中央値PR Cycle Time（時間） */
+  medianPRCycleTimeHours: number | null;
+  /** 最小PR Cycle Time（時間） */
+  minPRCycleTimeHours: number | null;
+  /** 最大PR Cycle Time（時間） */
+  maxPRCycleTimeHours: number | null;
+  /** 各PRの詳細 */
+  prDetails: PRCycleTimeDetail[];
+}
+
+// =============================================================================
 // 手戻り率指標
 // =============================================================================
 

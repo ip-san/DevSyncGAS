@@ -7,6 +7,7 @@ import {
   CYCLE_TIME_EXCLUDE_KEYS,
   CODING_TIME_EXCLUDE_KEYS,
   REWORK_RATE_EXCLUDE_KEYS,
+  PR_CYCLE_TIME_EXCLUDE_KEYS,
   DEPLOYMENT_KEYS,
 } from './propertyKeys';
 
@@ -501,4 +502,30 @@ export function setDeployWorkflowPatterns(patterns: string[]): void {
  */
 export function resetDeployWorkflowPatterns(): void {
   deleteProperty(DEPLOYMENT_KEYS.WORKFLOW_PATTERNS);
+}
+
+// ============================================================
+// PR Cycle Time除外設定
+// ============================================================
+
+/**
+ * PR Cycle Time計算から除外するbaseブランチを取得
+ * @returns ブランチ名配列（デフォルト: []）
+ */
+export function getExcludePRCycleTimeBaseBranches(): string[] {
+  return getPropertyAsStringArray(PR_CYCLE_TIME_EXCLUDE_KEYS.EXCLUDE_BASE_BRANCHES);
+}
+
+/**
+ * PR Cycle Time計算から除外するbaseブランチを設定
+ */
+export function setExcludePRCycleTimeBaseBranches(branches: string[]): void {
+  setPropertyAsStringArray(PR_CYCLE_TIME_EXCLUDE_KEYS.EXCLUDE_BASE_BRANCHES, branches);
+}
+
+/**
+ * PR Cycle Time除外ブランチ設定をリセット
+ */
+export function resetExcludePRCycleTimeBaseBranches(): void {
+  deleteProperty(PR_CYCLE_TIME_EXCLUDE_KEYS.EXCLUDE_BASE_BRANCHES);
 }
