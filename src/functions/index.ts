@@ -40,6 +40,8 @@ export {
   configureCodingTimeLabels,
   showCodingTimeLabels,
   showCodingTimeConfig,
+  configurePRCycleTimeExcludeBranches,
+  showPRCycleTimeExcludeBranches,
   configurePRSizeExcludeBranches,
   showPRSizeExcludeBranches,
   configureDeployWorkflowPatterns,

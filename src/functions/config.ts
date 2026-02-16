@@ -27,6 +27,9 @@ import {
   getExcludeReworkRateBaseBranches,
   setExcludeReworkRateBaseBranches,
   resetExcludeReworkRateBaseBranches,
+  getExcludePRCycleTimeBaseBranches,
+  setExcludePRCycleTimeBaseBranches,
+  resetExcludePRCycleTimeBaseBranches,
   getDeployWorkflowPatterns,
   setDeployWorkflowPatterns,
   resetDeployWorkflowPatterns,
@@ -464,6 +467,53 @@ export function resetReworkRateExcludeBranchesConfig(): void {
   ensureContainerInitialized();
   resetExcludeReworkRateBaseBranches();
   Logger.log('✅ Rework rate exclude branches reset (all PRs will be included)');
+}
+
+// =============================================================================
+// PR Cycle Time除外ブランチ設定
+// =============================================================================
+
+/**
+ * PR Cycle Time計算から除外するbaseブランチを設定（部分一致）
+ *
+ * @example
+ * configurePRCycleTimeExcludeBranches(['production', 'staging']);
+ * // 以下のブランチへのマージが除外される:
+ * // - "production", "production-hotfix", "production-v1" など
+ * // - "staging", "staging-test" など
+ *
+ * configurePRCycleTimeExcludeBranches([]);  // 除外しない（全PR対象）
+ */
+export function configurePRCycleTimeExcludeBranches(branches: string[]): void {
+  ensureContainerInitialized();
+  setExcludePRCycleTimeBaseBranches(branches);
+  if (branches.length > 0) {
+    Logger.log(`✅ PR Cycle Time exclude branches set to: ${branches.join(', ')} (partial match)`);
+  } else {
+    Logger.log('✅ PR Cycle Time exclude branches cleared (all PRs will be included)');
+  }
+}
+
+/**
+ * 現在のPR Cycle Time除外ブランチを表示
+ */
+export function showPRCycleTimeExcludeBranches(): void {
+  ensureContainerInitialized();
+  const branches = getExcludePRCycleTimeBaseBranches();
+  if (branches.length > 0) {
+    Logger.log(`📋 PR Cycle Time exclude branches: ${branches.join(', ')} (partial match)`);
+  } else {
+    Logger.log('📋 PR Cycle Time exclude branches: (none - all PRs included)');
+  }
+}
+
+/**
+ * PR Cycle Time除外ブランチ設定をリセット（全PR対象に戻す）
+ */
+export function resetPRCycleTimeExcludeBranchesConfig(): void {
+  ensureContainerInitialized();
+  resetExcludePRCycleTimeBaseBranches();
+  Logger.log('✅ PR Cycle Time exclude branches reset (all PRs will be included)');
 }
 
 // =============================================================================

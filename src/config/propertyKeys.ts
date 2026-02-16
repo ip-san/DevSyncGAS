@@ -135,6 +135,14 @@ export const REWORK_RATE_EXCLUDE_KEYS = {
 } as const;
 
 /**
+ * PR Cycle Time除外設定キー
+ */
+export const PR_CYCLE_TIME_EXCLUDE_KEYS = {
+  /** PR Cycle Time計算から除外するbaseブランチ（JSON配列） */
+  EXCLUDE_BASE_BRANCHES: 'PR_CYCLE_TIME_EXCLUDE_BASE_BRANCHES',
+} as const;
+
+/**
  * デプロイメント設定キー
  */
 export const DEPLOYMENT_KEYS = {
@@ -169,6 +177,7 @@ export const CONFIG_KEYS = {
   CYCLE_TIME_EXCLUDE: CYCLE_TIME_EXCLUDE_KEYS,
   CODING_TIME_EXCLUDE: CODING_TIME_EXCLUDE_KEYS,
   REWORK_RATE_EXCLUDE: REWORK_RATE_EXCLUDE_KEYS,
+  PR_CYCLE_TIME_EXCLUDE: PR_CYCLE_TIME_EXCLUDE_KEYS,
   DEPLOYMENT: DEPLOYMENT_KEYS,
   DISPLAY: DISPLAY_KEYS,
 } as const;
@@ -191,5 +200,6 @@ export type ConfigKeyValue =
   | (typeof CYCLE_TIME_EXCLUDE_KEYS)[keyof typeof CYCLE_TIME_EXCLUDE_KEYS]
   | (typeof CODING_TIME_EXCLUDE_KEYS)[keyof typeof CODING_TIME_EXCLUDE_KEYS]
   | (typeof REWORK_RATE_EXCLUDE_KEYS)[keyof typeof REWORK_RATE_EXCLUDE_KEYS]
+  | (typeof PR_CYCLE_TIME_EXCLUDE_KEYS)[keyof typeof PR_CYCLE_TIME_EXCLUDE_KEYS]
   | (typeof DEPLOYMENT_KEYS)[keyof typeof DEPLOYMENT_KEYS]
   | (typeof DISPLAY_KEYS)[keyof typeof DISPLAY_KEYS];

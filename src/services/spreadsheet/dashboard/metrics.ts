@@ -33,6 +33,7 @@ export function extractLatestMetricsByRepository(
         // 拡張指標は後で統合
         cycleTimeHours: null,
         codingTimeHours: null,
+        prCycleTimeHours: null,
         timeToFirstReviewHours: null,
         reviewDurationHours: null,
         avgLinesOfCode: null,
@@ -101,6 +102,10 @@ export function enrichWithExtendedMetrics(
       // コーディング時間 (3列目: 平均コーディング時間 (時間))
       const codingTimeSheetName = getExtendedMetricSheetName(repository, 'コーディング時間');
       data.codingTimeHours = calculateAverageFromSheet(spreadsheet, codingTimeSheetName, 3);
+
+      // PR Cycle Time (3列目: 平均PR Cycle Time (時間))
+      const prCycleTimeSheetName = getExtendedMetricSheetName(repository, 'PR Cycle Time');
+      data.prCycleTimeHours = calculateAverageFromSheet(spreadsheet, prCycleTimeSheetName, 3);
 
       // レビュー効率 (3列目: 平均レビュー待ち時間、5列目: 平均レビュー時間)
       const reviewEffSheetName = getExtendedMetricSheetName(repository, 'レビュー効率');

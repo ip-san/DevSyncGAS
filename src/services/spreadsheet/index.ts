@@ -59,6 +59,13 @@ export {
   writeCodingTimeToAllRepositorySheets,
 } from './codingTime';
 
+// PR Cycle Time指標
+export {
+  writePRCycleTimeToSheet,
+  writePRCycleTimeDetailsToRepositorySheet,
+  writePRCycleTimeToAllRepositorySheets,
+} from './prCycleTime';
+
 // 手戻り率指標
 export {
   writeReworkRateToSheet,

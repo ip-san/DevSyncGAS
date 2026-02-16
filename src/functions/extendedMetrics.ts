@@ -13,10 +13,12 @@ import {
   getExcludeReworkRateBaseBranches,
   getExcludePRSizeBaseBranches,
   getExcludeReviewEfficiencyBaseBranches,
+  getExcludePRCycleTimeBaseBranches,
 } from '../config/settings';
 import {
   getCycleTimeDataGraphQL,
   getCodingTimeDataGraphQL,
+  getPRCycleTimeDataGraphQL,
   getReworkDataForPRsGraphQL,
   getReviewEfficiencyDataForPRsGraphQL,
   getPRSizeDataForPRsGraphQL,
@@ -26,6 +28,7 @@ import {
 import {
   writeCycleTimeToSheet,
   writeCodingTimeToSheet,
+  writePRCycleTimeToSheet,
   writeReworkRateToSheet,
   writeReviewEfficiencyToSheet,
   writePRSizeToSheet,
@@ -33,6 +36,7 @@ import {
 import {
   calculateCycleTime,
   calculateCodingTime,
+  calculatePRCycleTime,
   calculateReworkRate,
   calculateReviewEfficiency,
   calculatePRSize,
@@ -186,6 +190,56 @@ function syncCodingTime(days = 30): void {
   writeCodingTimeToSheet(config.spreadsheet.id, metrics);
 
   Logger.log(`✅ Coding Time synced successfully`);
+}
+
+// =============================================================================
+// PR Cycle Time同期
+// =============================================================================
+
+/**
+ * PR Cycle Timeを収集してスプレッドシートに書き出す
+ *
+ * PR作成からPRマージまでの時間を計測（Issue有無は問わない）。
+ *
+ * @param days - 過去何日分のデータを取得するか（デフォルト: 30日）
+ */
+function syncPRCycleTime(days = 30): void {
+  ensureContainerInitialized();
+  const config = getConfig();
+  const token = getGitHubToken();
+
+  Logger.log(`🔄 Syncing PR Cycle Time (past ${days} days)`);
+  Logger.log(`   Repositories: ${config.github.repositories.length}`);
+
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  // GitHub APIからPR Cycle Timeデータを取得
+  const excludeBranches = getExcludePRCycleTimeBaseBranches();
+  const prCycleTimeResult = getPRCycleTimeDataGraphQL(config.github.repositories, token, {
+    dateRange: { since },
+    excludeBaseBranches: excludeBranches,
+  });
+
+  if (!prCycleTimeResult.success || !prCycleTimeResult.data) {
+    Logger.log(`❌ Failed to fetch PR cycle time data: ${prCycleTimeResult.error}`);
+    return;
+  }
+
+  Logger.log(`📥 Fetched ${prCycleTimeResult.data.length} PR cycle time records`);
+
+  // メトリクス計算
+  const period = `過去${days}日`;
+  const metrics = calculatePRCycleTime(prCycleTimeResult.data, period);
+
+  Logger.log(
+    `📈 Calculated PR cycle time: ${metrics.mergedPRCount} PRs, avg ${metrics.avgPRCycleTimeHours?.toFixed(1) ?? 'N/A'}h`
+  );
+
+  // スプレッドシートに書き込み
+  writePRCycleTimeToSheet(config.spreadsheet.id, metrics);
+
+  Logger.log(`✅ PR Cycle Time synced successfully`);
 }
 
 // =============================================================================
@@ -402,19 +456,22 @@ async function syncDORAMetrics(days: number): Promise<void> {
  * @param days - 過去何日分のデータを取得するか
  */
 function syncAllExtendedMetrics(days: number): void {
-  Logger.log(`\n⏱️  [2/7] サイクルタイムを取得中...`);
+  Logger.log(`\n⏱️  [2/8] サイクルタイムを取得中...`);
   syncCycleTime(days);
 
-  Logger.log(`\n⌨️  [3/7] コーディング時間を取得中...`);
+  Logger.log(`\n⌨️  [3/8] コーディング時間を取得中...`);
   syncCodingTime(days);
 
-  Logger.log(`\n🔄 [4/7] 手戻り率を取得中...`);
+  Logger.log(`\n📦 [4/8] PR Cycle Timeを取得中...`);
+  syncPRCycleTime(days);
+
+  Logger.log(`\n🔄 [5/8] 手戻り率を取得中...`);
   syncReworkRate(days);
 
-  Logger.log(`\n👀 [5/7] レビュー効率を取得中...`);
+  Logger.log(`\n👀 [6/8] レビュー効率を取得中...`);
   syncReviewEfficiency(days);
 
-  Logger.log(`\n📏 [6/7] PRサイズを取得中...`);
+  Logger.log(`\n📏 [7/8] PRサイズを取得中...`);
   syncPRSize(days);
 }
 
@@ -422,7 +479,7 @@ function syncAllExtendedMetrics(days: number): void {
  * ダッシュボードを更新
  */
 async function updateDashboard(): Promise<void> {
-  Logger.log(`\n📊 [7/7] ダッシュボードを更新中...`);
+  Logger.log(`\n📊 [8/8] ダッシュボードを更新中...`);
   const config = getConfig();
   const { writeDashboard, readMetricsFromAllRepositorySheets } =
     await import('../services/spreadsheet');

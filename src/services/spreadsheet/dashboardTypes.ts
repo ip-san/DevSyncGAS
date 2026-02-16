@@ -29,6 +29,7 @@ export interface RepositoryLatestData {
   mttrHours: number | null;
   cycleTimeHours: number | null;
   codingTimeHours: number | null;
+  prCycleTimeHours: number | null;
   timeToFirstReviewHours: number | null;
   reviewDurationHours: number | null;
   avgLinesOfCode: number | null;

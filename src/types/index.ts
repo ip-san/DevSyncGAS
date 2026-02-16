@@ -21,6 +21,7 @@ export type {
   PRChainItem,
   IssueCycleTime,
   IssueCodingTime,
+  PRCycleTime,
 } from './github';
 
 // DevOps指標の型
@@ -31,6 +32,9 @@ export type {
   // コーディング時間
   IssueCodingTimeDetail,
   CodingTimeMetrics,
+  // PR Cycle Time
+  PRCycleTimeDetail,
+  PRCycleTimeMetrics,
   // 手戻り率
   PRReworkData,
   ReworkRateMetrics,

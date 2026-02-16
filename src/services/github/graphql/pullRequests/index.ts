@@ -23,3 +23,6 @@ export { getPRDetailsGraphQL, getPullRequestWithBranchesGraphQL } from './detail
 export { getReworkDataForPRsGraphQL } from './batchRework';
 export { getPRSizeDataForPRsGraphQL } from './batchSize';
 export { getReviewEfficiencyDataForPRsGraphQL } from './batchReview';
+
+// PR Cycle Time operations
+export { getPRCycleTimeDataGraphQL } from './prCycleTime';
