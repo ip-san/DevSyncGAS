@@ -94,6 +94,50 @@ function findMergedPRsByHeadBranchGraphQL(
 }
 
 /**
+ * ブランチ名で次のPRを検索し、MinimalPRInfoとして返す
+ *
+ * mergedAfter 以降にマージされたPRのうち最も早いものを選択。
+ */
+function findNextPRByBranchAdapter(
+  repoCtx: { owner: string; repo: string; token: string },
+  headBranch: string,
+  mergedAfter: string
+): ApiResponse<MinimalPRInfo | null> {
+  const result = findMergedPRsByHeadBranchGraphQL(
+    repoCtx.owner,
+    repoCtx.repo,
+    headBranch,
+    repoCtx.token
+  );
+
+  if (!result.success || !result.data?.repository) {
+    return { success: true, data: null };
+  }
+
+  const prs = result.data.repository.pullRequests.nodes;
+  const mergedAfterTime = new Date(mergedAfter).getTime();
+  const candidates = prs
+    .filter((pr) => pr.mergedAt && new Date(pr.mergedAt).getTime() >= mergedAfterTime)
+    .sort((a, b) => new Date(a.mergedAt!).getTime() - new Date(b.mergedAt!).getTime());
+
+  if (candidates.length === 0) {
+    return { success: true, data: null };
+  }
+
+  const best = candidates[0];
+  return {
+    success: true,
+    data: {
+      number: best.number,
+      baseBranch: best.baseRefName,
+      headBranch: best.headRefName,
+      mergedAt: best.mergedAt,
+      mergeCommitSha: best.mergeCommit?.oid ?? null,
+    },
+  };
+}
+
+/**
  * GraphQL API版PRFetcherの作成
  *
  * 共通のPR追跡ロジックで使用するためのアダプター
@@ -127,7 +171,6 @@ function createGraphQLFetcher(owner: string, repo: string, token: string): PRFet
         return { success: true, data: null };
       }
 
-      // 同じPRの場合は無限ループを防止
       if (result.data.number === currentPRNumber) {
         return { success: true, data: null };
       }
@@ -136,35 +179,7 @@ function createGraphQLFetcher(owner: string, repo: string, token: string): PRFet
     },
 
     findNextPRByBranch(headBranch: string, mergedAfter: string): ApiResponse<MinimalPRInfo | null> {
-      const result = findMergedPRsByHeadBranchGraphQL(owner, repo, headBranch, token);
-
-      if (!result.success || !result.data?.repository) {
-        return { success: true, data: null };
-      }
-
-      const prs = result.data.repository.pullRequests.nodes;
-
-      // mergedAfter 以降にマージされたPRをフィルタし、最も早いものを選択
-      const mergedAfterTime = new Date(mergedAfter).getTime();
-      const candidates = prs
-        .filter((pr) => pr.mergedAt && new Date(pr.mergedAt).getTime() >= mergedAfterTime)
-        .sort((a, b) => new Date(a.mergedAt!).getTime() - new Date(b.mergedAt!).getTime());
-
-      if (candidates.length === 0) {
-        return { success: true, data: null };
-      }
-
-      const best = candidates[0];
-      return {
-        success: true,
-        data: {
-          number: best.number,
-          baseBranch: best.baseRefName,
-          headBranch: best.headRefName,
-          mergedAt: best.mergedAt,
-          mergeCommitSha: best.mergeCommit?.oid ?? null,
-        },
-      };
+      return findNextPRByBranchAdapter({ owner, repo, token }, headBranch, mergedAfter);
     },
   };
 }

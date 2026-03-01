@@ -77,6 +77,43 @@ function checkProductionMerge(
 }
 
 /**
+ * commit SHA追跡で次のPRを検索
+ */
+function findNextPRByCommit(
+  fetcher: PRFetcher,
+  pr: MinimalPRInfo,
+  currentPRNumber: number
+): number | null {
+  if (!pr.mergeCommitSha) {
+    return null;
+  }
+  const result = fetcher.findPRByCommit(pr.mergeCommitSha, currentPRNumber);
+  return result.success && result.data ? result.data : null;
+}
+
+/**
+ * ブランチ名ベースで次のPRを検索（フォールバック）
+ */
+function findNextPRByBranchFallback(
+  fetcher: PRFetcher,
+  pr: MinimalPRInfo,
+  logger: LoggerClient
+): number | null {
+  if (!fetcher.findNextPRByBranch || !pr.baseBranch || !pr.mergedAt) {
+    return null;
+  }
+  logger.log(`    🔄 Commit tracking failed, trying branch fallback: head="${pr.baseBranch}"`);
+  const result = fetcher.findNextPRByBranch(pr.baseBranch, pr.mergedAt);
+  if (result.success && result.data) {
+    logger.log(
+      `    🔗 Found next PR via branch fallback: PR #${result.data.number} → ${result.data.baseBranch}`
+    );
+    return result.data.number;
+  }
+  return null;
+}
+
+/**
  * PR追跡の1ステップを実行
  */
 function processTrackStep(
@@ -115,28 +152,13 @@ function processTrackStep(
     return { shouldContinue: false, productionMergedAt: null, nextPRNumber: null };
   }
 
-  // 次のPRを検索（commit SHA追跡）
-  if (pr.mergeCommitSha) {
-    const nextPRResult = fetcher.findPRByCommit(pr.mergeCommitSha, currentPRNumber);
-    if (nextPRResult.success && nextPRResult.data) {
-      return { shouldContinue: true, productionMergedAt: null, nextPRNumber: nextPRResult.data };
-    }
-  }
+  // 次のPRを検索（commit SHA → ブランチフォールバック）
+  const nextPR =
+    findNextPRByCommit(fetcher, pr, currentPRNumber) ??
+    findNextPRByBranchFallback(fetcher, pr, logger);
 
-  // フォールバック: ブランチ名ベースで次のPRを検索
-  if (fetcher.findNextPRByBranch && pr.baseBranch) {
-    logger.log(`    🔄 Commit tracking failed, trying branch fallback: head="${pr.baseBranch}"`);
-    const branchResult = fetcher.findNextPRByBranch(pr.baseBranch, pr.mergedAt);
-    if (branchResult.success && branchResult.data) {
-      logger.log(
-        `    🔗 Found next PR via branch fallback: PR #${branchResult.data.number} → ${branchResult.data.baseBranch}`
-      );
-      return {
-        shouldContinue: true,
-        productionMergedAt: null,
-        nextPRNumber: branchResult.data.number,
-      };
-    }
+  if (nextPR) {
+    return { shouldContinue: true, productionMergedAt: null, nextPRNumber: nextPR };
   }
 
   return { shouldContinue: false, productionMergedAt: null, nextPRNumber: null };

@@ -25,17 +25,21 @@ function calculatePRCycleTimeHours(prCreatedAt: string, prMergedAt: string): num
 }
 
 /**
+ * 除外対象ブランチかどうかを判定
+ */
+function isExcludedBranch(baseBranch: string | undefined, excludePatterns: string[]): boolean {
+  return (
+    excludePatterns.length > 0 &&
+    !!baseBranch &&
+    excludePatterns.some((pattern) => baseBranch.includes(pattern))
+  );
+}
+
+/**
  * PR Cycle Timeデータを取得（GraphQL版）
  *
  * PR作成からPRマージまでの時間を計測するデータを取得する。
  * Issueリンクの有無は問わず、全てのマージ済みPRを対象とする。
- *
- * @param repositories - リポジトリ一覧
- * @param token - GitHubトークン
- * @param options - オプション設定
- * @param options.dateRange - 日付範囲（PR作成日基準）
- * @param options.excludeBaseBranches - 除外するベースブランチパターン（部分一致）
- * @returns PRCycleTimeデータ配列
  */
 export function getPRCycleTimeDataGraphQL(
   repositories: GitHubRepository[],
@@ -54,11 +58,10 @@ export function getPRCycleTimeDataGraphQL(
   for (const repo of repositories) {
     logger.log(`🔍 Processing ${repo.fullName}...`);
 
-    // マージ済みPRを取得（state: 'all' で取得し、後でフィルタ）
     const prsResult = getPullRequestsGraphQL({
       repo,
       token,
-      state: 'all',
+      state: 'closed',
       dateRange: options.dateRange,
     });
 
@@ -67,21 +70,14 @@ export function getPRCycleTimeDataGraphQL(
       continue;
     }
 
-    // マージ済みPRのみフィルタ
     const mergedPRs = prsResult.data.filter((pr) => pr.mergedAt !== null);
     logger.log(`  📋 Found ${mergedPRs.length} merged PRs`);
 
     for (const pr of mergedPRs) {
-      // 除外ブランチチェック
-      if (excludeBranches.length > 0 && pr.baseBranch) {
-        const shouldExclude = excludeBranches.some((pattern) => pr.baseBranch!.includes(pattern));
-        if (shouldExclude) {
-          logger.debug(`  ⏩ Skipping PR#${pr.number} (baseBranch: ${pr.baseBranch})`);
-          continue;
-        }
+      if (isExcludedBranch(pr.baseBranch, excludeBranches)) {
+        logger.debug(`  ⏩ Skipping PR#${pr.number} (baseBranch: ${pr.baseBranch})`);
+        continue;
       }
-
-      const prCycleTimeHours = calculatePRCycleTimeHours(pr.createdAt, pr.mergedAt!);
 
       allPRCycleTimeData.push({
         prNumber: pr.number,
@@ -89,8 +85,8 @@ export function getPRCycleTimeDataGraphQL(
         repository: repo.fullName,
         prCreatedAt: pr.createdAt,
         prMergedAt: pr.mergedAt,
-        prCycleTimeHours,
-        linkedIssueNumber: null, // 将来的にGraphQLで取得可能
+        prCycleTimeHours: calculatePRCycleTimeHours(pr.createdAt, pr.mergedAt!),
+        linkedIssueNumber: null,
         baseBranch: pr.baseBranch ?? '',
       });
     }
