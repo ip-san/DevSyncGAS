@@ -15,6 +15,7 @@ import {
   formatDecimalColumns,
   applyDataBorders,
 } from './helpers';
+import { formatRowsForSheet } from '../../utils/dateFormat';
 import {
   getExtendedMetricSheetName,
   getExtendedMetricDetailSheetName,
@@ -293,7 +294,9 @@ export function writePRCycleTimeDetailsToRepositorySheet(
   ]);
 
   const lastRow = sheet.getLastRow();
-  sheet.getRange(lastRow + 1, 1, rows.length, REPOSITORY_DETAIL_HEADERS.length).setValues(rows);
+  sheet
+    .getRange(lastRow + 1, 1, rows.length, REPOSITORY_DETAIL_HEADERS.length)
+    .setValues(formatRowsForSheet(rows));
 
   formatRepositoryPRCycleTimeDetailSheet(sheet);
   logger.info(`✅ [${repository}] Wrote ${detailsToWrite.length} PR cycle time detail records`);
