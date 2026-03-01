@@ -8,7 +8,11 @@ import type { ApiResponse, PRChainItem } from '../../../../types';
 import { getContainer } from '../../../../container';
 import { executeGraphQLWithRetry } from '../client';
 import { COMMIT_ASSOCIATED_PRS_QUERY } from '../queries/commits.js';
-import type { CommitAssociatedPRsQueryResponse } from '../types';
+import { MERGED_PRS_BY_HEAD_BRANCH_QUERY } from '../queries/pullRequests.js';
+import type {
+  CommitAssociatedPRsQueryResponse,
+  MergedPRsByHeadBranchQueryResponse,
+} from '../types';
 import {
   trackToProductionMerge as trackToProductionMergeShared,
   type PRFetcher,
@@ -71,6 +75,25 @@ export function findPRContainingCommitGraphQL(
 }
 
 /**
+ * ブランチ名でマージ済みPRを検索（GraphQL版）
+ *
+ * 指定ブランチからマージされたPRのうち、指定日時以降にマージされた
+ * 最も早いPRを返す。PRチェーン追跡のフォールバック用。
+ */
+function findMergedPRsByHeadBranchGraphQL(
+  owner: string,
+  repo: string,
+  headBranch: string,
+  token: string
+): ApiResponse<MergedPRsByHeadBranchQueryResponse> {
+  return executeGraphQLWithRetry<MergedPRsByHeadBranchQueryResponse>(
+    MERGED_PRS_BY_HEAD_BRANCH_QUERY,
+    { owner, name: repo, headRefName: headBranch },
+    token
+  );
+}
+
+/**
  * GraphQL API版PRFetcherの作成
  *
  * 共通のPR追跡ロジックで使用するためのアダプター
@@ -110,6 +133,38 @@ function createGraphQLFetcher(owner: string, repo: string, token: string): PRFet
       }
 
       return { success: true, data: result.data.number };
+    },
+
+    findNextPRByBranch(headBranch: string, mergedAfter: string): ApiResponse<MinimalPRInfo | null> {
+      const result = findMergedPRsByHeadBranchGraphQL(owner, repo, headBranch, token);
+
+      if (!result.success || !result.data?.repository) {
+        return { success: true, data: null };
+      }
+
+      const prs = result.data.repository.pullRequests.nodes;
+
+      // mergedAfter 以降にマージされたPRをフィルタし、最も早いものを選択
+      const mergedAfterTime = new Date(mergedAfter).getTime();
+      const candidates = prs
+        .filter((pr) => pr.mergedAt && new Date(pr.mergedAt).getTime() >= mergedAfterTime)
+        .sort((a, b) => new Date(a.mergedAt!).getTime() - new Date(b.mergedAt!).getTime());
+
+      if (candidates.length === 0) {
+        return { success: true, data: null };
+      }
+
+      const best = candidates[0];
+      return {
+        success: true,
+        data: {
+          number: best.number,
+          baseBranch: best.baseRefName,
+          headBranch: best.headRefName,
+          mergedAt: best.mergedAt,
+          mergeCommitSha: best.mergeCommit?.oid ?? null,
+        },
+      };
     },
   };
 }

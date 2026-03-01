@@ -23,8 +23,20 @@ syncAllMetrics(90);     // 過去90日
 
 ### 前提条件
 
-1. IssueとPRがリンクされている（PRのdescriptionに `Fixes #123` など）
+1. IssueとPRがリンクされている（PRのdescriptionにGitHub closing keywordを記載）
 2. PRがProductionブランチにマージされている
+
+#### GitHub closing keyword
+
+以下のキーワードいずれでもリンクが作成されます（大文字小文字不問）：
+
+| キーワード | 例 |
+|-----------|-----|
+| `close` / `closes` / `closed` | `close #123`, `Closes #123` |
+| `fix` / `fixes` / `fixed` | `fix #456`, `Fixes #456` |
+| `resolve` / `resolves` / `resolved` | `resolve #789`, `Resolves #789` |
+
+DevSyncGASはキーワードを自前でパースせず、GitHubが自動生成する `CrossReferencedEvent` を読み取ります。そのためGitHubが認識するキーワードであればすべて対応しています。
 
 ---
 
@@ -166,6 +178,29 @@ PR3 (staging→production) ← このマージ日 = 完了日
 
 最大5段階まで追跡します。
 
+### 追跡方法
+
+2段階の追跡戦略で次のPRを検索します：
+
+1. **Commit SHA追跡**（優先）: マージコミットSHAを含むPRを検索
+2. **ブランチフォールバック**: commit追跡が失敗した場合、baseBranch名をheadとするマージ済みPRを時系列で検索
+
+#### ブランチフォールバックが必要なケース
+
+squashマージやrebaseマージでは、マージコミットSHAが書き換わるため、commit SHA追跡が途切れることがあります。この場合、ブランチ名ベースのフォールバックが自動的に使用されます。
+
+```
+PR #100 (feature → master) merged 1/2
+    ↓ commit追跡失敗（squashマージ）
+    ↓ フォールバック: headRefName="master" のマージ済みPRを検索
+PR #101 (master → staging_toyama) merged 1/3
+    ↓ commit追跡失敗
+    ↓ フォールバック: headRefName="staging_toyama" のマージ済みPRを検索
+PR #102 (staging_toyama → production_server_toyama) merged 1/4
+    ↓ baseBranch.includes("production") → 検出
+サイクルタイム = Issue作成日 → 1/4
+```
+
 ---
 
 ## DORA Lead Time との違い
@@ -192,22 +227,33 @@ Issue作成 ─→ コーディング ─→ PR作成 ─→ マージ ─→ Pr
 - `listRepos()` でリポジトリが正しく登録されているか確認
 - 計測期間内にProductionマージされたIssueが存在するか確認
 
+### DashboardのサイクルタイムがN/Aになる
+
+N/Aの原因は主に2つです：
+
+1. **IssueとPRが紐付いていない**（ログに `No linked PRs found`）
+   - PRのdescriptionに `close #123` 等のclosing keywordが書かれているか確認
+   - 対象: 上記「GitHub closing keyword」の表を参照
+2. **PRチェーンがProductionに到達しない**（ログに `Could not track to production`）
+   - `checkConfig()` でProductionブランチパターンを確認
+   - ブランチ名がパターンに部分一致するか確認（例: パターン `production` → `production_server_toyama` はマッチ）
+
 ### サイクルタイムがnullになる
 
-- IssueとPRがリンクされているか確認（`Fixes #123` など）
+- IssueとPRがリンクされているか確認（`close #123` / `Fixes #123` など）
 - PRがProductionブランチにマージされているか確認
-- `showProductionBranch()` でブランチパターンを確認
+- `checkConfig()` でブランチパターンを確認
 
 ### PRチェーンが検出されない
 
 - 各PRがマージ済みか確認
-- squashマージの場合はマージコミットSHAが異なる場合があります
+- squashマージやrebaseマージの場合はcommit SHA追跡が途切れますが、ブランチフォールバックで自動補完されます
 
 ---
 
 ## 制約事項
 
-- PRリンク必須（`Fixes #123` などでリンクされていないIssueは除外）
+- PRリンク必須（`close #123` / `Fixes #123` などでリンクされていないIssueは除外）
 - PRチェーン深度: 最大5段階
 - GAS実行時間制限: 6分（大量のIssueがある場合は期間を短くするか、ラベルフィルタで絞る）
 

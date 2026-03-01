@@ -10,6 +10,7 @@ import { getGitHubAuthMode } from './authMode.js';
 import { GitHubRepositoriesSchema } from '../utils/configSchemas.js';
 import { SPREADSHEET_ID_DISPLAY_LENGTH } from './apiConfig.js';
 import { getProjects } from './projects.js';
+import { getProductionBranchPattern } from './metrics.js';
 
 export interface ConfigDiagnosticItem {
   name: string;
@@ -283,6 +284,19 @@ function diagnoseProjects(): ConfigDiagnosticItem {
 }
 
 /**
+ * Productionブランチパターンを診断
+ */
+function diagnoseProductionBranch(): ConfigDiagnosticItem {
+  const pattern = getProductionBranchPattern();
+  return {
+    name: 'Productionブランチ',
+    status: 'ok',
+    message: `パターン: "${pattern}"`,
+    hint: 'サイクルタイムが N/A の場合、setProductionBranchPattern("main") 等で実際のブランチ名に変更してください',
+  };
+}
+
+/**
  * 診断結果のサマリーを計算
  */
 function calculateSummary(items: ConfigDiagnosticItem[]): {
@@ -315,6 +329,9 @@ export function diagnoseConfig(): ConfigDiagnosticResult {
 
   // 4. プロジェクト設定
   items.push(diagnoseProjects());
+
+  // 5. Productionブランチパターン
+  items.push(diagnoseProductionBranch());
 
   // 結果のサマリー
   const summary = calculateSummary(items);

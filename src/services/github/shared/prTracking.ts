@@ -37,6 +37,15 @@ export interface PRFetcher {
    * コミットSHAを含むPRを検索
    */
   findPRByCommit(commitSha: string, currentPRNumber: number): ApiResponse<number | null>;
+
+  /**
+   * ブランチ名で次のPRを検索（フォールバック用）
+   *
+   * 指定ブランチからマージされたPRのうち、指定日時以降に
+   * マージされた最も早いPRを返す。
+   * commit追跡が失敗した場合のフォールバックとして使用。
+   */
+  findNextPRByBranch?(headBranch: string, mergedAfter: string): ApiResponse<MinimalPRInfo | null>;
 }
 
 /**
@@ -102,17 +111,35 @@ function processTrackStep(
   }
 
   // マージされていない場合は追跡終了
-  if (!pr.mergedAt || !pr.mergeCommitSha) {
+  if (!pr.mergedAt) {
     return { shouldContinue: false, productionMergedAt: null, nextPRNumber: null };
   }
 
-  // 次のPRを検索
-  const nextPRResult = fetcher.findPRByCommit(pr.mergeCommitSha, currentPRNumber);
-  if (!nextPRResult.success || !nextPRResult.data) {
-    return { shouldContinue: false, productionMergedAt: null, nextPRNumber: null };
+  // 次のPRを検索（commit SHA追跡）
+  if (pr.mergeCommitSha) {
+    const nextPRResult = fetcher.findPRByCommit(pr.mergeCommitSha, currentPRNumber);
+    if (nextPRResult.success && nextPRResult.data) {
+      return { shouldContinue: true, productionMergedAt: null, nextPRNumber: nextPRResult.data };
+    }
   }
 
-  return { shouldContinue: true, productionMergedAt: null, nextPRNumber: nextPRResult.data };
+  // フォールバック: ブランチ名ベースで次のPRを検索
+  if (fetcher.findNextPRByBranch && pr.baseBranch) {
+    logger.log(`    🔄 Commit tracking failed, trying branch fallback: head="${pr.baseBranch}"`);
+    const branchResult = fetcher.findNextPRByBranch(pr.baseBranch, pr.mergedAt);
+    if (branchResult.success && branchResult.data) {
+      logger.log(
+        `    🔗 Found next PR via branch fallback: PR #${branchResult.data.number} → ${branchResult.data.baseBranch}`
+      );
+      return {
+        shouldContinue: true,
+        productionMergedAt: null,
+        nextPRNumber: branchResult.data.number,
+      };
+    }
+  }
+
+  return { shouldContinue: false, productionMergedAt: null, nextPRNumber: null };
 }
 
 /**
