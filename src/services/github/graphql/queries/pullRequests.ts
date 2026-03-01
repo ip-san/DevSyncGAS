@@ -206,3 +206,38 @@ export function buildBatchPRDetailQuery(prNumbers: number[]): string {
     }
   `;
 }
+
+/**
+ * headRefNameでフィルタしたマージ済みPR検索クエリ
+ *
+ * ブランチベースのPRチェーン追跡フォールバック用。
+ * 指定ブランチからマージされたPRを取得する。
+ *
+ * コスト: 約 1 + nodes数
+ */
+export const MERGED_PRS_BY_HEAD_BRANCH_QUERY = `
+  query FindMergedPRsByHeadBranch(
+    $owner: String!
+    $name: String!
+    $headRefName: String!
+  ) {
+    repository(owner: $owner, name: $name) {
+      pullRequests(
+        headRefName: $headRefName
+        states: MERGED
+        first: 10
+        orderBy: { field: CREATED_AT, direction: DESC }
+      ) {
+        nodes {
+          number
+          baseRefName
+          headRefName
+          mergedAt
+          mergeCommit {
+            oid
+          }
+        }
+      }
+    }
+  }
+`;

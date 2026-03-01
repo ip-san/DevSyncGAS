@@ -10,6 +10,9 @@
 import {
   getConfig,
   getGitHubToken,
+  getProductionBranchPattern,
+  getCycleTimeIssueLabels,
+  getCodingTimeIssueLabels,
   getExcludeReworkRateBaseBranches,
   getExcludePRSizeBaseBranches,
   getExcludeReviewEfficiencyBaseBranches,
@@ -121,6 +124,8 @@ function syncCycleTime(days = 30): void {
   // GitHub APIからサイクルタイムデータを取得
   const cycleTimeResult = getCycleTimeDataGraphQL(config.github.repositories, token, {
     dateRange: { start: since.toISOString() },
+    productionBranchPattern: getProductionBranchPattern(),
+    labels: getCycleTimeIssueLabels(),
   });
 
   if (!cycleTimeResult.success || !cycleTimeResult.data) {
@@ -169,6 +174,7 @@ function syncCodingTime(days = 30): void {
   // GitHub APIからコーディング時間データを取得
   const codingTimeResult = getCodingTimeDataGraphQL(config.github.repositories, token, {
     dateRange: { start: since.toISOString() },
+    labels: getCodingTimeIssueLabels(),
   });
 
   if (!codingTimeResult.success || !codingTimeResult.data) {

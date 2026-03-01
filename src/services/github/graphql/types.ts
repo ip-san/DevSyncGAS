@@ -283,3 +283,20 @@ export interface CommitAssociatedPRsQueryResponse {
     } | null;
   } | null;
 }
+
+/**
+ * ブランチ指定マージ済みPR検索レスポンス
+ */
+export interface MergedPRsByHeadBranchQueryResponse {
+  repository: {
+    pullRequests: {
+      nodes: Array<{
+        number: number;
+        baseRefName: string;
+        headRefName: string;
+        mergedAt: string | null;
+        mergeCommit: { oid: string } | null;
+      }>;
+    };
+  } | null;
+}
