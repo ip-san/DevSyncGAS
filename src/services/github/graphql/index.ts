@@ -232,7 +232,7 @@ export function getAllRepositoriesDataGraphQL(
   const {
     dateRange,
     deploymentEnvironment = 'production',
-    deploymentEnvironmentMatchMode = 'exact',
+    deploymentEnvironmentMatchMode = 'partial',
   } = options;
   const { logger } = getContainer();
 
